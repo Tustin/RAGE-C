@@ -238,17 +238,31 @@ namespace RAGE
                     List<string> afterLogicCode = new List<string>();
                     if (conditionalsHit == 0)
                     {
+                        Conditional nextParent = function.Conditionals.GetNextParentConditional(thisConditional);
                         int index = (int)thisConditional.CodeEndLine + 1;
-                        int count = function.Code.Count - ((int)thisConditional.CodeEndLine + 1);
+                        int count = (nextParent.CodeStartLine - 1) - ((int)thisConditional.CodeEndLine + 1);
                         afterLogicCode = function.Code.GetRange(index, count);
                     }
                     else
                     {
                         Conditional previousConditional;
+                        //see if this conditional is a nested one
                         if (thisConditional.Parent == null)
                         {
-                            previousConditional = function.Conditionals.GetLastParentConditional(thisConditional);
-
+                            if (function.Conditionals.AreThereAnyParentsAfterThisParent(thisConditional))
+                            {
+                                Conditional nextParent = function.Conditionals.GetNextParentConditional(thisConditional);
+                                int index = (int)thisConditional.CodeEndLine + 1;
+                                int count = (nextParent.CodeStartLine - 2) - ((int)thisConditional.CodeEndLine + 1);
+                                afterLogicCode = function.Code.GetRange(index, count);
+                                //afterLogicCode = function.Code.GetRange((int)(thisConditional.CodeEndLine + 1), nextParent.CodeStartLine - 2);
+                            }
+                            else
+                            {
+                                int index = (int)thisConditional.CodeEndLine + 1;
+                                int count = (function.Code.Count - 1) - ((int)thisConditional.CodeEndLine + 1);
+                                afterLogicCode = function.Code.GetRange(index, count);
+                            }
                         }
                         else
                         {

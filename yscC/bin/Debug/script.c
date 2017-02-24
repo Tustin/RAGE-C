@@ -5,8 +5,10 @@ void main () {
         if (id == 0) {
             int morestuff = 50;
         }
-        int dothis = 500;   
+        int dothis = 500;
     }
+    string testing = "ok";
+    int boop = 2323;
     if (true == false) {
         bool cool = false;
     }

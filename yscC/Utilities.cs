@@ -58,5 +58,14 @@ namespace RAGE
         {
             return list.Where(a => a.Parent == null && a != excludedConditional).FirstOrDefault();
         }
+
+        public static Conditional GetNextParentConditional(this List<Conditional> list, Conditional currentConditional)
+        {
+            return list.Where(a => a.Parent == null && a != currentConditional && a.Index > currentConditional.Index).FirstOrDefault();
+        }
+        public static bool AreThereAnyParentsAfterThisParent(this List<Conditional> list, Conditional currentConditional)
+        {
+            return list.Any(a => a.Parent == null && a != currentConditional && a.Index > currentConditional.Index);
+        }
     }
 }
