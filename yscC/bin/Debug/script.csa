@@ -1,0 +1,37 @@
+//compiled using RAGE-C by Tustin
+:__script__entry
+Function 0 2 0
+Call @main
+Return 0 0
+
+:main
+Function 0 8 0
+CallNative "player_id" 0 1
+setF1 2
+PushString "adder"
+CallNative "get_hash_key" 1 1
+setF1 3
+getF1 3
+push -1216765807
+JumpNE @main_if_end_0
+getF1 2
+push_0
+JumpNE @main_if_end_1
+push1 50
+setF1 4
+push_1
+push_0
+JumpNE @main_if_end_2
+
+:main_if_end_2
+
+:main_if_end_1
+push 500
+setF1 5
+
+:main_if_end_0
+push_0
+setF1 6
+PushString "should be in last block"
+setF1 7
+Return 0 0
