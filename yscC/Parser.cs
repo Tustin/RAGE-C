@@ -13,7 +13,6 @@ namespace RAGE
 
         private List<string> dataTypes = new List<string>() { "void", "int", "bool", "string" };
 
-
         public Parser(StreamReader fileStream)
         {
             this.sourceFile = fileStream;
@@ -214,69 +213,33 @@ namespace RAGE
             //add label
             asmCode.Add(":" + function.Name);
             asmCode.Add($"Function 0 {function.frameCount} 0");
-            Dictionary<string, List<string>> conditionalBlocks = new Dictionary<string, List<string>>(function.Conditionals.Count);
+            AssemblyFunction asmFunction = new AssemblyFunction(function.Name);
+            //Dictionary<string, List<string>> conditionalBlocks = new Dictionary<string, List<string>>(function.Conditionals.Count);
+            Dictionary<string, List<string>> organizedConditionals = OrganizeConditionals(function);
+            Dictionary<string, List<string>> asmConditionals = organizedConditionals.Where(a => a.Key != null).ToDictionary(a => a.Key, a => new List<string>());
+            asmFunction.PopulateBlocks(organizedConditionals.Keys.ToList());
             int conditionalsHit = 0;
             foreach (string line in function.Code)
             {
-                //code generation for native func calls
-                if (line.Contains("(") && line.Contains(")") && !line.Contains("if ") && !line.Contains("while "))
+                //find where this code goes
+                string labelBlock = organizedConditionals.FindConditionalBlockForCode(line);
+                //if code isnt in a conditional block, then just put it in the main function code
+                if (labelBlock == null)
+                {
+                    labelBlock = function.Name;
+                }
+                //code generation for native func calls that dont return anything
+                if (line.Contains("(") && line.Contains(")") && !line.Contains("if ") && !line.Contains("while ") && !line.Contains(" = "))
                 {
                     List<string> nativeASMCode = GenerateNativeCall(function, line);
-                    asmCode.AddRange(nativeASMCode);
+                    asmFunction.LabelBlocks[labelBlock].AddRange(nativeASMCode);
                 }
                 //do conditional code generation
                 else if (line.Contains("if "))
                 {
                     Conditional thisConditional = function.Conditionals[conditionalsHit];
-                    if (thisConditional.CodeEndLine == null)
-                    {
-                        throw new Exception("Conditional has no end. Possible malformed if block.");
-                    }
-                    //create a label for the conditional
-                    string conditionalEndLabel = $"{function.Name}_if_end_{thisConditional.Index}";
-                    List<string> logicCode = function.Code.GetRange(thisConditional.CodeStartLine, ((int)thisConditional.CodeEndLine - thisConditional.CodeStartLine) + 1);
-                    List<string> afterLogicCode = new List<string>();
-                    if (conditionalsHit == 0)
-                    {
-                        //Conditional nextParent = function.Conditionals.GetNextParentConditional(thisConditional);
-                        int index = (int)thisConditional.CodeEndLine + 1;
-                        int count = function.Code.Count - ((int)thisConditional.CodeEndLine + 1);
-                        afterLogicCode = function.Code.GetRange(index, count);
-                    }
-                    else
-                    {
-                        Conditional previousConditional;
-                        //see if this conditional is a nested one
-                        if (thisConditional.Parent == null)
-                        {
-                            if (function.Conditionals.AreThereAnyParentsAfterThisParent(thisConditional))
-                            {
-                                Conditional nextParent = function.Conditionals.GetNextParentConditional(thisConditional);
-                                int index = (int)thisConditional.CodeEndLine + 1;
-                                int count = (nextParent.CodeStartLine - 1) - ((int)thisConditional.CodeEndLine + 1);
-                                afterLogicCode = function.Code.GetRange(index, count);
-                                //afterLogicCode = function.Code.GetRange((int)(thisConditional.CodeEndLine + 1), nextParent.CodeStartLine - 2);
-                            }
-                            else
-                            {
-                                int index = (int)thisConditional.CodeEndLine + 1;
-                                int count = (function.Code.Count - 1) - ((int)thisConditional.CodeEndLine + 1);
-                                afterLogicCode = function.Code.GetRange(index, count);
-                            }
-                        }
-                        else
-                        {
-                            previousConditional = function.Conditionals[conditionalsHit - 1];
-                            int index = (int)thisConditional.CodeEndLine + 1;
-                            int first = (int)(previousConditional.CodeEndLine + 1);
-                            int second = (int)(thisConditional.CodeEndLine + 1);
-                            int count = (int)(first - second);
-                            afterLogicCode = function.Code.GetRange(index, count);
-                        }
+                    string label = $"{function.Name}_if_end_{thisConditional.Index}";
 
-                    }
-
-                    conditionalBlocks.Add(conditionalEndLabel, afterLogicCode);
                     //if the logic is expecting a true, then we will output this shit
                     if (thisConditional.Logic.LogicType)
                     {
@@ -285,7 +248,8 @@ namespace RAGE
                         if (function.LocalVariables.IsLocalVariable(firstCondition))
                         {
                             Variable localVar = function.LocalVariables.GetLocalVariable(firstCondition);
-                            asmCode.Add($"getF1 {localVar.FrameId}");
+                            asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
+                            //asmCode.Add();
                         }
                         else
                         {
@@ -298,14 +262,16 @@ namespace RAGE
                                 firstCondition = firstCondition.Replace("0x", "");
                                 firstCondition = int.Parse(firstCondition, System.Globalization.NumberStyles.HexNumber).ToString();
                             }
-                            asmCode.Add(GeneratePushInstruction(firstCondition));
+                            asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(firstCondition));
+                            //asmCode.Add(GeneratePushInstruction(firstCondition));
                         }
                         string secondCondition = thisConditional.Logic.SecondCondition;
                         //is this a local var? if so, pull it and get the frame var id
                         if (function.LocalVariables.IsLocalVariable(secondCondition))
                         {
                             Variable localVar = function.LocalVariables.GetLocalVariable(secondCondition);
-                            asmCode.Add($"getF1 {localVar.FrameId}");
+                            asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
+                            //asmCode.Add($"getF1 {localVar.FrameId}");
                         }
                         else
                         {
@@ -318,41 +284,62 @@ namespace RAGE
                                 secondCondition = secondCondition.Replace("0x", "");
                                 secondCondition = int.Parse(secondCondition, System.Globalization.NumberStyles.HexNumber).ToString();
                             }
-                            asmCode.Add(GeneratePushInstruction(secondCondition));
+                            asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(secondCondition));
                         }
                     }
-                    asmCode.Add($"JumpNE @{conditionalEndLabel}");
-                    Console.WriteLine($"Found a Conditional - size of code block: {logicCode.Count}");
+                    asmFunction.LabelBlocks[labelBlock].Add($"JumpNE @{label}");
                     conditionalsHit++;
                 }
                 else if (line.Contains(" = ") && !line.Contains("=="))
                 {
-                    if (conditionalBlocks.IsLogicCode(line))
-                        continue;
-
+                    //string label = organizedConditionals.FindConditionalBlockForCode(line);
                     List<string> instructions = GenerateAssignmentInstructions(function, line);
-                    asmCode.AddRange(instructions);
+                    //asmCode.AddRange(instructions);
+                    asmFunction.LabelBlocks[labelBlock].AddRange(instructions);
+                    //add the asm code to the right label otherwise just add it to the main function block
+                    //if (label != null)
+                    //{
+                    //}
+                    //else
+                    //{
+                    //    asmFunction.LabelBlocks[$"{function.Name}"].AddRange(instructions);
+                    //}
                 }
             }
 
             //generate the end for each if statement
             //might need to reverse the order
-            foreach (KeyValuePair<string, List<string>> result in conditionalBlocks.Reverse())
+            KeyValuePair<string, List<string>> mainBlock = asmFunction.LabelBlocks.Where(a => a.Key == function.Name).First();
+            asmFunction.LabelBlocks.Remove(function.Name);
+            asmCode.AddRange(mainBlock.Value);
+            foreach (KeyValuePair<string, List<string>> blocks in asmFunction.LabelBlocks.Reverse())
             {
-                asmCode.Add("");
-                asmCode.Add($":{result.Key}");
-                foreach (string line in result.Value)
+                if (blocks.Key != function.Name)
                 {
-                    if (line.Contains('}'))
-                        continue;
-                    if (line.Contains(" = "))
-                    {
-                        List<string> instructions = GenerateAssignmentInstructions(function, line);
-                        asmCode.AddRange(instructions);
-                    }
+                    asmCode.Add($":{blocks.Key}");
                 }
 
+                foreach (string line in blocks.Value)
+                {
+                    asmCode.Add(line);
+                }
             }
+            //foreach (KeyValuePair<string, List<string>> result in conditionalBlocks.Reverse())
+            //{
+            //    asmCode.Add("");
+            //    asmCode.Add($":{result.Key}");
+            //    foreach (string line in result.Value)
+            //    {
+            //        if (line.Contains('}'))
+            //            continue;
+            //        if (line.Contains(" = "))
+            //        {
+            //            List<string> instructions = GenerateAssignmentInstructions(function, line);
+            //            asmCode.AddRange(instructions);
+            //        }
+            //    }
+
+            //}
             asmCode.Add($"Return 0 0");
             //asmCode.Add("");
             return asmCode;
@@ -642,6 +629,15 @@ namespace RAGE
                     value = string.Join(" ", fullString.ToArray());
                 }
                 value = value.ReplaceLast(";");
+                //\(.*\)
+                Regex regex = new Regex("[^a-zA-Z0-9_\\(\\)]");
+                string nativeCheck = regex.Replace(value, "");
+                Regex argRemoval = new Regex("\\(.*\\)");
+                nativeCheck = argRemoval.Replace(nativeCheck, "");
+                if (Native.IsFunctionANative(nativeCheck))
+                {
+                    return GenerateNativeCall(function, line);
+                }
                 string code = GeneratePushInstruction(value);
                 if (code == null)
                 {
@@ -652,6 +648,58 @@ namespace RAGE
             }
 
             return final;
+        }
+
+        public Dictionary<string, List<string>> OrganizeConditionals(Function function)
+        {
+            Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
+
+            foreach (Conditional conditional in function.Conditionals)
+            {
+                string conditionalEndLabel = $"{function.Name}_if_end_{conditional.Index}";
+                List<string> logicCode = function.Code.GetRange(conditional.CodeStartLine, ((int)conditional.CodeEndLine - conditional.CodeStartLine) + 1);
+                //List<string> afterLogicCode = new List<string>();
+
+                if (conditional.Index == 0 && function.Conditionals.Count > 1)
+                {
+                    Conditional nextParent = function.Conditionals.GetNextParentConditional(conditional);
+                    int index = (int)conditional.CodeEndLine + 1;
+                    int count = ((int)nextParent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                    result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                }
+                else
+                {
+                    Conditional previousConditional;
+                    //see if this conditional is a nested one
+                    if (conditional.Parent == null)
+                    {
+                        if (function.Conditionals.AreThereAnyParentsAfterThisParent(conditional))
+                        {
+                            Conditional nextParent = function.Conditionals.GetNextParentConditional(conditional);
+                            int index = (int)conditional.CodeEndLine + 1;
+                            int count = ((int)nextParent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                            result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                        }
+                        else
+                        {
+                            int index = (int)conditional.CodeEndLine + 1;
+                            int count = (function.Code.Count) - ((int)conditional.CodeEndLine + 1);
+                            result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                        }
+                    }
+                    else
+                    {
+                        previousConditional = function.Conditionals[conditional.Index - 1];
+                        int index = (int)conditional.CodeEndLine + 1;
+                        int first = (int)(previousConditional.CodeEndLine + 1);
+                        int second = (int)(conditional.CodeEndLine + 1);
+                        int count = (int)(first - second);
+                        result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                    }
+
+                }
+            }
+            return result;
         }
     }
 }

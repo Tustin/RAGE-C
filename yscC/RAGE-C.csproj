@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Argument.cs" />
+    <Compile Include="Assembly\AssemblyFunction.cs" />
     <Compile Include="Assembly\NativeCall.cs" />
     <Compile Include="Conditional.cs" />
     <Compile Include="ConditionalLogic.cs" />
