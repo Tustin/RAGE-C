@@ -238,9 +238,9 @@ namespace RAGE
                     List<string> afterLogicCode = new List<string>();
                     if (conditionalsHit == 0)
                     {
-                        Conditional nextParent = function.Conditionals.GetNextParentConditional(thisConditional);
+                        //Conditional nextParent = function.Conditionals.GetNextParentConditional(thisConditional);
                         int index = (int)thisConditional.CodeEndLine + 1;
-                        int count = (nextParent.CodeStartLine - 1) - ((int)thisConditional.CodeEndLine + 1);
+                        int count = function.Code.Count - ((int)thisConditional.CodeEndLine + 1);
                         afterLogicCode = function.Code.GetRange(index, count);
                     }
                     else
@@ -253,7 +253,7 @@ namespace RAGE
                             {
                                 Conditional nextParent = function.Conditionals.GetNextParentConditional(thisConditional);
                                 int index = (int)thisConditional.CodeEndLine + 1;
-                                int count = (nextParent.CodeStartLine - 2) - ((int)thisConditional.CodeEndLine + 1);
+                                int count = (nextParent.CodeStartLine - 1) - ((int)thisConditional.CodeEndLine + 1);
                                 afterLogicCode = function.Code.GetRange(index, count);
                                 //afterLogicCode = function.Code.GetRange((int)(thisConditional.CodeEndLine + 1), nextParent.CodeStartLine - 2);
                             }

@@ -22,10 +22,6 @@ setF1 4
 push_1
 push_0
 JumpNE @main_if_end_2
-push_0
-setF1 8
-PushString "should be in last block"
-setF1 9
 
 :main_if_end_2
 
@@ -38,4 +34,8 @@ PushString "ok"
 setF1 6
 push 2323
 setF1 7
+push_0
+setF1 8
+PushString "should be in last block"
+setF1 9
 Return 0 0
