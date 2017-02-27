@@ -238,7 +238,17 @@ namespace RAGE
                 else if (line.Contains("if "))
                 {
                     Conditional thisConditional = function.Conditionals[conditionalsHit];
-                    string label = $"{function.Name}_if_end_{thisConditional.Index}";
+                    string label;
+                    if (thisConditional.Parent != null)
+                    {
+                        label = $"{function.Name}_nested_{thisConditional.Parent.Index}_if_end_{thisConditional.Index}";
+
+                    }
+                    else
+                    {
+                        label = $"{function.Name}_if_end_{thisConditional.Index}";
+
+                    }
 
                     //if the logic is expecting a true, then we will output this shit
                     if (thisConditional.Logic.LogicType)
@@ -292,18 +302,8 @@ namespace RAGE
                 }
                 else if (line.Contains(" = ") && !line.Contains("=="))
                 {
-                    //string label = organizedConditionals.FindConditionalBlockForCode(line);
                     List<string> instructions = GenerateAssignmentInstructions(function, line);
-                    //asmCode.AddRange(instructions);
                     asmFunction.LabelBlocks[labelBlock].AddRange(instructions);
-                    //add the asm code to the right label otherwise just add it to the main function block
-                    //if (label != null)
-                    //{
-                    //}
-                    //else
-                    //{
-                    //    asmFunction.LabelBlocks[$"{function.Name}"].AddRange(instructions);
-                    //}
                 }
             }
 
@@ -312,6 +312,8 @@ namespace RAGE
             KeyValuePair<string, List<string>> mainBlock = asmFunction.LabelBlocks.Where(a => a.Key == function.Name).First();
             asmFunction.LabelBlocks.Remove(function.Name);
             asmCode.AddRange(mainBlock.Value);
+            Dictionary<string, List<string>> orderedBlocks = asmFunction.LabelBlocks;
+            var test = asmFunction.LabelBlocks.OrderBlocks(function);
             foreach (KeyValuePair<string, List<string>> blocks in asmFunction.LabelBlocks.Reverse())
             {
                 if (blocks.Key != function.Name)
@@ -324,24 +326,7 @@ namespace RAGE
                     asmCode.Add(line);
                 }
             }
-            //foreach (KeyValuePair<string, List<string>> result in conditionalBlocks.Reverse())
-            //{
-            //    asmCode.Add("");
-            //    asmCode.Add($":{result.Key}");
-            //    foreach (string line in result.Value)
-            //    {
-            //        if (line.Contains('}'))
-            //            continue;
-            //        if (line.Contains(" = "))
-            //        {
-            //            List<string> instructions = GenerateAssignmentInstructions(function, line);
-            //            asmCode.AddRange(instructions);
-            //        }
-            //    }
-
-            //}
             asmCode.Add($"Return 0 0");
-            //asmCode.Add("");
             return asmCode;
         }
 
@@ -656,7 +641,15 @@ namespace RAGE
 
             foreach (Conditional conditional in function.Conditionals)
             {
-                string conditionalEndLabel = $"{function.Name}_if_end_{conditional.Index}";
+                string conditionalEndLabel;
+                if (conditional.Parent != null)
+                {
+                    conditionalEndLabel = $"{function.Name}_nested_{conditional.Parent.Index}_if_end_{conditional.Index}";
+                }
+                else
+                {
+                    conditionalEndLabel = $"{function.Name}_if_end_{conditional.Index}";
+                }
                 List<string> logicCode = function.Code.GetRange(conditional.CodeStartLine, ((int)conditional.CodeEndLine - conditional.CodeStartLine) + 1);
                 //List<string> afterLogicCode = new List<string>();
 
@@ -689,12 +682,19 @@ namespace RAGE
                     }
                     else
                     {
-                        previousConditional = function.Conditionals[conditional.Index - 1];
-                        int index = (int)conditional.CodeEndLine + 1;
-                        int first = (int)(previousConditional.CodeEndLine + 1);
-                        int second = (int)(conditional.CodeEndLine + 1);
-                        int count = (int)(first - second);
-                        result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                        Conditional nextConditional = function.Conditionals.GetNextNonParentConditional(conditional);
+                        if (nextConditional == null || nextConditional.Parent != conditional.Parent)
+                        {
+                            int index = (int)conditional.CodeEndLine + 1;
+                            int count = ((int)conditional.Parent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                            result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                        }
+                        else if (nextConditional.Parent == conditional.Parent)
+                        {
+                            int index = (int)conditional.CodeEndLine + 1;
+                            int count = ((int)nextConditional.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                            result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                        }
                     }
 
                 }

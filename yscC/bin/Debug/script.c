@@ -5,6 +5,10 @@ void main () {
         if (id == 0) {
             int morestuff = 50;
         }
+        string poop = "peee";
+        if (false == true) {
+            int gg = 12;
+        }
         int dothis = 500;
     }
     string testing = "ok";

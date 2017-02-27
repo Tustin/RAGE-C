@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RAGE
 {
-    class Function
+    public class Function
     {
         public string Name { get; set; }
         public string ReturnType { get; set; }
