@@ -58,20 +58,24 @@ namespace RAGE
                 {
                     //found it, make sure it's a function
                     List<string> pieces = line.Split(' ').ToList();
-
+                    if (line.IsFunction())
+                    {
+                        var matches = line.GetFunctionInfo();
+                        f.ReturnType = matches[0];
+                        f.Name = matches[1];
+                        foundFunction = true;
+                    }
                     //the return type should ALWAYS be in front of the function name
-                    int pos = pieces.IndexOf(functionName);
-                    if (pos == 0)
-                    {
-                        continue;
-                    }
-                    if (!dataTypes.Contains(pieces[pos - 1].ToLower()))
-                    {
-                        continue;
-                    }
-                    f.ReturnType = pieces[pos - 1];
-                    f.Name = pieces[pos];
-                    foundFunction = true;
+                    //int pos = pieces.IndexOf(functionName);
+                    //if (pos == 0)
+                    //{
+                    //    continue;
+                    //}
+                    //if (!dataTypes.Contains(pieces[pos - 1].ToLower()))
+                    //{
+                    //    continue;
+                    //}
+
                 }
 
                 //we found the function and this list contains an open curly bracket and we currently aren't in a block - we can assume this is the start
@@ -86,7 +90,7 @@ namespace RAGE
                 if (foundFunction && line.Contains('{') && inFunctionBlock)
                 {
                     List<string> elements = line.ExplodeAndClean(' ');
-                    if (elements[0] == "if")
+                    if (elements[0].StartsWith("if"))
                     {
                         Conditional conditional = new Conditional(ConditionalTypes.JustIf, f.Code.Count + 1, null);
                         conditional.Index = conditionalCount++;
@@ -230,6 +234,7 @@ namespace RAGE
             int conditionalsHit = 0;
             foreach (string line in function.Code)
             {
+                List<string> linePieces = line.ExplodeAndClean(' ');
                 //find where this code goes
                 string labelBlock = organizedConditionals.FindConditionalBlockForCode(line);
                 //if code isnt in a conditional block, then just put it in the main function code
@@ -244,7 +249,7 @@ namespace RAGE
                     asmFunction.LabelBlocks[labelBlock].AddRange(nativeASMCode);
                 }
                 //do conditional code generation
-                else if (line.Contains("if "))
+                else if (linePieces[0].StartsWith("if"))
                 {
                     Conditional thisConditional = function.Conditionals[conditionalsHit];
                     string label;

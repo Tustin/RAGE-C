@@ -3,10 +3,10 @@ void main () {
     int hash = get_hash_key("adder1");
     if (hash == 0xB779A091) {
         if (id == 0) {
-            if (5 == 4) {
+            if(5 == 4) {
                 bool var = false;
                 if (hash == id) {
-                    string farty = "marty";
+                    string farts = "oh fuck ya";
                 }
             }
             int morestuff = 50;

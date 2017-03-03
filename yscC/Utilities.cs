@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace RAGE
@@ -109,17 +110,19 @@ namespace RAGE
             {
                 throw new Exception("String doesn't contain a nested label");
             }
-            return int.Parse(pieces[pieces.IndexOf("nested") + 1]);
+            return int.Parse(pieces[pieces.IndexOf("end") + 1]);
         }
-        public static int GetNestedBlockNormalIndex(this string nestedConditional)
+
+        public static int GetNestedBlockParentIndex(this string nestedConditional)
         {
             List<string> pieces = nestedConditional.Split('_').ToList();
             if (!pieces.Contains("nested"))
             {
                 throw new Exception("String doesn't contain a nested label");
             }
-            return int.Parse(pieces[pieces.IndexOf("end") + 1]);
+            return int.Parse(pieces[pieces.IndexOf("nested") + 1]);
         }
+
         public static int GetNormalBlockIndex(this string nestedConditional)
         {
             List<string> pieces = nestedConditional.Split('_').ToList();
@@ -135,8 +138,7 @@ namespace RAGE
             Dictionary<string, List<string>> finalBlocks = new Dictionary<string, List<string>>();
 
             var nestedBlocks = dict.Where(a => a.Key.Contains("nested")).Select(a => new KeyValuePair<string, List<string>>(a.Key, a.Value));
-            nestedBlocks = nestedBlocks.OrderByDescending(a => a.Key.GetNestedBlockNormalIndex());
-            nestedBlocks = nestedBlocks.Reverse();
+            nestedBlocks = nestedBlocks.OrderByDescending(a => a.Key.GetNestedBlockParentIndex()).ThenBy(a => a.Key.GetNestedBlockIndex());
             nestedBlocks.ToList().ForEach(a => finalBlocks.Add(a.Key, a.Value));
 
             var normalBlocks = dict.Where(a => !a.Key.Contains("nested")).Select(a => new KeyValuePair<string, List<string>>(a.Key, a.Value));
@@ -144,7 +146,45 @@ namespace RAGE
             normalBlocks.ToList().ForEach(a => finalBlocks.Add(a.Key, a.Value));
 
             return finalBlocks;
+        }
 
+        public static bool IsFunction(this string line)
+        {
+            Regex r = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s?\([a-zA-Z0-9,\s]*\)\s?{?$");
+            return r.IsMatch(line);
+        }
+
+        public static List<string> GetFunctionInfo(this string line)
+        {
+            Regex r = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s?\([a-zA-Z0-9,\s]*\)\s?{?$");
+            return r.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+        }
+
+        public static bool IsFunctionCall(this string line, out bool isReturning, out List<string> matches)
+        {
+            Regex functionCallRegex = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s]*\)$");
+            isReturning = false;
+            matches = new List<string>();
+            if (functionCallRegex.IsMatch(line))
+            {
+                isReturning = true;
+            }
+            else
+            {
+                functionCallRegex = new Regex(@"^([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s]*\)$");
+                if (!functionCallRegex.IsMatch(line))
+                {
+                    return false;
+                }
+            }
+            matches = functionCallRegex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+            return true;
+        }
+
+        public static List<string> GetFunctionCallInfo(this string line)
+        {
+            Regex r = new Regex(@"^([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s]*\)$");
+            return r.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
         }
     }
 }
