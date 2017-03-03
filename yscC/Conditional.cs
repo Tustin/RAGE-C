@@ -37,13 +37,9 @@ namespace RAGE
             Parent = parent;
         }
 
-        public List<string> GenerateASM()
+        public bool IsNested()
         {
-            List<string> asmCode = new List<string>();
-
-
-
-            return asmCode;
+            return this.Parent != null;
         }
     }
 }

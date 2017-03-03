@@ -5,7 +5,7 @@ Call @main
 Return 0 0
 
 :main
-Function 0 12 0
+Function 0 14 0
 CallNative "player_id" 0 1
 setF1 2
 PushString "adder1"
@@ -16,31 +16,28 @@ push -1216765807
 JumpNE @main_if_end_0
 getF1 2
 push_0
-JumpNE @main_nested_0_if_end_1
-push1 50
-setF1 4
-:main_if_end_3
-PushString "should be in last block"
-setF1 11
-:main_nested_0_if_end_2
-push 500
-setF1 7
-:main_nested_0_if_end_1
-PushString "peee"
-setF1 5
+JumpNE @main_if_end_1
+push_5
+push_4
+JumpNE @main_if_end_2
 push_0
-push_1
-JumpNE @main_nested_0_if_end_2
-push1 12
-setF1 6
+setF1 4
+getF1 3
+getF1 2
+JumpNE @main_if_end_3
+PushString "marty"
+setF1 5
 :main_if_end_0
 PushString "ok"
-setF1 8
+setF1 10
 push 2323
-setF1 9
+setF1 11
 push_1
 push_0
-JumpNE @main_if_end_3
+JumpNE @main_if_end_5
 push_0
-setF1 10
+setF1 12
+:main_if_end_5
+PushString "should be in last block"
+setF1 13
 Return 0 0

@@ -89,13 +89,22 @@ namespace RAGE
                     if (elements[0] == "if")
                     {
                         Conditional conditional = new Conditional(ConditionalTypes.JustIf, f.Code.Count + 1, null);
+                        conditional.Index = conditionalCount++;
                         //lets see if this conditional is nested
                         if (f.Conditionals.AreThereAnyParentConditionals(conditional) && f.AreThereAnyUnclosedLogicBlocks())
                         {
-                            Conditional lastParent = f.Conditionals.GetLastParentConditional();
-                            conditional.Parent = lastParent;
+                            Conditional lastConditional = f.Conditionals.GetLastConditional(conditional);
+                            //since the last one isnt closed, we can assume its the parent of this one
+                            if (lastConditional.CodeEndLine == null)
+                            {
+                                conditional.Parent = lastConditional;
+                            }
+                            else
+                            {
+                                Conditional lastParent = f.Conditionals.GetLastParentConditional();
+                                conditional.Parent = lastParent;
+                            }
                         }
-                        conditional.Index = conditionalCount++;
                         //are we comparing two things?
                         if (elements.Any(a => a == "=="))
                         {
@@ -307,14 +316,11 @@ namespace RAGE
                 }
             }
 
-            //generate the end for each if statement
-            //might need to reverse the order
             KeyValuePair<string, List<string>> mainBlock = asmFunction.LabelBlocks.Where(a => a.Key == function.Name).First();
             asmFunction.LabelBlocks.Remove(function.Name);
             asmCode.AddRange(mainBlock.Value);
-            Dictionary<string, List<string>> orderedBlocks = asmFunction.LabelBlocks;
-            var test = asmFunction.LabelBlocks.OrderBlocks(function);
-            foreach (KeyValuePair<string, List<string>> blocks in asmFunction.LabelBlocks.Reverse())
+            var orderedBlocks = asmFunction.LabelBlocks.OrderBlocks(function);
+            foreach (KeyValuePair<string, List<string>> blocks in orderedBlocks)
             {
                 if (blocks.Key != function.Name)
                 {
@@ -653,51 +659,67 @@ namespace RAGE
                 List<string> logicCode = function.Code.GetRange(conditional.CodeStartLine, ((int)conditional.CodeEndLine - conditional.CodeStartLine) + 1);
                 //List<string> afterLogicCode = new List<string>();
 
-                if (conditional.Index == 0 && function.Conditionals.Count > 1)
+                //if (conditional.Index == 0 && function.Conditionals.Count > 1)
+                //{
+                //    Conditional nextParent = function.Conditionals.GetNextParentConditional(conditional);
+                //    int index = (int)conditional.CodeEndLine + 1;
+                //    int count = ((int)nextParent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                //    result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                //}
+                //else
+                //{
+                //see if this conditional is a nested one
+                if (conditional.Parent == null)
                 {
-                    Conditional nextParent = function.Conditionals.GetNextParentConditional(conditional);
-                    int index = (int)conditional.CodeEndLine + 1;
-                    int count = ((int)nextParent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
-                    result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                    if (function.Conditionals.AreThereAnyParentsAfterThisParent(conditional))
+                    {
+                        Conditional nextParent = function.Conditionals.GetNextParentConditional(conditional);
+                        int index = (int)conditional.CodeEndLine + 1;
+                        int count = ((int)nextParent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                        result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                    }
+                    else
+                    {
+                        int index = (int)conditional.CodeEndLine + 1;
+                        int count = (function.Code.Count) - ((int)conditional.CodeEndLine + 1);
+                        result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                    }
                 }
                 else
                 {
-                    Conditional previousConditional;
-                    //see if this conditional is a nested one
-                    if (conditional.Parent == null)
+                    Conditional nextConditional = function.Conditionals.GetNextNonParentConditional(conditional);
+                    if (function.Conditionals.DoesConditionalHaveChildren(conditional))
                     {
-                        if (function.Conditionals.AreThereAnyParentsAfterThisParent(conditional))
+                        nextConditional = function.Conditionals.GetNextConditionalWithSameParent(conditional);
+                        if (nextConditional == null)
                         {
-                            Conditional nextParent = function.Conditionals.GetNextParentConditional(conditional);
+                            nextConditional = conditional.Parent;
                             int index = (int)conditional.CodeEndLine + 1;
-                            int count = ((int)nextParent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                            int count = ((int)nextConditional.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
                             result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
                         }
                         else
                         {
                             int index = (int)conditional.CodeEndLine + 1;
-                            int count = (function.Code.Count) - ((int)conditional.CodeEndLine + 1);
-                            result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
-                        }
-                    }
-                    else
-                    {
-                        Conditional nextConditional = function.Conditionals.GetNextNonParentConditional(conditional);
-                        if (nextConditional == null || nextConditional.Parent != conditional.Parent)
-                        {
-                            int index = (int)conditional.CodeEndLine + 1;
-                            int count = ((int)conditional.Parent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
-                            result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
-                        }
-                        else if (nextConditional.Parent == conditional.Parent)
-                        {
-                            int index = (int)conditional.CodeEndLine + 1;
                             int count = ((int)nextConditional.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
                             result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
                         }
-                    }
 
+                    }
+                    else if (nextConditional == null || nextConditional.Parent != conditional.Parent)
+                    {
+                        int index = (int)conditional.CodeEndLine + 1;
+                        int count = ((int)conditional.Parent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                        result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                    }
+                    //else if (nextConditional.Parent == conditional.Parent)
+                    //{
+                    //    int index = (int)conditional.CodeEndLine + 1;
+                    //    int count = ((int)nextConditional.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+                    //    result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+                    //}
                 }
+
             }
             return result;
         }
