@@ -234,7 +234,7 @@ namespace RAGE
                 }
                 string keyword = null;
                 bool foundKeyword = Keyword.IsMatch(linePieces[0], out keyword);
-                //code generation for native func calls that dont return anything
+                //generate code for function call
                 if (line.IsFunctionCall() != FunctionCallType.None && !foundKeyword)
                 {
                     List<string> nativeASMCode = GenerateNativeCall(function, line);
@@ -367,92 +367,6 @@ namespace RAGE
                 }
                 nativeCall.Add($"setF1 {returnVar.FrameId}");
             }
-
-            //if (code.Contains('='))
-            //{
-            //    List<string> pieces = code.Split('=').ToList();
-            //    //since it has a return value, parse what type it is and save that
-            //    List<string> returnTypePieces = pieces[0].Split(' ').ToList();
-            //    returnTypePieces = returnTypePieces.Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().ToList();
-            //    string type = returnTypePieces.Intersect(dataTypes).FirstOrDefault();
-
-            //    if (type == null)
-            //    {
-            //        throw new NotImplementedException("Data type has not been defined yet");
-            //    }
-            //    int functionEnd = pieces[1].IndexOf('(');
-            //    string cleanFunctionName = pieces[1].Substring(0, functionEnd).Replace(" ", "");
-
-            //    //function isnt a native but rather a local script function, so just call it
-            //    if (!Native.IsFunctionANative(cleanFunctionName))
-            //    {
-            //        nativeCall.Add($"Call @{cleanFunctionName}");
-            //    }
-            //    else
-            //    {
-            //        //piece 2 (index 1) should be the native call
-            //        call = GetNativeCallInfo(pieces[1]);
-            //        hasReturnValue = true;
-            //        returnValueVariable = returnTypePieces[1];
-            //    }
-            //}
-            ////must be a native with no return value (or it's not being set to anything...)
-            ////assumes - nativeCall([optional args]);
-            //else
-            //{
-            //    int functionEnd = code.IndexOf('(');
-            //    string cleanFunctionName = code.Substring(0, functionEnd).Substring(0, functionEnd).Replace(" ", "");
-            //    // if the function isnt a native then its prob a local function so just call it using it's label
-            //    if (!Native.IsFunctionANative(cleanFunctionName))
-            //    {
-            //        nativeCall.Add($"Call @{cleanFunctionName}");
-            //    }
-            //    else
-            //    {
-            //        call = GetNativeCallInfo(code);
-            //    }
-            //    //the native doesnt have a return value, so just pass the line of code
-            //}
-            ////no arguments are passed for the function, so just call it
-            //if (call.Arguments.Count == 0)
-            //{
-            //    nativeCall.Add($"CallNative \"{call.Native}\" 0 {Convert.ToInt32(hasReturnValue)}");
-            //    //are we storing the value into something?
-            //    if (hasReturnValue)
-            //    {
-            //        Variable retVariableArg = function.LocalVariables.Where(v => v.Value == returnValueVariable).FirstOrDefault();
-            //        if (retVariableArg == null)
-            //        {
-            //            throw new Exception("couldnt find the variable to store the return value into");
-            //        }
-            //        nativeCall.Add($"setF1 {retVariableArg.FrameId}");
-
-            //    }
-            //}
-            //else
-            //{
-            //    foreach (Argument arg in call.Arguments)
-            //    {
-            //        //see if the argument is a local variable
-            //        Argument localVar = function.LocalVariables.Where(s => s.Value == arg.Value).FirstOrDefault();
-            //        if (localVar == null)
-            //        {
-            //            //arg.ValueType = localVar.ValueType;
-            //        }
-            //        nativeCall.Add(GeneratePushInstruction(function, arg));
-            //    }
-            //    nativeCall.Add($"CallNative \"{call.Native}\" {call.Arguments.Count} {Convert.ToInt32(hasReturnValue)}");
-            //    if (hasReturnValue)
-            //    {
-            //        Variable retVariableArg = function.LocalVariables.Where(v => v.Value == returnValueVariable).FirstOrDefault();
-            //        if (retVariableArg == null)
-            //        {
-            //            throw new Exception();
-            //        }
-            //        nativeCall.Add($"setF1 {retVariableArg.FrameId}");
-
-            //    }
-            //}
             return nativeCall;
         }
 
@@ -629,7 +543,7 @@ namespace RAGE
 
         public List<string> GenerateAssignmentInstructions(Function function, string line)
         {
-            //assumes - {dataType} {variableName } = {value};
+
             List<string> exploded = line.ExplodeAndClean(' ');
             List<string> final = new List<string>();
             if (function.LocalVariables.IsLocalVariable(exploded[1]))
@@ -679,17 +593,7 @@ namespace RAGE
                     conditionalEndLabel = $"{function.Name}_if_end_{conditional.Index}";
                 }
                 List<string> logicCode = function.Code.GetRange(conditional.CodeStartLine, ((int)conditional.CodeEndLine - conditional.CodeStartLine) + 1);
-                //List<string> afterLogicCode = new List<string>();
 
-                //if (conditional.Index == 0 && function.Conditionals.Count > 1)
-                //{
-                //    Conditional nextParent = function.Conditionals.GetNextParentConditional(conditional);
-                //    int index = (int)conditional.CodeEndLine + 1;
-                //    int count = ((int)nextParent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
-                //    result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
-                //}
-                //else
-                //{
                 //see if this conditional is a nested one
                 if (conditional.Parent == null)
                 {
@@ -734,6 +638,7 @@ namespace RAGE
                         int count = ((int)conditional.Parent.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
                         result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
                     }
+                    //might need to enable this in the future
                     //else if (nextConditional.Parent == conditional.Parent)
                     //{
                     //    int index = (int)conditional.CodeEndLine + 1;

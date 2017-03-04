@@ -9,6 +9,12 @@ namespace RAGE
 {
     public static class Utilities
     {
+        public const string FUNCTION_CALL_REGEX = @"^([a-z]+)\s([a-zA-Z0-9_]+)\s?\([a-zA-Z0-9,\s]*\)\s?{?$";
+        public const string NEW_VAR_ASSIGNMENT_REGEX = @"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s""']*\);?$";
+        public const string EXISTING_VAR_ASSIGNMENT_REGEX = @"^([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$";
+        public const string VOID_ASSIGNMENT_REGEX = @"^([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$";
+
+
         public static List<string> ExplodeAndClean(this string line, char delimiter)
         {
             line = line.Trim();
@@ -150,13 +156,13 @@ namespace RAGE
 
         public static bool IsFunction(this string line)
         {
-            Regex r = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s?\([a-zA-Z0-9,\s]*\)\s?{?$");
+            Regex r = new Regex(FUNCTION_CALL_REGEX);
             return r.IsMatch(line);
         }
 
         public static List<string> GetFunctionInfo(this string line)
         {
-            Regex r = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s?\([a-zA-Z0-9,\s]*\)\s?{?$");
+            Regex r = new Regex(FUNCTION_CALL_REGEX);
             return r.Matches(line).GetRegexGroups();
         }
 
@@ -205,20 +211,20 @@ namespace RAGE
         public static FunctionCallType IsFunctionCall(this string line)
         {
             //bool somevar = my_call();
-            Regex functionCallRegex = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s""']*\);?$");
+            Regex functionCallRegex = new Regex(NEW_VAR_ASSIGNMENT_REGEX);
             if (functionCallRegex.IsMatch(line))
             {
                 return FunctionCallType.NewVar;
             }
             //someExistingVar = my_call();
-            functionCallRegex = new Regex(@"^([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s""']*\);?$");
+            functionCallRegex = new Regex(EXISTING_VAR_ASSIGNMENT_REGEX);
             if (functionCallRegex.IsMatch(line))
             {
                 return FunctionCallType.ExistingVar;
             }
 
             //my_call();
-            functionCallRegex = new Regex(@"^([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s""']*\);?$");
+            functionCallRegex = new Regex(VOID_ASSIGNMENT_REGEX);
             if (functionCallRegex.IsMatch(line))
             {
                 return FunctionCallType.Void;
@@ -240,7 +246,7 @@ namespace RAGE
             switch (callType)
             {
                 case FunctionCallType.NewVar:
-                regex = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$");
+                regex = new Regex(NEW_VAR_ASSIGNMENT_REGEX);
                 matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
                 call.HasReturnValue = true;
                 call.ReturnType = matches[0];
@@ -249,7 +255,7 @@ namespace RAGE
                 call.Arguments = matches[3].GetListOfArguments();
                 break;
                 case FunctionCallType.ExistingVar:
-                regex = new Regex(@"^([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$");
+                regex = new Regex(EXISTING_VAR_ASSIGNMENT_REGEX);
                 matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
                 call.HasReturnValue = true;
                 call.ReturnType = null;
@@ -258,7 +264,7 @@ namespace RAGE
                 call.Arguments = matches[2].GetListOfArguments();
                 break;
                 case FunctionCallType.Void:
-                regex = new Regex(@"^([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$");
+                regex = new Regex(VOID_ASSIGNMENT_REGEX);
                 matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
                 call.HasReturnValue = false;
                 call.ReturnType = null;
