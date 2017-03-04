@@ -65,19 +65,7 @@ namespace RAGE
                         f.Name = matches[1];
                         foundFunction = true;
                     }
-                    //the return type should ALWAYS be in front of the function name
-                    //int pos = pieces.IndexOf(functionName);
-                    //if (pos == 0)
-                    //{
-                    //    continue;
-                    //}
-                    //if (!dataTypes.Contains(pieces[pos - 1].ToLower()))
-                    //{
-                    //    continue;
-                    //}
-
                 }
-
                 //we found the function and this list contains an open curly bracket and we currently aren't in a block - we can assume this is the start
                 if (foundFunction && line.Contains('{') && !inFunctionBlock)
                 {
@@ -222,8 +210,6 @@ namespace RAGE
         public List<string> GenerateASMFunction(Function function)
         {
             List<string> asmCode = new List<string>();
-
-            //add label
             asmCode.Add(":" + function.Name);
             asmCode.Add($"Function 0 {function.frameCount} 0");
             AssemblyFunction asmFunction = new AssemblyFunction(function.Name);
@@ -242,14 +228,16 @@ namespace RAGE
                 {
                     labelBlock = function.Name;
                 }
+                string keyword = null;
+                bool foundKeyword = Keyword.IsMatch(linePieces[0], out keyword);
                 //code generation for native func calls that dont return anything
-                if (line.Contains("(") && line.Contains(")") && !line.Contains("if ") && !line.Contains("while ") && !line.Contains(" = "))
+                if (line.IsFunctionCall() != FunctionCallType.None && !foundKeyword)
                 {
                     List<string> nativeASMCode = GenerateNativeCall(function, line);
                     asmFunction.LabelBlocks[labelBlock].AddRange(nativeASMCode);
                 }
                 //do conditional code generation
-                else if (linePieces[0].StartsWith("if"))
+                else if (keyword == "if")
                 {
                     Conditional thisConditional = function.Conditionals[conditionalsHit];
                     string label;
@@ -344,98 +332,123 @@ namespace RAGE
         //creates a CallNative instruction
         public List<string> GenerateNativeCall(Function function, string code)
         {
-            //must be a native with a return value
-            //assumes - int varName = nativeCall([optional args]);
+            code = code.Trim();
             List<string> nativeCall = new List<string>();
             NativeCall call = new NativeCall();
             bool hasReturnValue = false;
-            string returnValueVariable = string.Empty;
-            if (code.Contains('='))
-            {
-                List<string> pieces = code.Split('=').ToList();
-                //since it has a return value, parse what type it is and save that
-                List<string> returnTypePieces = pieces[0].Split(' ').ToList();
-                returnTypePieces = returnTypePieces.Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().ToList();
-                string type = returnTypePieces.Intersect(dataTypes).FirstOrDefault();
+            FunctionCall callInfo = code.GetFunctionCallInfo();
 
-                if (type == null)
-                {
-                    throw new NotImplementedException("Data type has not been defined yet");
-                }
-                //Regex rgx = new Regex("[^a-zA-Z0-9_]");
-                int functionEnd = pieces[1].IndexOf('(');
-                string cleanFunctionName = pieces[1].Substring(0, functionEnd).Replace(" ", "");
-
-                //function isnt a native but rather a local script function, so just call it
-                if (!Native.IsFunctionANative(cleanFunctionName))
-                {
-                    nativeCall.Add($"Call @{cleanFunctionName}");
-                }
-                else
-                {
-                    //piece 2 (index 1) should be the native call
-                    call = GetNativeCallInfo(pieces[1]);
-                    hasReturnValue = true;
-                    returnValueVariable = returnTypePieces[1];
-                }
-            }
-            //must be a native with no return value (or it's not being set to anything...)
-            //assumes - nativeCall([optional args]);
-            else
+            if (callInfo.Arguments.Count > 0)
             {
-                int functionEnd = code.IndexOf('(');
-                string cleanFunctionName = code.Substring(0, functionEnd).Substring(0, functionEnd).Replace(" ", "");
-                // if the function isnt a native then its prob a local function so just call it using it's label
-                if (!Native.IsFunctionANative(cleanFunctionName))
+                foreach (Argument arg in callInfo.Arguments)
                 {
-                    nativeCall.Add($"Call @{cleanFunctionName}");
-                }
-                else
-                {
-                    call = GetNativeCallInfo(code);
-                }
-                //the native doesnt have a return value, so just pass the line of code
-            }
-            //no arguments are passed for the function, so just call it
-            if (call.Arguments.Count == 0)
-            {
-                nativeCall.Add($"CallNative \"{call.Native}\" 0 {Convert.ToInt32(hasReturnValue)}");
-                //are we storing the value into something?
-                if (hasReturnValue)
-                {
-                    Variable retVariableArg = function.LocalVariables.Where(v => v.Value == returnValueVariable).FirstOrDefault();
-                    if (retVariableArg == null)
-                    {
-                        throw new Exception("couldnt find the variable to store the return value into");
-                    }
-                    nativeCall.Add($"setF1 {retVariableArg.FrameId}");
-
-                }
-            }
-            else
-            {
-                foreach (Argument arg in call.Arguments)
-                {
-                    //see if the argument is a local variable
-                    Argument localVar = function.LocalVariables.Where(s => s.Value == arg.Value).FirstOrDefault();
-                    if (localVar == null)
-                    {
-                        //arg.ValueType = localVar.ValueType;
-                    }
+                    Variable localVar = function.LocalVariables.Where(s => s.Value == arg.Value).FirstOrDefault();
                     nativeCall.Add(GeneratePushInstruction(function, arg));
                 }
-                nativeCall.Add($"CallNative \"{call.Native}\" {call.Arguments.Count} {Convert.ToInt32(hasReturnValue)}");
-                if (hasReturnValue)
-                {
-                    Variable retVariableArg = function.LocalVariables.Where(v => v.Value == returnValueVariable).FirstOrDefault();
-                    if (retVariableArg == null)
-                    {
-                        throw new Exception();
-                    }
-                    nativeCall.Add($"setF1 {retVariableArg.FrameId}");
-
-                }
             }
+            if (!Native.IsFunctionANative(callInfo.FunctionName))
+            {
+                nativeCall.Add($"Call @{callInfo.FunctionName}");
+            }
+            else
+            {
+                nativeCall.Add($"CallNative \"{callInfo.FunctionName}\" {callInfo.Arguments.Count} {Convert.ToInt32(hasReturnValue)}");
+            }
+            if (callInfo.HasReturnValue)
+            {
+                Variable returnVar = function.LocalVariables.Where(a => a.Value == callInfo.ReturnVariableName).FirstOrDefault();
+                if (returnVar == null)
+                {
+                    throw new Exception("Return variable not found");
+                }
+                nativeCall.Add($"setF1 {returnVar.FrameId}");
+            }
+
+            //if (code.Contains('='))
+            //{
+            //    List<string> pieces = code.Split('=').ToList();
+            //    //since it has a return value, parse what type it is and save that
+            //    List<string> returnTypePieces = pieces[0].Split(' ').ToList();
+            //    returnTypePieces = returnTypePieces.Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().ToList();
+            //    string type = returnTypePieces.Intersect(dataTypes).FirstOrDefault();
+
+            //    if (type == null)
+            //    {
+            //        throw new NotImplementedException("Data type has not been defined yet");
+            //    }
+            //    int functionEnd = pieces[1].IndexOf('(');
+            //    string cleanFunctionName = pieces[1].Substring(0, functionEnd).Replace(" ", "");
+
+            //    //function isnt a native but rather a local script function, so just call it
+            //    if (!Native.IsFunctionANative(cleanFunctionName))
+            //    {
+            //        nativeCall.Add($"Call @{cleanFunctionName}");
+            //    }
+            //    else
+            //    {
+            //        //piece 2 (index 1) should be the native call
+            //        call = GetNativeCallInfo(pieces[1]);
+            //        hasReturnValue = true;
+            //        returnValueVariable = returnTypePieces[1];
+            //    }
+            //}
+            ////must be a native with no return value (or it's not being set to anything...)
+            ////assumes - nativeCall([optional args]);
+            //else
+            //{
+            //    int functionEnd = code.IndexOf('(');
+            //    string cleanFunctionName = code.Substring(0, functionEnd).Substring(0, functionEnd).Replace(" ", "");
+            //    // if the function isnt a native then its prob a local function so just call it using it's label
+            //    if (!Native.IsFunctionANative(cleanFunctionName))
+            //    {
+            //        nativeCall.Add($"Call @{cleanFunctionName}");
+            //    }
+            //    else
+            //    {
+            //        call = GetNativeCallInfo(code);
+            //    }
+            //    //the native doesnt have a return value, so just pass the line of code
+            //}
+            ////no arguments are passed for the function, so just call it
+            //if (call.Arguments.Count == 0)
+            //{
+            //    nativeCall.Add($"CallNative \"{call.Native}\" 0 {Convert.ToInt32(hasReturnValue)}");
+            //    //are we storing the value into something?
+            //    if (hasReturnValue)
+            //    {
+            //        Variable retVariableArg = function.LocalVariables.Where(v => v.Value == returnValueVariable).FirstOrDefault();
+            //        if (retVariableArg == null)
+            //        {
+            //            throw new Exception("couldnt find the variable to store the return value into");
+            //        }
+            //        nativeCall.Add($"setF1 {retVariableArg.FrameId}");
+
+            //    }
+            //}
+            //else
+            //{
+            //    foreach (Argument arg in call.Arguments)
+            //    {
+            //        //see if the argument is a local variable
+            //        Argument localVar = function.LocalVariables.Where(s => s.Value == arg.Value).FirstOrDefault();
+            //        if (localVar == null)
+            //        {
+            //            //arg.ValueType = localVar.ValueType;
+            //        }
+            //        nativeCall.Add(GeneratePushInstruction(function, arg));
+            //    }
+            //    nativeCall.Add($"CallNative \"{call.Native}\" {call.Arguments.Count} {Convert.ToInt32(hasReturnValue)}");
+            //    if (hasReturnValue)
+            //    {
+            //        Variable retVariableArg = function.LocalVariables.Where(v => v.Value == returnValueVariable).FirstOrDefault();
+            //        if (retVariableArg == null)
+            //        {
+            //            throw new Exception();
+            //        }
+            //        nativeCall.Add($"setF1 {retVariableArg.FrameId}");
+
+            //    }
+            //}
             return nativeCall;
         }
 

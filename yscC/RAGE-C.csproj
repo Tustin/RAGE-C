@@ -49,6 +49,9 @@
     <Compile Include="Conditional.cs" />
     <Compile Include="ConditionalLogic.cs" />
     <Compile Include="Function.cs" />
+    <Compile Include="FunctionCall.cs" />
+    <Compile Include="FunctionCallTypes.cs" />
+    <Compile Include="Keywords.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />

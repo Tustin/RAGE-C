@@ -11,8 +11,8 @@ namespace RAGE
     {
         public static List<string> ExplodeAndClean(this string line, char delimiter)
         {
+            line = line.Trim();
             List<string> pieces = line.Split(delimiter).ToList();
-            pieces = pieces.Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().ToList();
             return pieces;
         }
 
@@ -157,34 +157,117 @@ namespace RAGE
         public static List<string> GetFunctionInfo(this string line)
         {
             Regex r = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s?\([a-zA-Z0-9,\s]*\)\s?{?$");
-            return r.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+            return r.Matches(line).GetRegexGroups();
         }
 
-        public static bool IsFunctionCall(this string line, out bool isReturning, out List<string> matches)
+        public static List<string> GetRegexGroups(this MatchCollection collection)
         {
-            Regex functionCallRegex = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s]*\)$");
-            isReturning = false;
-            matches = new List<string>();
+            return collection[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+        }
+
+        public static List<Argument> GetListOfArguments(this string args)
+        {
+            var result = new List<Argument>();
+            List<string> argsList = args.Split(',').ToList();
+            if (string.IsNullOrEmpty(argsList[0]))
+            {
+                return result;
+            }
+            foreach (string arg in argsList)
+            {
+                Argument finalArg = new Argument();
+                int itemp;
+                bool btemp;
+                float ftemp;
+                if (bool.TryParse(arg, out btemp))
+                {
+                    finalArg.ValueType = "bool";
+                }
+                else if (float.TryParse(arg, out ftemp))
+                {
+                    finalArg.ValueType = "float";
+                }
+                else if (arg.Contains('"'))
+                {
+                    finalArg.ValueType = "string";
+                }
+                else if (int.TryParse(arg, out itemp))
+                {
+                    finalArg.ValueType = "int";
+                }
+                finalArg.Value = arg.Replace(" ", "");
+                result.Add(finalArg);
+            }
+
+            return result;     
+        }
+
+        public static FunctionCallType IsFunctionCall(this string line)
+        {
+            //bool somevar = my_call();
+            Regex functionCallRegex = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s""']*\);?$");
             if (functionCallRegex.IsMatch(line))
             {
-                isReturning = true;
+                return FunctionCallType.NewVar;
             }
-            else
+            //someExistingVar = my_call();
+            functionCallRegex = new Regex(@"^([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s""']*\);?$");
+            if (functionCallRegex.IsMatch(line))
             {
-                functionCallRegex = new Regex(@"^([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s]*\)$");
-                if (!functionCallRegex.IsMatch(line))
-                {
-                    return false;
-                }
+                return FunctionCallType.ExistingVar;
             }
-            matches = functionCallRegex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
-            return true;
+
+            //my_call();
+            functionCallRegex = new Regex(@"^([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s""']*\);?$");
+            if (functionCallRegex.IsMatch(line))
+            {
+                return FunctionCallType.Void;
+            }
+
+            return FunctionCallType.None;
         }
 
-        public static List<string> GetFunctionCallInfo(this string line)
+        public static FunctionCall GetFunctionCallInfo(this string line)
         {
-            Regex r = new Regex(@"^([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s]*\)$");
-            return r.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+            FunctionCallType callType = line.IsFunctionCall();
+            if (callType == FunctionCallType.None)
+            {
+                throw new Exception("Trying to get function call info from a line of code that isn't a function call");
+            }
+            FunctionCall call = new FunctionCall();
+            Regex regex;
+            List<string> matches;
+            switch (callType)
+            {
+                case FunctionCallType.NewVar:
+                regex = new Regex(@"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$");
+                matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+                call.HasReturnValue = true;
+                call.ReturnType = matches[0];
+                call.ReturnVariableName = matches[1];
+                call.FunctionName = matches[2];
+                call.Arguments = matches[3].GetListOfArguments();
+                break;
+                case FunctionCallType.ExistingVar:
+                regex = new Regex(@"^([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$");
+                matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+                call.HasReturnValue = true;
+                call.ReturnType = null;
+                call.ReturnVariableName = matches[0];
+                call.FunctionName = matches[1];
+                call.Arguments = matches[2].GetListOfArguments();
+                break;
+                case FunctionCallType.Void:
+                regex = new Regex(@"^([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$");
+                matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+                call.HasReturnValue = false;
+                call.ReturnType = null;
+                call.ReturnVariableName = null;
+                call.FunctionName = matches[0];
+                call.Arguments = matches[1].GetListOfArguments();
+                break;
+            }
+            return call;
         }
     }
 }

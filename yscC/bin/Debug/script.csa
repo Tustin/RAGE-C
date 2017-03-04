@@ -6,10 +6,10 @@ Return 0 0
 
 :main
 Function 0 14 0
-CallNative "player_id" 0 1
+CallNative "player_id" 0 0
 setF1 2
 PushString "adder1"
-CallNative "get_hash_key" 1 1
+CallNative "get_hash_key" 1 0
 setF1 3
 getF1 3
 push -1216765807
@@ -17,7 +17,7 @@ JumpNE @main_if_end_0
 getF1 2
 push_0
 JumpNE @main_nested_0_if_end_1
-push_5
+
 push_4
 JumpNE @main_nested_1_if_end_2
 push_0
