@@ -235,7 +235,7 @@ namespace RAGE
                 string keyword = null;
                 bool foundKeyword = Keyword.IsMatch(linePieces[0], out keyword);
                 //generate code for function call
-                if (line.IsFunctionCall() != FunctionCallType.None && !foundKeyword)
+                if (line.IsFunctionCall() != AssignmentTypes.None && !foundKeyword)
                 {
                     List<string> nativeASMCode = GenerateNativeCall(function, line);
                     asmFunction.LabelBlocks[labelBlock].AddRange(nativeASMCode);
@@ -370,82 +370,6 @@ namespace RAGE
             return nativeCall;
         }
 
-        public NativeCall GetNativeCallInfo(string functionCall, NativeCall call = null)
-        {
-            if (functionCall.Contains('(') && functionCall.Contains(')'))
-            {
-                if (call == null)
-                    call = new NativeCall();
-
-                int startParens = functionCall.IndexOf('(');
-                int endParens = functionCall.IndexOf(')') - 1;
-                string nativeName = functionCall.Substring(0, startParens);
-                string argsString = functionCall.Substring(startParens + 1, endParens - startParens);
-                //we can assume theres multiple types
-                List<Argument> argumentsFinal = new List<Argument>();
-                if (argsString.Contains(',') && endParens - startParens > 1)
-                {
-                    List<string> arguments = argsString.Split(',').ToList();
-                    foreach (string arg in arguments)
-                    {
-                        Argument finalArg = new Argument();
-
-                        int itemp;
-                        bool btemp;
-                        float ftemp;
-                        if (bool.TryParse(arg, out btemp))
-                        {
-                            finalArg.ValueType = "bool";
-                        }
-                        else if (float.TryParse(arg, out ftemp))
-                        {
-                            finalArg.ValueType = "float";
-                        }
-                        else if (arg.Contains('"'))
-                        {
-                            finalArg.ValueType = "string";
-                        }
-                        else if (int.TryParse(arg, out itemp))
-                        {
-                            finalArg.ValueType = "int";
-                        }
-                        finalArg.Value = arg.Replace(" ", "");
-                        argumentsFinal.Add(finalArg);
-                    }
-                }
-                else if (endParens - startParens > 1)
-                {
-                    Argument finalArg = new Argument();
-
-                    int itemp;
-                    bool btemp;
-                    float ftemp;
-                    if (bool.TryParse(argsString, out btemp))
-                    {
-                        finalArg.ValueType = "bool";
-                    }
-                    else if (float.TryParse(argsString, out ftemp))
-                    {
-                        finalArg.ValueType = "float";
-                    }
-                    else if (argsString.Contains('"'))
-                    {
-                        finalArg.ValueType = "string";
-                    }
-                    else if (int.TryParse(argsString, out itemp))
-                    {
-                        finalArg.ValueType = "int";
-                    }
-                    finalArg.Value = argsString.Replace(" ", "");
-                    argumentsFinal.Add(finalArg);
-                }
-                call.Arguments = argumentsFinal;
-                call.Native = nativeName.Replace(" ", "");
-                return call;
-            }
-            return null;
-        }
-
         public string GeneratePushInstruction(Function function, Argument arg)
         {
             switch (arg.ValueType)
@@ -541,38 +465,36 @@ namespace RAGE
 
         }
 
+        public string GeneratePushInstruction(string value, string valueType)
+        {
+            switch (valueType)
+            {
+                case "bool":
+                return PushInstruction.Bool(value);
+                case "float":
+                return PushInstruction.Float(value);
+                case "string":
+                return PushInstruction.String(value);
+                case "int":
+                return PushInstruction.Int(value);
+                default:
+                throw new Exception("Type not defined");
+            }
+        }
+
         public List<string> GenerateAssignmentInstructions(Function function, string line)
         {
-
             List<string> exploded = line.ExplodeAndClean(' ');
             List<string> final = new List<string>();
-            if (function.LocalVariables.IsLocalVariable(exploded[1]))
-            {
-                Variable v = function.LocalVariables.GetLocalVariable(exploded[1]);
-                string value = exploded[3];
-                if (exploded.Count > 4)
-                {
-                    List<string> fullString = exploded.GetRange(3, exploded.Count - 3);
-                    value = string.Join(" ", fullString.ToArray());
-                }
-                value = value.ReplaceLast(";");
-                //\(.*\)
-                Regex regex = new Regex("[^a-zA-Z0-9_\\(\\)]");
-                string nativeCheck = regex.Replace(value, "");
-                Regex argRemoval = new Regex("\\(.*\\)");
-                nativeCheck = argRemoval.Replace(nativeCheck, "");
-                if (Native.IsFunctionANative(nativeCheck))
-                {
-                    return GenerateNativeCall(function, line);
-                }
-                string code = GeneratePushInstruction(value);
-                if (code == null)
-                {
-                    throw new Exception("Expected a push instruction, got null");
-                }
-                final.Add(code);
-                final.Add($"setF1 {v.FrameId}");
-            }
+
+            Assignment assignment = line.GetAssignmentInfo();
+
+            Variable variable = function.LocalVariables.GetLocalVariable(assignment.AssignedVariable);
+
+            string code = GeneratePushInstruction(assignment.AssignedValue, assignment.AssignedValueType);
+
+            final.Add(code);
+            final.Add($"setF1 {variable.FrameId}");
 
             return final;
         }

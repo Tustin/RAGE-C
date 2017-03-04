@@ -10,10 +10,13 @@ namespace RAGE
     public static class Utilities
     {
         public const string FUNCTION_CALL_REGEX = @"^([a-z]+)\s([a-zA-Z0-9_]+)\s?\([a-zA-Z0-9,\s]*\)\s?{?$";
-        public const string NEW_VAR_ASSIGNMENT_REGEX = @"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\([a-zA-Z0-9,\s""']*\);?$";
-        public const string EXISTING_VAR_ASSIGNMENT_REGEX = @"^([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$";
-        public const string VOID_ASSIGNMENT_REGEX = @"^([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$";
 
+        public const string NEW_VAR_FUNCTION_CALL_REGEX = @"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$";
+        public const string EXISTING_VAR_FUNCTION_CALL_REGEX = @"^([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$";
+        public const string VOID_FUNCTION_CALL_REGEX = @"^([a-zA-Z0-9_]+)\(([a-zA-Z0-9,\s""']*)\);?$";
+
+        public const string NEW_VAR_ASSIGNMENT_REGEX = @"^([a-z]+)\s([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+|""[^""]*"");?$";
+        public const string EXISTING_VAR_ASSIGNMENT_REGEX = @"^([a-zA-Z0-9_]+)\s=\s([a-zA-Z0-9_]+|""[^""]*"");?$";
 
         public static List<string> ExplodeAndClean(this string line, char delimiter)
         {
@@ -171,6 +174,31 @@ namespace RAGE
             return collection[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
         }
 
+        public static string GetDataType(this string value)
+        {
+            int itemp;
+            bool btemp;
+            float ftemp;
+            Regex regex = new Regex(@"^""[^""]*""$");
+            if (bool.TryParse(value, out btemp))
+            {
+                return "bool";
+            }
+            else if (float.TryParse(value, out ftemp))
+            {
+                return "float";
+            }
+            else if (regex.IsMatch(value))
+            {
+               return "string";
+            }
+            else if (int.TryParse(value, out itemp))
+            {
+                return "int";
+            }
+            return null;
+        }
+
         public static List<Argument> GetListOfArguments(this string args)
         {
             var result = new List<Argument>();
@@ -182,25 +210,7 @@ namespace RAGE
             foreach (string arg in argsList)
             {
                 Argument finalArg = new Argument();
-                int itemp;
-                bool btemp;
-                float ftemp;
-                if (bool.TryParse(arg, out btemp))
-                {
-                    finalArg.ValueType = "bool";
-                }
-                else if (float.TryParse(arg, out ftemp))
-                {
-                    finalArg.ValueType = "float";
-                }
-                else if (arg.Contains('"'))
-                {
-                    finalArg.ValueType = "string";
-                }
-                else if (int.TryParse(arg, out itemp))
-                {
-                    finalArg.ValueType = "int";
-                }
+                finalArg.ValueType = arg.GetDataType();
                 finalArg.Value = arg.Replace(" ", "");
                 result.Add(finalArg);
             }
@@ -208,35 +218,35 @@ namespace RAGE
             return result;     
         }
 
-        public static FunctionCallType IsFunctionCall(this string line)
+        public static AssignmentTypes IsFunctionCall(this string line)
         {
-            //bool somevar = my_call();
-            Regex functionCallRegex = new Regex(NEW_VAR_ASSIGNMENT_REGEX);
+            //bool someVar = my_call();
+            Regex functionCallRegex = new Regex(NEW_VAR_FUNCTION_CALL_REGEX);
             if (functionCallRegex.IsMatch(line))
             {
-                return FunctionCallType.NewVar;
+                return AssignmentTypes.NewVar;
             }
             //someExistingVar = my_call();
-            functionCallRegex = new Regex(EXISTING_VAR_ASSIGNMENT_REGEX);
+            functionCallRegex = new Regex(EXISTING_VAR_FUNCTION_CALL_REGEX);
             if (functionCallRegex.IsMatch(line))
             {
-                return FunctionCallType.ExistingVar;
+                return AssignmentTypes.ExistingVar;
             }
 
             //my_call();
-            functionCallRegex = new Regex(VOID_ASSIGNMENT_REGEX);
+            functionCallRegex = new Regex(VOID_FUNCTION_CALL_REGEX);
             if (functionCallRegex.IsMatch(line))
             {
-                return FunctionCallType.Void;
+                return AssignmentTypes.Void;
             }
 
-            return FunctionCallType.None;
+            return AssignmentTypes.None;
         }
 
         public static FunctionCall GetFunctionCallInfo(this string line)
         {
-            FunctionCallType callType = line.IsFunctionCall();
-            if (callType == FunctionCallType.None)
+            AssignmentTypes callType = line.IsFunctionCall();
+            if (callType == AssignmentTypes.None)
             {
                 throw new Exception("Trying to get function call info from a line of code that isn't a function call");
             }
@@ -245,27 +255,27 @@ namespace RAGE
             List<string> matches;
             switch (callType)
             {
-                case FunctionCallType.NewVar:
-                regex = new Regex(NEW_VAR_ASSIGNMENT_REGEX);
-                matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+                case AssignmentTypes.NewVar:
+                regex = new Regex(NEW_VAR_FUNCTION_CALL_REGEX);
+                matches = regex.Matches(line).GetRegexGroups();
                 call.HasReturnValue = true;
                 call.ReturnType = matches[0];
                 call.ReturnVariableName = matches[1];
                 call.FunctionName = matches[2];
                 call.Arguments = matches[3].GetListOfArguments();
                 break;
-                case FunctionCallType.ExistingVar:
-                regex = new Regex(EXISTING_VAR_ASSIGNMENT_REGEX);
-                matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+                case AssignmentTypes.ExistingVar:
+                regex = new Regex(EXISTING_VAR_FUNCTION_CALL_REGEX);
+                matches = regex.Matches(line).GetRegexGroups();
                 call.HasReturnValue = true;
                 call.ReturnType = null;
                 call.ReturnVariableName = matches[0];
                 call.FunctionName = matches[1];
                 call.Arguments = matches[2].GetListOfArguments();
                 break;
-                case FunctionCallType.Void:
-                regex = new Regex(VOID_ASSIGNMENT_REGEX);
-                matches = regex.Matches(line)[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
+                case AssignmentTypes.Void:
+                regex = new Regex(VOID_FUNCTION_CALL_REGEX);
+                matches = regex.Matches(line).GetRegexGroups();
                 call.HasReturnValue = false;
                 call.ReturnType = null;
                 call.ReturnVariableName = null;
@@ -275,5 +285,58 @@ namespace RAGE
             }
             return call;
         }
+
+        public static AssignmentTypes IsAssignment(this string line)
+        {
+            //bool someVar = value;
+            Regex functionCallRegex = new Regex(NEW_VAR_ASSIGNMENT_REGEX);
+            if (functionCallRegex.IsMatch(line))
+            {
+                return AssignmentTypes.NewVar;
+            }
+
+            //someExistingVar = value;
+            functionCallRegex = new Regex(EXISTING_VAR_ASSIGNMENT_REGEX);
+            if (functionCallRegex.IsMatch(line))
+            {
+                return AssignmentTypes.ExistingVar;
+            }
+
+            return AssignmentTypes.None;
+        }
+
+        public static Assignment GetAssignmentInfo(this string line)
+        {
+            AssignmentTypes callType = line.IsAssignment();
+            if (callType == AssignmentTypes.None)
+            {
+                throw new Exception("Line was interpreted as an assignment, but assignment check failed");
+            }
+            Assignment assignment = new Assignment();
+            Regex regex;
+            List<string> matches;
+            switch (callType)
+            {
+                case AssignmentTypes.NewVar:
+                regex = new Regex(NEW_VAR_ASSIGNMENT_REGEX);
+                matches = regex.Matches(line).GetRegexGroups();
+                assignment.AssignedVariable = matches[1];
+                assignment.AssignedValue = matches[2];
+                assignment.AssignedValueType = matches[2].GetDataType();
+                break;
+                case AssignmentTypes.ExistingVar:
+                regex = new Regex(EXISTING_VAR_ASSIGNMENT_REGEX);
+                matches = regex.Matches(line).GetRegexGroups();
+                assignment.AssignedVariable = matches[0];
+                assignment.AssignedValue = matches[1];
+                assignment.AssignedValueType = matches[1].GetDataType();
+                break;
+                default:
+                throw new Exception("Assignment type doesnt match one of the defined types");
+            }
+            return assignment;
+        }
+
+
     }
 }

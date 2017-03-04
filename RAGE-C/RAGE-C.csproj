@@ -46,11 +46,13 @@
     <Compile Include="Argument.cs" />
     <Compile Include="Assembly\AssemblyFunction.cs" />
     <Compile Include="Assembly\NativeCall.cs" />
+    <Compile Include="Assembly\PushInstruction.cs" />
+    <Compile Include="Assignment.cs" />
     <Compile Include="Conditional.cs" />
     <Compile Include="ConditionalLogic.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="FunctionCall.cs" />
-    <Compile Include="FunctionCallTypes.cs" />
+    <Compile Include="AssignmentTypes.cs" />
     <Compile Include="Keywords.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="Parser.cs" />

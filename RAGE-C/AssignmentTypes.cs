@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RAGE
 {
-    public enum FunctionCallType
+    public enum AssignmentTypes
     {
         None,
         Void,

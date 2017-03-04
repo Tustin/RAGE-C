@@ -29,7 +29,7 @@ PushString "oh fuck ya"
 setF1 5
 :main_nested_2_if_end_3
 :main_nested_1_if_end_2
-push1 50
+fpush 50
 setF1 6
 :main_nested_0_if_end_1
 PushString "peee"
@@ -37,15 +37,15 @@ setF1 7
 push_0
 push_1
 JumpNE @main_nested_0_if_end_4
-push1 12
+fpush 12
 setF1 8
 :main_nested_0_if_end_4
-push 500
+fpush 500
 setF1 9
 :main_if_end_0
 PushString "ok"
 setF1 10
-push 2323
+fpush 2323
 setF1 11
 push_1
 push_0
