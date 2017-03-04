@@ -4,3 +4,6 @@ D:\Code\Visual Studio\Visual Studio 2015\Projects\RAGE-C\yscC\bin\Debug\RAGE-C.p
 D:\Code\Visual Studio\Visual Studio 2015\Projects\RAGE-C\yscC\obj\Debug\RAGE-C.exe
 D:\Code\Visual Studio\Visual Studio 2015\Projects\RAGE-C\yscC\obj\Debug\RAGE-C.pdb
 D:\Code\Visual Studio\Visual Studio 2015\Projects\RAGE-C\yscC\obj\Debug\RAGE-C.csprojResolveAssemblyReference.cache
+D:\Code\Visual Studio\Visual Studio 2015\Projects\RAGE-C\RAGE-C\bin\Debug\RAGE-C.exe.config
+D:\Code\Visual Studio\Visual Studio 2015\Projects\RAGE-C\RAGE-C\obj\Debug\RAGE-C.exe
+D:\Code\Visual Studio\Visual Studio 2015\Projects\RAGE-C\RAGE-C\obj\Debug\RAGE-C.pdb
