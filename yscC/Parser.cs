@@ -50,6 +50,8 @@ namespace RAGE
             ResetStream();
             while ((line = sourceFile.ReadLine()) != null)
             {
+                line = line.Trim();
+                List<string> pieces = line.ExplodeAndClean(' ');
                 if (!line.Contains(functionName) && !foundFunction)
                 {
                     continue;
@@ -57,7 +59,6 @@ namespace RAGE
                 else if (!foundFunction)
                 {
                     //found it, make sure it's a function
-                    List<string> pieces = line.Split(' ').ToList();
                     if (line.IsFunction())
                     {
                         var matches = line.GetFunctionInfo();
@@ -66,67 +67,70 @@ namespace RAGE
                         foundFunction = true;
                     }
                 }
-                //we found the function and this list contains an open curly bracket and we currently aren't in a block - we can assume this is the start
+
+                //we found the function and this list contains an open curly bracket and we currently aren't in a block
+                //we can assume this is the start
                 if (foundFunction && line.Contains('{') && !inFunctionBlock)
                 {
                     inFunctionBlock = true;
                     continue;
                 }
 
-                //we found the function, are currently in it but we found an opening bracket - we can assume this is a logic block
-                //assumes - if (something == somethingelse) {
-                if (foundFunction && line.Contains('{') && inFunctionBlock)
+                string keyword = null;
+                bool foundKeyword = Keyword.IsMatch(pieces[0], out keyword);
+                //we found the function, are currently in it but we found an opening bracket
+                //we can assume this is an if logic block
+                if (foundFunction && foundKeyword && keyword == "if" && inFunctionBlock)
                 {
                     List<string> elements = line.ExplodeAndClean(' ');
-                    if (elements[0].StartsWith("if"))
+                    //makes it so you can either put the { on the same line as the if or on the line after
+                    //only assumes that the { actually exists so if it doesn't, the code will be fucked up
+                    int startPosition = f.Code.Count + 1;
+                    if (!line.Contains("{"))
                     {
-                        Conditional conditional = new Conditional(ConditionalTypes.JustIf, f.Code.Count + 1, null);
-                        conditional.Index = conditionalCount++;
-                        //lets see if this conditional is nested
-                        if (f.Conditionals.AreThereAnyParentConditionals(conditional) && f.AreThereAnyUnclosedLogicBlocks())
-                        {
-                            Conditional lastConditional = f.Conditionals.GetLastConditional(conditional);
-                            //since the last one isnt closed, we can assume its the parent of this one
-                            if (lastConditional.CodeEndLine == null)
-                            {
-                                conditional.Parent = lastConditional;
-                            }
-                            else
-                            {
-                                Conditional lastParent = f.Conditionals.GetLastParentConditional();
-                                conditional.Parent = lastParent;
-                            }
-                        }
-                        //are we comparing two things?
-                        if (elements.Any(a => a == "=="))
-                        {
-                            //get the 2 things we're comparing
-                            int compareIndex = elements.IndexOf("==");
-                            string compare1 = elements[compareIndex - 1].ReplaceFirst("(", "");
-                            string compare2 = elements[compareIndex + 1].ReplaceLast(")");
-
-                            conditional.Logic.FirstCondition = compare1;
-                            conditional.Logic.SecondCondition = compare2;
-                            conditional.Logic.LogicType = true;
-                        }
-                        else if (elements.Any(a => a == "!="))
-                        {
-                            //get the 2 things we're comparing
-                            int compareIndex = elements.IndexOf("!=");
-                            string compare1 = elements[compareIndex - 1].ReplaceFirst("(", "");
-                            string compare2 = elements[compareIndex + 1].ReplaceLast(")");
-
-                            conditional.Logic.FirstCondition = compare1;
-                            conditional.Logic.SecondCondition = compare2;
-                            conditional.Logic.LogicType = false;
-                        }
-                        f.Conditionals.Add(conditional);
-
+                        startPosition = f.Code.Count + 2;
                     }
-                    else
+                    Conditional conditional = new Conditional(ConditionalTypes.JustIf, startPosition, null);
+                    conditional.Index = conditionalCount++;
+                    //lets see if this conditional is nested
+                    if (f.Conditionals.AreThereAnyParentConditionals(conditional) && f.AreThereAnyUnclosedLogicBlocks())
                     {
-                        throw new NotImplementedException("Conditional type not defined yet");
+                        Conditional lastConditional = f.Conditionals.GetLastConditional(conditional);
+                        //since the last one isnt closed, we can assume its the parent of this one
+                        if (lastConditional.CodeEndLine == null)
+                        {
+                            conditional.Parent = lastConditional;
+                        }
+                        else
+                        {
+                            Conditional lastParent = f.Conditionals.GetLastParentConditional();
+                            conditional.Parent = lastParent;
+                        }
                     }
+                    //are we comparing two things?
+                    if (elements.Any(a => a == "=="))
+                    {
+                        //get the 2 things we're comparing
+                        int compareIndex = elements.IndexOf("==");
+                        string compare1 = elements[compareIndex - 1].ReplaceFirst("(", "");
+                        string compare2 = elements[compareIndex + 1].ReplaceLast(")");
+
+                        conditional.Logic.FirstCondition = compare1;
+                        conditional.Logic.SecondCondition = compare2;
+                        conditional.Logic.LogicType = true;
+                    }
+                    else if (elements.Any(a => a == "!="))
+                    {
+                        //get the 2 things we're comparing
+                        int compareIndex = elements.IndexOf("!=");
+                        string compare1 = elements[compareIndex - 1].ReplaceFirst("(", "");
+                        string compare2 = elements[compareIndex + 1].ReplaceLast(")");
+
+                        conditional.Logic.FirstCondition = compare1;
+                        conditional.Logic.SecondCondition = compare2;
+                        conditional.Logic.LogicType = false;
+                    }
+                    f.Conditionals.Add(conditional);
                     inLogicBlock = true;
                     f.Code.Add(line);
                     continue;
@@ -149,8 +153,8 @@ namespace RAGE
                 //we found the function, we're in the function code block and it contains an assignment
                 if (foundFunction && inFunctionBlock && line.Contains("=") && !line.Contains("=="))
                 {
-                    List<string> pieces = line.Split('=').ToList();
-                    List<string> assignmentPieces = pieces[0].ExplodeAndClean(' ');
+                    List<string> elements = line.Split('=').ToList();
+                    List<string> assignmentPieces = elements[0].ExplodeAndClean(' ');
                     assignmentPieces[0].ToLower();
                     string type = assignmentPieces.Intersect(dataTypes).FirstOrDefault();
                     if (type == null)
