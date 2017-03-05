@@ -2,7 +2,7 @@ void main () {
     int id = player_id();
     int hash = get_hash_key("adder1");
     if (hash == 0xB779A091) {
-        if (id == 0) {
+        if (id > 0) {
             if(5 == 4) {
                 bool var = false;
                 if (hash == id) {
@@ -12,7 +12,7 @@ void main () {
             int morestuff = 50;
         }
         string poop = "peee";
-        if (!true) {
+        if (true) {
             int gg = 12;
         }
         int dothis = 500;

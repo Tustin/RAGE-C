@@ -9,24 +9,33 @@ namespace RAGE
 {
     public class ConditionalLogic
     {
-        const string IF_LOGIC_REGEX = @"^if\s?\(\s?([a-zA-Z0-9_]+|""[^""]*"")\s?(==|!=)\s?([a-zA-Z0-9_]+|""[^""]*"")\)";
+        const string IF_LOGIC_REGEX = @"^if\s?\(\s?([a-zA-Z0-9_]+|""[^""]*"")\s?(==|!=|<|<=|>|>=)\s?([a-zA-Z0-9_]+|""[^""]*"")\)";
         const string IF_NOT_LOGIC_REGEX = @"^if\s?\(!(\w+)\)";
         const string IF_TRUE_LOGIC_REGEX = @"^if\s?\((\w+)\)";
 
-        public bool LogicType { get; set; }
+        public ConditionalLogicTypes LogicType { get; set; }
 
         public string FirstCondition { get; set; }
         public string SecondCondition { get; set; }
 
-        public static bool GetLogicType(string logic)
+        public static ConditionalLogicTypes GetLogicType(string logic)
         {
             switch (logic)
             {
                 case "==":
-                return true;
+                return ConditionalLogicTypes.Equal;
                 case "!=":
+                return ConditionalLogicTypes.NotEqual;
+                case ">":
+                return ConditionalLogicTypes.GreaterThan;
+                case ">=":
+                return ConditionalLogicTypes.GreaterThanEqual;
+                case "<":
+                return ConditionalLogicTypes.LessThan;
+                case "<=":
+                return ConditionalLogicTypes.LessThanEqual;
                 default:
-                return false;
+                throw new Exception("Undefined conditional logic type");
             }
         }
         public static ConditionalLogic Parse(string line)
@@ -47,7 +56,7 @@ namespace RAGE
             {
                 matches = regex.Matches(line).GetRegexGroups();
                 logic.FirstCondition = matches[0];
-                logic.LogicType = false;
+                logic.LogicType = ConditionalLogicTypes.NotEqual;
                 logic.SecondCondition = null;
                 return logic;
             }
@@ -56,7 +65,7 @@ namespace RAGE
             {
                 matches = regex.Matches(line).GetRegexGroups();
                 logic.FirstCondition = matches[0];
-                logic.LogicType = true;
+                logic.LogicType = ConditionalLogicTypes.Equal;
                 logic.SecondCondition = null;
                 return logic;
             }

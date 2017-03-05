@@ -236,6 +236,7 @@ namespace RAGE
                     }
 
                     asmFunction.LabelBlocks[labelBlock].Add(thisConditional.ParseConditionalLogic(thisConditional.Logic.FirstCondition));
+
                     //if it's null, then the user is doing something like if (!someVar) or if (someVar)
                     if (thisConditional.Logic.SecondCondition == null)
                     {
@@ -243,54 +244,43 @@ namespace RAGE
                         {
                             throw new Exception("Trying to use short-hand conditional logic on non-bool value");
                         }
-                        if (!thisConditional.Logic.LogicType)
+                        if (thisConditional.Logic.LogicType == ConditionalLogicTypes.NotEqual)
                         {
                             asmFunction.LabelBlocks[labelBlock].Add("Not");
-                            asmFunction.LabelBlocks[labelBlock].Add($"JumpFalse @{label}");
                         }
+                        else if (thisConditional.Logic.LogicType != ConditionalLogicTypes.Equal)
+                        {
+                            throw new Exception("Trying to use short-hand conditional logic on invalid logic type");
+                        }
+                        asmFunction.LabelBlocks[labelBlock].Add($"JumpFalse @{label}");
                     }
                     else
                     {
                         asmFunction.LabelBlocks[labelBlock].Add(thisConditional.ParseConditionalLogic(thisConditional.Logic.SecondCondition));
+                        switch (thisConditional.Logic.LogicType)
+                        {
+                            //each one will equate to the inverse of it so it jumps properly
+                            case ConditionalLogicTypes.Equal:
+                            asmFunction.LabelBlocks[labelBlock].Add($"JumpNE @{label}");
+                            break;
+                            case ConditionalLogicTypes.NotEqual:
+                            asmFunction.LabelBlocks[labelBlock].Add($"JumpEQ @{label}");
+                            break;
+                            case ConditionalLogicTypes.LessThan:
+                            asmFunction.LabelBlocks[labelBlock].Add($"JumpGT @{label}");
+                            break;
+                            case ConditionalLogicTypes.LessThanEqual:
+                            asmFunction.LabelBlocks[labelBlock].Add($"JumpGE @{label}");
+                            break;
+                            case ConditionalLogicTypes.GreaterThan:
+                            asmFunction.LabelBlocks[labelBlock].Add($"JumpLT @{label}");
+                            break;
+                            case ConditionalLogicTypes.GreaterThanEqual:
+                            asmFunction.LabelBlocks[labelBlock].Add($"JumpLE @{label}");
+                            break;
+                        }
                     }
-
-                    asmFunction.LabelBlocks[labelBlock].Add($"JumpNE @{label}");
                     conditionalsHit++;
-
-                    //string firstCondition = thisConditional.Logic.FirstCondition;
-                    //if (function.LocalVariables.IsLocalVariable(firstCondition))
-                    //{
-                    //    Variable localVar = function.LocalVariables.GetLocalVariable(firstCondition);
-                    //    asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
-                    //}
-                    //else
-                    //{
-                    //    //turn any hashes into int format
-                    //    if (firstCondition.Contains("0x"))
-                    //    {
-                    //        firstCondition = firstCondition.Replace("0x", "");
-                    //        firstCondition = int.Parse(firstCondition, System.Globalization.NumberStyles.HexNumber).ToString();
-                    //    }
-                    //    asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(firstCondition));
-
-                    //}
-                    //string secondCondition = thisConditional.Logic.SecondCondition;
-                    ////is this a local var? if so, pull it and get the frame var id
-                    //if (function.LocalVariables.IsLocalVariable(secondCondition))
-                    //{
-                    //    Variable localVar = function.LocalVariables.GetLocalVariable(secondCondition);
-                    //    asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
-                    //}
-                    //else
-                    //{
-                    //    //if its a hex value, convert it to an int
-                    //    if (secondCondition.Contains("0x"))
-                    //    {
-                    //        secondCondition = secondCondition.Replace("0x", "");
-                    //        secondCondition = int.Parse(secondCondition, System.Globalization.NumberStyles.HexNumber).ToString();
-                    //    }
-                    //    asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(secondCondition));
-                    //}
                 }
                 else if (line.IsAssignment() != AssignmentTypes.None)
                 {
