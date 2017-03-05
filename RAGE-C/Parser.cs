@@ -107,29 +107,9 @@ namespace RAGE
                             conditional.Parent = lastParent;
                         }
                     }
-                    //are we comparing two things?
-                    if (elements.Any(a => a == "=="))
-                    {
-                        //get the 2 things we're comparing
-                        int compareIndex = elements.IndexOf("==");
-                        string compare1 = elements[compareIndex - 1].ReplaceFirst("(", "");
-                        string compare2 = elements[compareIndex + 1].ReplaceLast(")");
 
-                        conditional.Logic.FirstCondition = compare1;
-                        conditional.Logic.SecondCondition = compare2;
-                        conditional.Logic.LogicType = true;
-                    }
-                    else if (elements.Any(a => a == "!="))
-                    {
-                        //get the 2 things we're comparing
-                        int compareIndex = elements.IndexOf("!=");
-                        string compare1 = elements[compareIndex - 1].ReplaceFirst("(", "");
-                        string compare2 = elements[compareIndex + 1].ReplaceLast(")");
+                    conditional.Logic = ConditionalLogic.Parse(line);
 
-                        conditional.Logic.FirstCondition = compare1;
-                        conditional.Logic.SecondCondition = compare2;
-                        conditional.Logic.LogicType = false;
-                    }
                     f.Conditionals.Add(conditional);
                     inLogicBlock = true;
                     f.Code.Add(line);
@@ -193,19 +173,14 @@ namespace RAGE
             ResetStream();
             while ((line = sourceFile.ReadLine()) != null)
             {
-                //line contains the data type
-                if (dataTypes.Any(line.Contains))
+                if (line.IsFunction())
                 {
-                    List<string> pieces = line.Split(' ').ToList();
-                    //find the return type of the function by intersecting
-                    string type = pieces.Intersect(dataTypes).FirstOrDefault();
-                    if (type == null)
+                    List<string> functionInfo = line.GetFunctionInfo();
+                    if (!dataTypes.Any(a => a == functionInfo[0]))
                     {
-                        continue;
+                        throw new Exception($"Return type for function '{functionInfo[1]}' not supported");
                     }
-                    int pos = pieces.IndexOf(type);
-                    string functionName = pieces[pos + 1];
-                    scriptFunctions.Add(this.GetFunctionContents(functionName));
+                    scriptFunctions.Add(GetFunctionContents(functionInfo[1]));
                 }
             }
             return scriptFunctions;
@@ -248,65 +223,50 @@ namespace RAGE
                     if (thisConditional.Parent != null)
                     {
                         label = $"{function.Name}_nested_{thisConditional.Parent.Index}_if_end_{thisConditional.Index}";
-
                     }
                     else
                     {
                         label = $"{function.Name}_if_end_{thisConditional.Index}";
-
                     }
 
-                    //if the logic is expecting a true, then we will output this shit
-                    if (thisConditional.Logic.LogicType)
+                    string firstCondition = thisConditional.Logic.FirstCondition;
+                    if (function.LocalVariables.IsLocalVariable(firstCondition))
                     {
-                        string firstCondition = thisConditional.Logic.FirstCondition;
-                        //is this a local var? if so, pull it and get the frame var id
-                        if (function.LocalVariables.IsLocalVariable(firstCondition))
+                        Variable localVar = function.LocalVariables.GetLocalVariable(firstCondition);
+                        asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
+                    }
+                    else
+                    {
+                        //turn any hashes into int format
+                        if (firstCondition.Contains("0x"))
                         {
-                            Variable localVar = function.LocalVariables.GetLocalVariable(firstCondition);
-                            asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
-                            //asmCode.Add();
+                            firstCondition = firstCondition.Replace("0x", "");
+                            firstCondition = int.Parse(firstCondition, System.Globalization.NumberStyles.HexNumber).ToString();
                         }
-                        else
-                        {
-                            //not a local var so lets assume its a value
-                            //TODO: check for natives here
+                        asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(firstCondition));
 
-                            //if its a hex value, convert it to an int
-                            if (firstCondition.Contains("0x"))
-                            {
-                                firstCondition = firstCondition.Replace("0x", "");
-                                firstCondition = int.Parse(firstCondition, System.Globalization.NumberStyles.HexNumber).ToString();
-                            }
-                            asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(firstCondition));
-                            //asmCode.Add(GeneratePushInstruction(firstCondition));
-                        }
-                        string secondCondition = thisConditional.Logic.SecondCondition;
-                        //is this a local var? if so, pull it and get the frame var id
-                        if (function.LocalVariables.IsLocalVariable(secondCondition))
+                    }
+                    string secondCondition = thisConditional.Logic.SecondCondition;
+                    //is this a local var? if so, pull it and get the frame var id
+                    if (function.LocalVariables.IsLocalVariable(secondCondition))
+                    {
+                        Variable localVar = function.LocalVariables.GetLocalVariable(secondCondition);
+                        asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
+                    }
+                    else
+                    {
+                        //if its a hex value, convert it to an int
+                        if (secondCondition.Contains("0x"))
                         {
-                            Variable localVar = function.LocalVariables.GetLocalVariable(secondCondition);
-                            asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
-                            //asmCode.Add($"getF1 {localVar.FrameId}");
+                            secondCondition = secondCondition.Replace("0x", "");
+                            secondCondition = int.Parse(secondCondition, System.Globalization.NumberStyles.HexNumber).ToString();
                         }
-                        else
-                        {
-                            //not a local var so lets assume its a value
-                            //TODO: check for natives here
-
-                            //if its a hex value, convert it to an int
-                            if (secondCondition.Contains("0x"))
-                            {
-                                secondCondition = secondCondition.Replace("0x", "");
-                                secondCondition = int.Parse(secondCondition, System.Globalization.NumberStyles.HexNumber).ToString();
-                            }
-                            asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(secondCondition));
-                        }
+                        asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(secondCondition));
                     }
                     asmFunction.LabelBlocks[labelBlock].Add($"JumpNE @{label}");
                     conditionalsHit++;
                 }
-                else if (line.Contains(" = ") && !line.Contains("=="))
+                else if (line.IsAssignment() != AssignmentTypes.None)
                 {
                     List<string> instructions = GenerateAssignmentInstructions(function, line);
                     asmFunction.LabelBlocks[labelBlock].AddRange(instructions);
@@ -372,97 +332,22 @@ namespace RAGE
 
         public string GeneratePushInstruction(Function function, Argument arg)
         {
-            switch (arg.ValueType)
+            string code = GeneratePushInstruction(arg.Value, arg.ValueType);
+            if (code != null)
             {
-                case "int":
-                if (int.Parse(arg.Value) >= -1 && int.Parse(arg.Value) <= 7)
-                {
-                    return $"push_{arg.Value}";
-                }
-                else if (int.Parse(arg.Value) <= 255)
-                {
-                    return $"push1 {arg.Value}";
-                }
-                else
-                {
-                    return $"push {arg.Value}";
-                }
-                case "bool":
-                return (arg.Value == "true") ? "push_1" : "push_0";
-                case "float":
-                if (float.Parse(arg.Value) >= -1.0f && float.Parse(arg.Value) <= 7.0f)
-                {
-                    return $"fpush_{arg.Value}";
-                }
-                else
-                {
-                    return $"fpush {arg.Value}";
-                }
-                case "string":
-                return $"PushString {arg.Value}";
-                default:
-                Variable localVar = function.LocalVariables.Where(s => s.Value == arg.Value).FirstOrDefault();
-                if (localVar == null)
-                {
-                    throw new NotImplementedException();
-                }
-                return $"getF1 {localVar.FrameId}";
+                return code;
             }
+            Variable localVar = function.LocalVariables.Where(s => s.Value == arg.Value).FirstOrDefault();
+            if (localVar == null)
+            {
+                throw new Exception("Variable used for push instruction not found");
+            }
+            return $"getF1 {localVar.FrameId}";
         }
 
         public string GeneratePushInstruction(string arg)
         {
-            if (arg == "true" || arg == "false")
-            {
-                return arg == "true" ? "push_1" : "push_0";
-            }
-
-            if (arg.EndsWith("f"))
-            {
-                float val;
-                if (float.TryParse(arg, out val))
-                {
-                    if (val >= -1.0f && val <= 7.0f)
-                    {
-                        return $"fpush_{val}";
-                    }
-                    else
-                    {
-                        return $"fpush {val}";
-                    }
-                }
-                else
-                {
-                    throw new Exception("Assumed float, but unable to parse");
-                }
-            }
-            //literal string
-            //assumes - "my string"
-            Regex reg = new Regex("^\"(.+)\"$");
-            if (reg.IsMatch(arg))
-            {
-                return $"PushString {arg}";
-            }
-
-            //assumes int if nothing above matched
-            int ival;
-            if (int.TryParse(arg, out ival))
-            {
-                if (ival >= -1 && ival <= 7)
-                {
-                    return $"push_{ival}";
-                }
-                else if (ival <= 255 && ival >= -255)
-                {
-                    return $"push1 {ival}";
-                }
-                else
-                {
-                    return $"push {ival}";
-                }
-            }
-            return null;
-
+            return GeneratePushInstruction(arg, arg.GetDataType());
         }
 
         public string GeneratePushInstruction(string value, string valueType)
@@ -478,13 +363,12 @@ namespace RAGE
                 case "int":
                 return PushInstruction.Int(value);
                 default:
-                throw new Exception("Type not defined");
+                return null;
             }
         }
 
         public List<string> GenerateAssignmentInstructions(Function function, string line)
         {
-            List<string> exploded = line.ExplodeAndClean(' ');
             List<string> final = new List<string>();
 
             Assignment assignment = line.GetAssignmentInfo();

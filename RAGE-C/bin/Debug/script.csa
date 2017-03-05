@@ -12,13 +12,13 @@ PushString "adder1"
 CallNative "get_hash_key" 1 0
 setF1 3
 getF1 3
-push -1216765807
+fpush -1.216766E+09
 JumpNE @main_if_end_0
 getF1 2
-push_0
+fpush_0
 JumpNE @main_nested_0_if_end_1
-
-push_4
+fpush_5
+fpush_4
 JumpNE @main_nested_1_if_end_2
 push_0
 setF1 4
