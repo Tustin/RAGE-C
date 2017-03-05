@@ -184,7 +184,7 @@ namespace RAGE
             {
                 return "bool";
             }
-            else if (float.TryParse(value, out ftemp))
+            else if (float.TryParse(value, out ftemp) && value.EndsWith("f"))
             {
                 return "float";
             }

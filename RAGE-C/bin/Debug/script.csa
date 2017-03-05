@@ -12,13 +12,13 @@ PushString "adder1"
 CallNative "get_hash_key" 1 0
 setF1 3
 getF1 3
-fpush -1.216766E+09
+push -1216765807
 JumpNE @main_if_end_0
 getF1 2
-fpush_0
+push_0
 JumpNE @main_nested_0_if_end_1
-fpush_5
-fpush_4
+push_5
+push_4
 JumpNE @main_nested_1_if_end_2
 push_0
 setF1 4
@@ -29,7 +29,7 @@ PushString "oh fuck ya"
 setF1 5
 :main_nested_2_if_end_3
 :main_nested_1_if_end_2
-fpush 50
+push1 50
 setF1 6
 :main_nested_0_if_end_1
 PushString "peee"
@@ -38,15 +38,15 @@ push_1
 Not
 JumpFalse @main_nested_0_if_end_4
 JumpNE @main_nested_0_if_end_4
-fpush 12
+push1 12
 setF1 8
 :main_nested_0_if_end_4
-fpush 500
+push 500
 setF1 9
 :main_if_end_0
 PushString "ok"
 setF1 10
-fpush 2323
+push 2323
 setF1 11
 push_1
 push_0
