@@ -34,8 +34,9 @@ setF1 6
 :main_nested_0_if_end_1
 PushString "peee"
 setF1 7
-push_0
 push_1
+Not
+JumpFalse @main_nested_0_if_end_4
 JumpNE @main_nested_0_if_end_4
 fpush 12
 setF1 8

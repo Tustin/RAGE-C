@@ -92,6 +92,7 @@ namespace RAGE
                     }
                     Conditional conditional = new Conditional(ConditionalTypes.JustIf, startPosition, null);
                     conditional.Index = conditionalCount++;
+                    conditional.Function = f;
                     //lets see if this conditional is nested
                     if (f.Conditionals.AreThereAnyParentConditionals(conditional) && f.AreThereAnyUnclosedLogicBlocks())
                     {
@@ -229,42 +230,67 @@ namespace RAGE
                         label = $"{function.Name}_if_end_{thisConditional.Index}";
                     }
 
-                    string firstCondition = thisConditional.Logic.FirstCondition;
-                    if (function.LocalVariables.IsLocalVariable(firstCondition))
+                    if (thisConditional.Logic.FirstCondition == null)
                     {
-                        Variable localVar = function.LocalVariables.GetLocalVariable(firstCondition);
-                        asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
+                        throw new Exception("Expected first conditional logic, got null");
                     }
-                    else
-                    {
-                        //turn any hashes into int format
-                        if (firstCondition.Contains("0x"))
-                        {
-                            firstCondition = firstCondition.Replace("0x", "");
-                            firstCondition = int.Parse(firstCondition, System.Globalization.NumberStyles.HexNumber).ToString();
-                        }
-                        asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(firstCondition));
 
-                    }
-                    string secondCondition = thisConditional.Logic.SecondCondition;
-                    //is this a local var? if so, pull it and get the frame var id
-                    if (function.LocalVariables.IsLocalVariable(secondCondition))
+                    asmFunction.LabelBlocks[labelBlock].Add(thisConditional.ParseConditionalLogic(thisConditional.Logic.FirstCondition));
+                    //if it's null, then the user is doing something like if (!someVar) or if (someVar)
+                    if (thisConditional.Logic.SecondCondition == null)
                     {
-                        Variable localVar = function.LocalVariables.GetLocalVariable(secondCondition);
-                        asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
+                        if (thisConditional.Logic.FirstCondition.GetDataType() != "bool")
+                        {
+                            throw new Exception("Trying to use short-hand conditional logic on non-bool value");
+                        }
+                        if (!thisConditional.Logic.LogicType)
+                        {
+                            asmFunction.LabelBlocks[labelBlock].Add("Not");
+                            asmFunction.LabelBlocks[labelBlock].Add($"JumpFalse @{label}");
+                        }
                     }
                     else
                     {
-                        //if its a hex value, convert it to an int
-                        if (secondCondition.Contains("0x"))
-                        {
-                            secondCondition = secondCondition.Replace("0x", "");
-                            secondCondition = int.Parse(secondCondition, System.Globalization.NumberStyles.HexNumber).ToString();
-                        }
-                        asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(secondCondition));
+                        asmFunction.LabelBlocks[labelBlock].Add(thisConditional.ParseConditionalLogic(thisConditional.Logic.SecondCondition));
                     }
+
                     asmFunction.LabelBlocks[labelBlock].Add($"JumpNE @{label}");
                     conditionalsHit++;
+
+                    //string firstCondition = thisConditional.Logic.FirstCondition;
+                    //if (function.LocalVariables.IsLocalVariable(firstCondition))
+                    //{
+                    //    Variable localVar = function.LocalVariables.GetLocalVariable(firstCondition);
+                    //    asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
+                    //}
+                    //else
+                    //{
+                    //    //turn any hashes into int format
+                    //    if (firstCondition.Contains("0x"))
+                    //    {
+                    //        firstCondition = firstCondition.Replace("0x", "");
+                    //        firstCondition = int.Parse(firstCondition, System.Globalization.NumberStyles.HexNumber).ToString();
+                    //    }
+                    //    asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(firstCondition));
+
+                    //}
+                    //string secondCondition = thisConditional.Logic.SecondCondition;
+                    ////is this a local var? if so, pull it and get the frame var id
+                    //if (function.LocalVariables.IsLocalVariable(secondCondition))
+                    //{
+                    //    Variable localVar = function.LocalVariables.GetLocalVariable(secondCondition);
+                    //    asmFunction.LabelBlocks[labelBlock].Add($"getF1 {localVar.FrameId}");
+                    //}
+                    //else
+                    //{
+                    //    //if its a hex value, convert it to an int
+                    //    if (secondCondition.Contains("0x"))
+                    //    {
+                    //        secondCondition = secondCondition.Replace("0x", "");
+                    //        secondCondition = int.Parse(secondCondition, System.Globalization.NumberStyles.HexNumber).ToString();
+                    //    }
+                    //    asmFunction.LabelBlocks[labelBlock].Add(GeneratePushInstruction(secondCondition));
+                    //}
                 }
                 else if (line.IsAssignment() != AssignmentTypes.None)
                 {
@@ -330,7 +356,7 @@ namespace RAGE
             return nativeCall;
         }
 
-        public string GeneratePushInstruction(Function function, Argument arg)
+        public static string GeneratePushInstruction(Function function, Argument arg)
         {
             string code = GeneratePushInstruction(arg.Value, arg.ValueType);
             if (code != null)
@@ -345,12 +371,12 @@ namespace RAGE
             return $"getF1 {localVar.FrameId}";
         }
 
-        public string GeneratePushInstruction(string arg)
+        public static string GeneratePushInstruction(string arg)
         {
             return GeneratePushInstruction(arg, arg.GetDataType());
         }
 
-        public string GeneratePushInstruction(string value, string valueType)
+        public static string GeneratePushInstruction(string value, string valueType)
         {
             switch (valueType)
             {

@@ -12,7 +12,7 @@ void main () {
             int morestuff = 50;
         }
         string poop = "peee";
-        if (false == true) {
+        if (!true) {
             int gg = 12;
         }
         int dothis = 500;

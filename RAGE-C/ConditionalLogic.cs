@@ -62,6 +62,5 @@ namespace RAGE
             }
             throw new Exception("Unable to parse conditional logic");
         }
-
     }
 }

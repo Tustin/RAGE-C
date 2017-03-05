@@ -28,6 +28,8 @@ namespace RAGE
 
         public ConditionalLogic Logic { get; set; }
 
+        public Function Function { get; set; }
+
         public Conditional(ConditionalTypes type, int start, int? end, Conditional parent = null)
         {
             Type = type;
@@ -40,6 +42,26 @@ namespace RAGE
         public bool IsNested()
         {
             return this.Parent != null;
+        }
+
+        public string ParseConditionalLogic(string condition)
+        {
+            if (this.Function.LocalVariables.IsLocalVariable(condition))
+            {
+                Variable localVar = this.Function.LocalVariables.GetLocalVariable(condition);
+                return $"getF1 {localVar.FrameId}";
+            }
+            else
+            {
+                //turn any hashes into int format
+                if (condition.Contains("0x"))
+                {
+                    condition = condition.Replace("0x", "");
+                    condition = int.Parse(condition, System.Globalization.NumberStyles.HexNumber).ToString();
+                }
+
+                return Parser.GeneratePushInstruction(condition);
+            }
         }
     }
 }
