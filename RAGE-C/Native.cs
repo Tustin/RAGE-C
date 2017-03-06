@@ -11,6 +11,7 @@ namespace RAGE
     public class Native
     {
         public static Dictionary<string, string> Natives = new Dictionary<string, string>();
+
         public static void PopulateNativeTable()
         {
             List<string> natives = File.ReadAllLines("natives.dat").ToList();
@@ -23,7 +24,7 @@ namespace RAGE
 
         public static bool IsFunctionANative(string functionName)
         {
-            return Natives.Where(n => n.Value == functionName || n.Key == functionName).Distinct().Count() == 1;
+            return Natives.Any(n => n.Value == functionName || n.Key == functionName);
         }
     }
 }

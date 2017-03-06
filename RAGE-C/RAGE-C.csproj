@@ -44,16 +44,29 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Argument.cs" />
+    <Compile Include="Arithmetic.cs" />
+    <Compile Include="ArithmeticTypes.cs" />
     <Compile Include="Assembly\AssemblyFunction.cs" />
     <Compile Include="Assembly\NativeCall.cs" />
     <Compile Include="Assembly\PushInstruction.cs" />
     <Compile Include="Assignment.cs" />
-    <Compile Include="Conditional.cs" />
-    <Compile Include="ConditionalLogic.cs" />
-    <Compile Include="ConditionalLogicTypes.cs" />
+    <Compile Include="Conditionals\Conditional.cs" />
+    <Compile Include="Conditionals\ConditionalLogic.cs" />
+    <Compile Include="Conditionals\ConditionalLogicTypes.cs" />
+    <Compile Include="Conditionals\ConditionalTypes.cs" />
+    <Compile Include="Control Loops\ControlLoopLogic.cs" />
+    <Compile Include="Control Loops\ControlLoops.cs" />
+    <Compile Include="Control Loops\ControlLoopTypes.cs" />
+    <Compile Include="Control Loops\IfLogic.cs" />
+    <Compile Include="Core.cs" />
+    <Compile Include="Extensions\ConditionalExtensions.cs" />
+    <Compile Include="Extensions\FunctionExtensions.cs" />
+    <Compile Include="Extensions\LoopExtensions.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="FunctionCall.cs" />
-    <Compile Include="AssignmentTypes.cs" />
+    <Compile Include="FunctionDeclaration.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Types\AssignmentTypes.cs" />
     <Compile Include="Keywords.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="Parser.cs" />

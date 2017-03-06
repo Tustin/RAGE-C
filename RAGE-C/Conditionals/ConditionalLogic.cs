@@ -9,15 +9,18 @@ namespace RAGE
 {
     public class ConditionalLogic
     {
-        const string IF_LOGIC_REGEX = @"^if\s?\(\s?([a-zA-Z0-9_]+|""[^""]*"")\s?(==|!=|<|<=|>|>=)\s?([a-zA-Z0-9_]+|""[^""]*"")\)";
-        const string IF_NOT_LOGIC_REGEX = @"^if\s?\(!(\w+)\)";
-        const string IF_TRUE_LOGIC_REGEX = @"^if\s?\((\w+)\)";
-
         public ConditionalLogicTypes LogicType { get; set; }
 
         public string FirstCondition { get; set; }
         public string SecondCondition { get; set; }
 
+        public ConditionalLogic(string firstCondition, string secondCondition, ConditionalLogicTypes type)
+        {
+            LogicType = type;
+            FirstCondition = firstCondition;
+            SecondCondition = secondCondition;
+        }
+        public ConditionalLogic() { }
         public static ConditionalLogicTypes GetLogicType(string logic)
         {
             switch (logic)
@@ -38,10 +41,11 @@ namespace RAGE
                 throw new Exception("Undefined conditional logic type");
             }
         }
+
         public static ConditionalLogic Parse(string line)
         {
             ConditionalLogic logic = new ConditionalLogic();
-            Regex regex = new Regex(IF_LOGIC_REGEX);
+            Regex regex = new Regex(Utilities.IF_LOGIC_REGEX);
             List<string> matches;
             if (regex.IsMatch(line))
             {
@@ -51,7 +55,7 @@ namespace RAGE
                 logic.SecondCondition = matches[2];
                 return logic;
             }
-            regex = new Regex(IF_NOT_LOGIC_REGEX);
+            regex = new Regex(Utilities.IF_NOT_LOGIC_REGEX);
             if (regex.IsMatch(line))
             {
                 matches = regex.Matches(line).GetRegexGroups();
@@ -60,7 +64,7 @@ namespace RAGE
                 logic.SecondCondition = null;
                 return logic;
             }
-            regex = new Regex(IF_TRUE_LOGIC_REGEX);
+            regex = new Regex(Utilities.IF_TRUE_LOGIC_REGEX);
             if (regex.IsMatch(line))
             {
                 matches = regex.Matches(line).GetRegexGroups();

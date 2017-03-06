@@ -1,4 +1,4 @@
-//compiled using RAGE-C by Tustin
+//Compiled using RAGE-C by Tustin
 :__script__entry
 Function 0 2 0
 Call @main

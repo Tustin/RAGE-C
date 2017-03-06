@@ -15,15 +15,31 @@ namespace RAGE
         public bool HasReturnValue { get; set; }
         public int frameCount = 2;
         public List<Conditional> Conditionals = new List<Conditional>();
+        public List<ControlLoop> Loops = new List<ControlLoop>();
+
+        public Function()
+        {
+            this.Code = new List<string>();
+        }
 
         public bool AreThereAnyUnclosedLogicBlocks()
         {
-            return Conditionals.Where(a => a.CodeEndLine == null).Count() > 0;
+            return Conditionals.Any(a => a.CodeEndLine == null);
         }
+
         public int GetIndexOfLastUnclosedLogicBlock()
         {
             return Conditionals.FindLastIndex(a => a.CodeEndLine == null);
         }
 
+        public bool AreThereAnyUnclosedLoopBlocks()
+        {
+            return Loops.Any(a => a.CodeEndLine == null);
+        }
+
+        public int GetIndexOfLastUnclosedLoopBlock()
+        {
+            return Loops.FindLastIndex(a => a.CodeEndLine == null);
+        }
     }
 }

@@ -1,6 +1,9 @@
 void main () {
     int id = player_id();
     int hash = get_hash_key("adder1");
+    for (int i = 0; i < 10; i++) {
+
+    }
     if (hash == 0xB779A091) {
         if (id > 0) {
             if(5 == 4) {

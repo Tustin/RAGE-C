@@ -7,23 +7,9 @@ using System.Text.RegularExpressions;
 //Tustin
 namespace RAGE
 {
-    class Parser
+    public static class Parser
     {
-        private readonly StreamReader sourceFile = null;
-
-        private List<string> dataTypes = new List<string>() { "void", "int", "bool", "string" };
-
-        public Parser(StreamReader fileStream)
-        {
-            this.sourceFile = fileStream;
-        }
-        private void ResetStream()
-        {
-            sourceFile.DiscardBufferedData();
-            sourceFile.BaseStream.Seek(0, SeekOrigin.Begin);
-        }
-
-        public List<string> GenerateEntryPoint(bool networkScript = false)
+        public static List<string> GenerateEntryPoint(bool networkScript = false)
         {
             List<string> code = new List<string>();
             code.Add(":__script__entry");
@@ -38,19 +24,21 @@ namespace RAGE
             return code;
         }
 
-        public Function GetFunctionContents(string functionName)
+        public static Function GetFunctionContents(string functionName)
         {
-            Function f = new Function();
-            f.Code = new List<string>();
-            string line;
+            Function function = new Function();
+
             bool foundFunction = false;
             bool inFunctionBlock = false;
             bool inLogicBlock = false;
+            bool inLoopBlock = false;
+
             int conditionalCount = 0;
-            ResetStream();
-            while ((line = sourceFile.ReadLine()) != null)
+            int loopCount = 0;
+
+            foreach (string code in Core.RawScriptCode)
             {
-                line = line.Trim();
+                string line = code.Trim();
                 List<string> pieces = line.ExplodeAndClean(' ');
                 if (!line.Contains(functionName) && !foundFunction)
                 {
@@ -61,9 +49,9 @@ namespace RAGE
                     //found it, make sure it's a function
                     if (line.IsFunction())
                     {
-                        var matches = line.GetFunctionInfo();
-                        f.ReturnType = matches[0];
-                        f.Name = matches[1];
+                        FunctionDeclaration info = line.GetFunctionInfo();
+                        function.ReturnType = info.ReturnType;
+                        function.Name = info.Name;
                         foundFunction = true;
                     }
                 }
@@ -85,18 +73,18 @@ namespace RAGE
                     List<string> elements = line.ExplodeAndClean(' ');
                     //makes it so you can either put the { on the same line as the if or on the line after
                     //only assumes that the { actually exists so if it doesn't, the code will be fucked up
-                    int startPosition = f.Code.Count + 1;
+                    int startPosition = function.Code.Count + 1;
                     if (!line.Contains("{"))
                     {
-                        startPosition = f.Code.Count + 2;
+                        startPosition = function.Code.Count + 2;
                     }
-                    Conditional conditional = new Conditional(ConditionalTypes.JustIf, startPosition, null);
+                    Conditional conditional = new Conditional(ConditionalTypes.If, startPosition, null);
                     conditional.Index = conditionalCount++;
-                    conditional.Function = f;
+                    conditional.Function = function;
                     //lets see if this conditional is nested
-                    if (f.Conditionals.AreThereAnyParentConditionals(conditional) && f.AreThereAnyUnclosedLogicBlocks())
+                    if (function.Conditionals.AreThereAnyParentConditionals(conditional) && function.AreThereAnyUnclosedLogicBlocks())
                     {
-                        Conditional lastConditional = f.Conditionals.GetLastConditional(conditional);
+                        Conditional lastConditional = function.Conditionals.GetLastConditional(conditional);
                         //since the last one isnt closed, we can assume its the parent of this one
                         if (lastConditional.CodeEndLine == null)
                         {
@@ -104,90 +92,138 @@ namespace RAGE
                         }
                         else
                         {
-                            Conditional lastParent = f.Conditionals.GetLastParentConditional();
+                            Conditional lastParent = function.Conditionals.GetLastParentConditional();
                             conditional.Parent = lastParent;
                         }
                     }
 
                     conditional.Logic = ConditionalLogic.Parse(line);
 
-                    f.Conditionals.Add(conditional);
+                    function.Conditionals.Add(conditional);
                     inLogicBlock = true;
-                    f.Code.Add(line);
+                    function.Code.Add(line);
+                    continue;
+                }
+                //we found the function, are currently in it but we found an opening bracket
+                //we can assume this is a control loop block
+                if (foundFunction && foundKeyword && (keyword == "for" || keyword == "while") && inFunctionBlock)
+                {
+                    ControlLoop loop = new ControlLoop();
+                    loop.Function = function;
+                    int startPosition = function.Code.Count + 1;
+                    if (!line.Contains("{"))
+                    {
+                        startPosition = function.Code.Count + 2;
+                    }
+                    loop.CodeStartLine = startPosition;
+                    loop.CodeEndLine = null;
+                    loop.Index = loopCount++;
+                    if (function.Loops.AreThereAnyParentLoops(loop) && function.AreThereAnyUnclosedLoopBlocks())
+                    {
+                        ControlLoop lastLoop = function.Loops.GetLastLoop(loop);
+                        //since the last one isnt closed, we can assume its the parent of this one
+                        if (lastLoop.CodeEndLine == null)
+                        {
+                            loop.Parent = lastLoop;
+                        }
+                        else
+                        {
+                            ControlLoop lastParent = function.Loops.GetLastParentLoop();
+                            loop.Parent = lastParent;
+                        }
+                    }
+                    loop.Type = ControlLoop.GetType(line);
+                    loop.Logic = loop.ParseLogic(line);
+                    function.Loops.Add(loop);
+                    function.Code.Add(line);
+                    inLoopBlock = true;
                     continue;
                 }
 
-                //we found the function, are currently in it AND we're also in a logic block - we can assume this is an ending to a logic block        
-                if (foundFunction && line.Contains('}') && inFunctionBlock && f.AreThereAnyUnclosedLogicBlocks())
+                //we found the function, are currently in it AND we're also in a logic block 
+                //we can assume this is an ending to a logic block        
+                if (foundFunction && line.Contains('}') && inFunctionBlock && function.AreThereAnyUnclosedLogicBlocks())
                 {
-                    if (f.Conditionals.Count == 0)
+                    if (function.Conditionals.Count == 0)
                     {
                         throw new Exception("No conditionals have been found prior, how did you get this?");
                     }
-                    int lastUnclosedBlock = f.GetIndexOfLastUnclosedLogicBlock();
-                    f.Conditionals[lastUnclosedBlock].CodeEndLine = f.Code.Count - 1;
+                    int lastUnclosedBlock = function.GetIndexOfLastUnclosedLogicBlock();
+                    function.Conditionals[lastUnclosedBlock].CodeEndLine = function.Code.Count - 1;
                     inLogicBlock = false;
-                    f.Code.Add(line);
+                    function.Code.Add(line);
                     continue;
                 }
 
-                //we found the function, we're in the function code block and it contains an assignment
-                if (foundFunction && inFunctionBlock && line.Contains("=") && !line.Contains("=="))
+                //we found the function, are currently in it AND we're also in a logic block 
+                //we can assume this is an ending to a logic block        
+                if (foundFunction && line.Contains('}') && inFunctionBlock && function.AreThereAnyUnclosedLoopBlocks())
                 {
-                    List<string> elements = line.Split('=').ToList();
-                    List<string> assignmentPieces = elements[0].ExplodeAndClean(' ');
-                    assignmentPieces[0].ToLower();
-                    string type = assignmentPieces.Intersect(dataTypes).FirstOrDefault();
-                    if (type == null)
+                    if (function.Loops.Count == 0)
+                    {
+                        throw new Exception("No loops have been found prior, how did you get this?");
+                    }
+                    int lastUnclosedBlock = function.GetIndexOfLastUnclosedLoopBlock();
+                    function.Loops[lastUnclosedBlock].CodeEndLine = function.Code.Count - 1;
+                    inLoopBlock = false;
+                    function.Code.Add(line);
+                    continue;
+                }
+
+                //we found the function, we're in the function code block and it contains an assignment to a new variable
+                Regex newVarRegex = new Regex(@"(\w+) (\w+)\s?=\s?(.+)\;");
+                if (foundFunction && inFunctionBlock && newVarRegex.IsMatch(line))
+                {
+                    List<string> matches = Utilities.GetRegexGroups(newVarRegex.Matches(line));
+                    if (!Core.IsTypeSupported(matches[0]))
                     {
                         throw new Exception("Type hasnt been defined yet");
                     }
-                    f.LocalVariables.Add(new Variable()
+                    function.LocalVariables.Add(new Variable()
                     {
-                        Value = assignmentPieces[1],
-                        ValueType = type,
-                        FrameId = f.frameCount++
+                        Value = matches[1],
+                        ValueType = matches[0],
+                        FrameId = function.frameCount++,
+                        VariableValue = matches[2],
                     });
                 }
 
                 //we found the function, we're in the function code block and its not the end of the function
                 if (foundFunction && inFunctionBlock && !line.Contains('}'))
                 {
-                    f.Code.Add(line);
+                    function.Code.Add(line);
                     continue;
                 }
 
                 //we found the function, we're in the function code block and we're not in a logic block but we found a closing curling bracket - we can assume its the end of the function
-                if (foundFunction && inFunctionBlock && line.Contains('}') && !inLogicBlock)
+                if (foundFunction && inFunctionBlock && line.Contains('}') && !inLogicBlock && !inLoopBlock)
                 {
                     inFunctionBlock = false;
-                    return f;
+                    return function;
                 }
             }
             return null;
         }
 
-        public List<Function> GetAllFunctions()
+        public static List<Function> GetAllFunctions()
         {
             List<Function> scriptFunctions = new List<Function>();
-            string line;
-            ResetStream();
-            while ((line = sourceFile.ReadLine()) != null)
+            foreach (string line in Core.RawScriptCode)
             {
                 if (line.IsFunction())
                 {
-                    List<string> functionInfo = line.GetFunctionInfo();
-                    if (!dataTypes.Any(a => a == functionInfo[0]))
+                    FunctionDeclaration functionInfo = line.GetFunctionInfo();
+                    if (!Core.IsTypeSupported(functionInfo.ReturnType))
                     {
-                        throw new Exception($"Return type for function '{functionInfo[1]}' not supported");
+                        throw new Exception($"Return type for function '{functionInfo.Name}' not supported");
                     }
-                    scriptFunctions.Add(GetFunctionContents(functionInfo[1]));
+                    scriptFunctions.Add(GetFunctionContents(functionInfo.Name));
                 }
             }
             return scriptFunctions;
         }
 
-        public List<string> GenerateASMFunction(Function function)
+        public static List<string> GenerateASMFunction(Function function)
         {
             List<string> asmCode = new List<string>();
             asmCode.Add(":" + function.Name);
@@ -198,6 +234,7 @@ namespace RAGE
             Dictionary<string, List<string>> asmConditionals = organizedConditionals.Where(a => a.Key != null).ToDictionary(a => a.Key, a => new List<string>());
             asmFunction.PopulateBlocks(organizedConditionals.Keys.ToList());
             int conditionalsHit = 0;
+            int loopsHit = 0;
             foreach (string line in function.Code)
             {
                 List<string> linePieces = line.ExplodeAndClean(' ');
@@ -282,6 +319,19 @@ namespace RAGE
                     }
                     conditionalsHit++;
                 }
+                else if (keyword == "for" || keyword == "while")
+                {
+                    ControlLoop thisLoop = function.Loops[loopsHit];
+                    string label;
+                    if (thisLoop.Parent != null)
+                    {
+                        label = $"{function.Name}_nested_{thisLoop.Parent.Index}_for_loop_{thisLoop.Index}";
+                    }
+                    else
+                    {
+                        label = $"{function.Name}_for_loop_{thisLoop.Index}";
+                    }
+                }
                 else if (line.IsAssignment() != AssignmentTypes.None)
                 {
                     List<string> instructions = GenerateAssignmentInstructions(function, line);
@@ -310,7 +360,7 @@ namespace RAGE
         }
 
         //creates a CallNative instruction
-        public List<string> GenerateNativeCall(Function function, string code)
+        public static List<string> GenerateNativeCall(Function function, string code)
         {
             code = code.Trim();
             List<string> nativeCall = new List<string>();
@@ -383,7 +433,7 @@ namespace RAGE
             }
         }
 
-        public List<string> GenerateAssignmentInstructions(Function function, string line)
+        public static List<string> GenerateAssignmentInstructions(Function function, string line)
         {
             List<string> final = new List<string>();
 
@@ -399,7 +449,7 @@ namespace RAGE
             return final;
         }
 
-        public Dictionary<string, List<string>> OrganizeConditionals(Function function)
+        public static Dictionary<string, List<string>> OrganizeConditionals(Function function)
         {
             Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
 
@@ -419,7 +469,7 @@ namespace RAGE
                 //see if this conditional is a nested one
                 if (conditional.Parent == null)
                 {
-                    if (function.Conditionals.AreThereAnyParentsAfterThisParent(conditional))
+                    if (function.Conditionals.AreThereAnyParentConditionalsAfterThisParent(conditional))
                     {
                         Conditional nextParent = function.Conditionals.GetNextParentConditional(conditional);
                         int index = (int)conditional.CodeEndLine + 1;
@@ -472,5 +522,76 @@ namespace RAGE
             }
             return result;
         }
+
+        //public Dictionary<string, List<string>> OrganizeLoops(Function function)
+        //{
+        //    Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
+
+        //    foreach (ControlLoop loop in function.Loops)
+        //    {
+        //        string loopLabel;
+        //        if (loop.Parent != null)
+        //        {
+        //            loopLabel = $"{function.Name}_nested_{loop.Parent.Index}_for_loop_{loop.Index}";
+        //        }
+        //        else
+        //        {
+        //            loopLabel = $"{function.Name}_for_loop_{loop.Index}";
+        //        }
+        //        List<string> logicCode = function.Code.GetRange(loop.CodeStartLine, ((int)loop.CodeEndLine - loop.CodeStartLine) + 1);
+
+        //        if (loop.Parent == null)
+        //        {
+        //            if (function.Loops.AreThereAnyParentLoopsAfterThisParent(loop))
+        //            {
+        //                ControlLoop nextParent = function.Loops.GetNextParentLoop(loop);
+        //                int index = (int)loop.CodeEndLine + 1;
+        //                int count = ((int)nextParent.CodeEndLine + 1) - ((int)loop.CodeEndLine + 1);
+        //                //result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+        //            }
+        //            else
+        //            {
+        //                int index = (int)loop.CodeEndLine + 1;
+        //                int count = (function.Code.Count) - ((int)loop.CodeEndLine + 1);
+        //                //result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+        //            }
+        //        }
+        //        else
+        //        {
+        //            ControlLoop nextLoop = function.Conditionals.GetNextNonParentConditional(conditional);
+        //            if (function.Conditionals.DoesConditionalHaveChildren(conditional))
+        //            {
+        //                nextLoop = function.Conditionals.GetNextConditionalWithSameParent(conditional);
+        //                if (nextLoop == null)
+        //                {
+        //                    nextLoop = loop.Parent;
+        //                    int index = (int)loop.CodeEndLine + 1;
+        //                    int count = ((int)nextLoop.CodeEndLine + 1) - ((int)loop.CodeEndLine + 1);
+        //                    //result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+        //                }
+        //                else
+        //                {
+        //                    int index = (int)loop.CodeEndLine + 1;
+        //                    int count = ((int)nextLoop.CodeEndLine + 1) - ((int)loop.CodeEndLine + 1);
+        //                   // result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+        //                }
+
+        //            }
+        //            else if (nextLoop == null || nextLoop.Parent != loop.Parent)
+        //            {
+        //                int index = (int)loop.CodeEndLine + 1;
+        //                int count = ((int)loop.Parent.CodeEndLine + 1) - ((int)loop.CodeEndLine + 1);
+        //                //result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+        //            }
+        //            //might need to enable this in the future
+        //            //else if (nextConditional.Parent == conditional.Parent)
+        //            //{
+        //            //    int index = (int)conditional.CodeEndLine + 1;
+        //            //    int count = ((int)nextConditional.CodeEndLine + 1) - ((int)conditional.CodeEndLine + 1);
+        //            //    result.Add(conditionalEndLabel, function.Code.GetRange(index, count));
+        //            //}
+        //        }
+        //    }
+        //}
     }
 }

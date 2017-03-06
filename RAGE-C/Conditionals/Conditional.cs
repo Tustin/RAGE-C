@@ -6,13 +6,6 @@ using System.Threading.Tasks;
 
 namespace RAGE
 {
-    public enum ConditionalTypes
-    {
-        JustIf,
-        IfElse,
-        //todo if elseif elseif else, etc..
-        Switch,
-    }
     public class Conditional
     {
         //Type of conditional
