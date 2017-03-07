@@ -21,17 +21,17 @@ namespace RAGE
 
         public Function Function { get; set; }
 
-        public ControlLoop Parent { get; set; }
+        public ControlLoop LoopParent { get; set; }
+        
+        public Conditional ConditionalParent { get; set; }
 
         public static ControlLoopTypes GetType(string line)
         {
-            Regex regex = new Regex(Utilities.FOR_LOOP_REGEX);
-            if (regex.IsMatch(line))
+            if (Regex.IsMatch(line, Utilities.FOR_LOOP_REGEX))
             {
                 return ControlLoopTypes.For;
             }
-            regex = new Regex(Utilities.WHILE_LOOP_REGEX);
-            if (regex.IsMatch(line))
+            if (Regex.IsMatch(line, Utilities.WHILE_LOOP_REGEX))
             {
                 return ControlLoopTypes.While;
             }

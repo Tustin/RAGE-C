@@ -34,15 +34,15 @@ namespace RAGE
 
         public bool IsNested()
         {
-            return this.Parent != null;
+            return Parent != null;
         }
 
         public string ParseConditionalLogic(string condition)
         {
-            if (this.Function.LocalVariables.IsLocalVariable(condition))
+            if (Function.LocalVariables.IsLocalVariable(condition))
             {
                 Variable localVar = this.Function.LocalVariables.GetLocalVariable(condition);
-                return $"getF1 {localVar.FrameId}";
+                return FrameVar.Get(localVar);
             }
             else
             {
@@ -53,7 +53,7 @@ namespace RAGE
                     condition = int.Parse(condition, System.Globalization.NumberStyles.HexNumber).ToString();
                 }
 
-                return Parser.GeneratePushInstruction(condition);
+                return Push.Generate(condition);
             }
         }
     }

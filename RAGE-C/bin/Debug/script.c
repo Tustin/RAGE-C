@@ -2,7 +2,13 @@ void main () {
     int id = player_id();
     int hash = get_hash_key("adder1");
     for (int i = 0; i < 10; i++) {
-
+        string looped = "in loop body";
+        if (true) {
+            for (int j = 0; i < 11; j++) {
+                int loopThing = i;
+            }
+        }
+        bool something = false;
     }
     if (hash == 0xB779A091) {
         if (id > 0) {

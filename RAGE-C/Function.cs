@@ -12,6 +12,7 @@ namespace RAGE
         public string ReturnType { get; set; }
         public List<string> Code { get; set; }
         public List<Variable> LocalVariables = new List<Variable>();
+        public List<Argument> Arguments { get; set; }
         public bool HasReturnValue { get; set; }
         public int frameCount = 2;
         public List<Conditional> Conditionals = new List<Conditional>();
@@ -19,7 +20,7 @@ namespace RAGE
 
         public Function()
         {
-            this.Code = new List<string>();
+            Code = new List<string>();
         }
 
         public bool AreThereAnyUnclosedLogicBlocks()
@@ -35,6 +36,19 @@ namespace RAGE
         public bool AreThereAnyUnclosedLoopBlocks()
         {
             return Loops.Any(a => a.CodeEndLine == null);
+        }
+
+        public bool AreThereAnyUnclosedBlocks<T>()
+        {
+            Type type = typeof(T);
+            if (type == typeof(Conditional))
+            {
+                return Conditionals.Any(a => a.CodeEndLine == null);
+            }
+            else
+            {
+                return Loops.Any(a => a.CodeEndLine == null);
+            }
         }
 
         public int GetIndexOfLastUnclosedLoopBlock()

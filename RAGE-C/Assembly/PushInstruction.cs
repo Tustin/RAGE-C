@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace RAGE
 {
-    public static class PushInstruction
+    public static class Push
     {
         public static string Float(string value)
         {
@@ -72,6 +72,28 @@ namespace RAGE
             else
             {
                 throw new Exception("Assumed int, but unable to parse");
+            }
+        }
+
+        public static string Generate(string arg)
+        {
+            return Generate(arg, arg.GetDataType());
+        }
+
+        public static string Generate(string value, string valueType)
+        {
+            switch (valueType)
+            {
+                case "bool":
+                return Bool(value);
+                case "float":
+                return Float(value);
+                case "string":
+                return String(value);
+                case "int":
+                return Int(value);
+                default:
+                return null;
             }
         }
     }

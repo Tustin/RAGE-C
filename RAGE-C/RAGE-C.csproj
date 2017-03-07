@@ -47,6 +47,7 @@
     <Compile Include="Arithmetic.cs" />
     <Compile Include="ArithmeticTypes.cs" />
     <Compile Include="Assembly\AssemblyFunction.cs" />
+    <Compile Include="Assembly\FrameVar.cs" />
     <Compile Include="Assembly\NativeCall.cs" />
     <Compile Include="Assembly\PushInstruction.cs" />
     <Compile Include="Assignment.cs" />

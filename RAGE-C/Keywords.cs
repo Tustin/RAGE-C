@@ -22,12 +22,10 @@ namespace RAGE
         };
         public static bool IsMatch(string check, out string result)
         {
-            Regex regex;
             result = null;
             foreach (string keyword in Keywords)
             {
-                regex = new Regex($@"^{keyword}\s?\(?");
-                if (regex.IsMatch(check))
+                if (Regex.IsMatch(check, $@"^{keyword}\s?\(?"))
                 {
                     result = keyword;
                     return true;

@@ -8,5 +8,9 @@ namespace RAGE
         {
             return functions.Any(a => a.Name == name);
         }
+        public static Function GetFunction(this List<Function> functions, string name)
+        {
+            return functions.Where(a => a.Name == name).FirstOrDefault();
+        }
     }
 }

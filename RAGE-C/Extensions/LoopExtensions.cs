@@ -15,7 +15,7 @@ namespace RAGE
 
         public static bool AreThereAnyParentLoops(this List<ControlLoop> list, ControlLoop currentLoop)
         {
-            return list.Any(a => a.Parent == null && a != currentLoop);
+            return list.Any(a => a.LoopParent == null && a != currentLoop);
         }
         public static ControlLoop GetLastLoop(this List<ControlLoop> list, ControlLoop currentLoop)
         {
@@ -24,22 +24,27 @@ namespace RAGE
 
         public static ControlLoop GetLastParentLoop(this List<ControlLoop> list)
         {
-            return list.Where(a => a.Parent == null).FirstOrDefault();
+            return list.Where(a => a.LoopParent == null).FirstOrDefault();
         }
 
         public static ControlLoop GetLastParentLoop(this List<ControlLoop> list, ControlLoop excludedLoop)
         {
-            return list.Where(a => a.Parent == null && a != excludedLoop).FirstOrDefault();
+            return list.Where(a => a.LoopParent == null && a != excludedLoop).FirstOrDefault();
         }
 
         public static bool AreThereAnyParentLoopsAfterThisParent(this List<ControlLoop> list, ControlLoop currentLoop)
         {
-            return list.Any(a => a.Parent == null && a != currentLoop && a.Index > currentLoop.Index);
+            return list.Any(a => a.LoopParent == null && a != currentLoop && a.Index > currentLoop.Index);
         }
 
         public static ControlLoop GetNextParentLoop(this List<ControlLoop> list, ControlLoop omittedLoop)
         {
-            return list.Where(a => a.Parent == null && a != omittedLoop && a.Index > omittedLoop.Index).FirstOrDefault();
+            return list.Where(a => a.LoopParent == null && a != omittedLoop && a.Index > omittedLoop.Index).FirstOrDefault();
+        }
+
+        public static string FindLoopBlockForCode(this Dictionary<string, List<string>> dict, string line)
+        {
+            return dict.Where(a => a.Value.Any(b => b == line)).FirstOrDefault().Key;
         }
     }
 }

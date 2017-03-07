@@ -11,5 +11,15 @@ namespace RAGE
         public int FrameId { get; set; }
 
         public string VariableValue { get; set; }
+
+        public Variable() { }
+
+        public Variable(string variableType, string variableName, string variableValue, int frameId)
+        {
+            Value = variableName;
+            ValueType = variableType;
+            FrameId = frameId;
+            VariableValue = variableValue;
+        }
     }
 }

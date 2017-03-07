@@ -12,10 +12,8 @@ namespace RAGE
         public string Name { get; set; }
         public List<Argument> Arguments { get; set; }
 
-        public FunctionDeclaration()
-        {
+        public FunctionDeclaration() { }
 
-        }
         public FunctionDeclaration(string returnType, string name, string arguments)
         {
             ReturnType = returnType;
