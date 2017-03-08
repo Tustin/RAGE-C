@@ -98,11 +98,7 @@ namespace RAGE
                         else
                         {
                             Conditional lastParent = function.Conditionals.GetLastUnclosedParentConditional();
-                            if (lastParent == null)
-                            {
-                                throw new Exception("Tried getting a parent for nested loop, but failed");
-                            }
-                            conditional.Parent = lastParent;
+                            conditional.Parent = lastParent ?? throw new Exception("Tried getting a parent for nested loop, but failed");
                         }
                     }
 
@@ -166,7 +162,7 @@ namespace RAGE
                     switch (loop.Type)
                     {
                         case ControlLoopTypes.For:
-                        IfLogic logic = (IfLogic)loop.Logic;
+                        ForLogic logic = (ForLogic)loop.Logic;
                         function.LocalVariables.Add(new Variable("int", logic.IteratorVariable, logic.InitialIteratorValue.ToString(), function.frameCount++));
                         break;
                     }
@@ -295,19 +291,29 @@ namespace RAGE
 
         public static List<string> GenerateASMFunction(Function function)
         {
-            List<string> asmCode = new List<string>();
-            asmCode.Add(":" + function.Name);
-            asmCode.Add($"Function 0 {function.frameCount} 0");
+            List<string> asmCode = new List<string>
+            {
+                ":" + function.Name,
+                $"Function 0 {function.frameCount} 0"
+            };
+
             AssemblyFunction asmFunction = new AssemblyFunction(function.Name);
+
             Dictionary<string, List<string>> organizedBlocks = new Dictionary<string, List<string>>();
             Dictionary<string, List<string>> organizedConditionals = OrganizeConditionals(function);
             Dictionary<string, List<string>> organizedLoops = OrganizeLoops(function);
+
+            List<string> orderedLabels = new List<string>();
+
             organizedConditionals.ToList().ForEach(x => organizedBlocks.Add(x.Key, x.Value));
             organizedLoops.ToList().ForEach(x => organizedBlocks.Add(x.Key, x.Value));
+
             asmFunction.PopulateBlocks(organizedConditionals.Keys.ToList());
             asmFunction.PopulateBlocks(organizedLoops.Keys.ToList());
+
             int conditionalsHit = 0;
             int loopsHit = 0;
+
             foreach (string line in function.Code)
             {
                 List<string> linePieces = line.ExplodeAndClean(' ');
@@ -402,7 +408,7 @@ namespace RAGE
                     switch (thisLoop.Type)
                     {
                         case ControlLoopTypes.For:
-                        IfLogic logic = (IfLogic)thisLoop.Logic;
+                        ForLogic logic = (ForLogic)thisLoop.Logic;
                         //will clean this up later
                         asmFunction.LabelBlocks[labelBlock].Add(Push.Generate(logic.InitialIteratorValue.ToString()));
                         Variable localVar = function.LocalVariables.GetLocalVariable(logic.IteratorVariable);
@@ -419,14 +425,21 @@ namespace RAGE
                 }
             }
 
+            //remove the main function label (we already output it at the top)
             KeyValuePair<string, List<string>> mainBlock = asmFunction.LabelBlocks.Where(a => a.Key == function.Name).First();
             asmFunction.LabelBlocks.Remove(function.Name);
+
+            //add the main code to the assembly
             asmCode.AddRange(mainBlock.Value);
+
+            //order the blocks based on their index
             var orderedBlocks = asmFunction.LabelBlocks.OrderBlocks(function);
+
             foreach (KeyValuePair<string, List<string>> blocks in orderedBlocks)
             {
                 if (blocks.Key != function.Name)
                 {
+                    asmCode.Add("");
                     asmCode.Add($":{blocks.Key}");
                 }
 
@@ -488,7 +501,7 @@ namespace RAGE
             {
                 throw new Exception("Variable used for push instruction not found");
             }
-            return $"getF1 {localVar.FrameId}";
+            return FrameVar.Get(localVar);
         }
 
         public static List<string> GenerateAssignmentInstructions(Function function, string line)
@@ -587,7 +600,7 @@ namespace RAGE
             {
                 string label = $"{ function.Name }_for_loop_{ loop.Index}";
                 List<string> loopCode = function.Code.GetRange(loop.CodeStartLine, ((int)loop.CodeEndLine - loop.CodeStartLine) + 1);
-                result.Add(label, function.Code.GetRange(loop.CodeStartLine, ((int)loop.CodeEndLine - loop.CodeStartLine) + 1));
+                result.Add(label, loopCode);
             }
 
             return result;

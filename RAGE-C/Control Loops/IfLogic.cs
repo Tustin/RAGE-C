@@ -1,6 +1,6 @@
 ﻿namespace RAGE
 {
-    public class IfLogic : ControlLoopLogic
+    public class ForLogic : ControlLoopLogic
     {
         public string IteratorVariable { get; set; }
 

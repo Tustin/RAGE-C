@@ -53,8 +53,7 @@ namespace RAGE
 
         public static string Int(string value)
         {
-            int ival;
-            if (int.TryParse(value, out ival))
+            if (int.TryParse(value, out int ival))
             {
                 if (ival >= -1 && ival <= 7)
                 {
@@ -63,6 +62,14 @@ namespace RAGE
                 else if (ival <= 255 && ival >= -255)
                 {
                     return $"push1 {ival}";
+                }
+                else if (ival > 255 && ival <= Int16.MaxValue)
+                {
+                    return $"pushS {ival}";
+                }
+                else if (ival > Int16.MaxValue && ival <= 16777215)
+                {
+                    return $"pushI24 {ival}";
                 }
                 else
                 {
@@ -85,15 +92,15 @@ namespace RAGE
             switch (valueType)
             {
                 case "bool":
-                return Bool(value);
+                    return Bool(value);
                 case "float":
-                return Float(value);
+                    return Float(value);
                 case "string":
-                return String(value);
+                    return String(value);
                 case "int":
-                return Int(value);
+                    return Int(value);
                 default:
-                return null;
+                    return null;
             }
         }
     }

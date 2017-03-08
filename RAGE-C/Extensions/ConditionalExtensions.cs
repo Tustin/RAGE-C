@@ -91,13 +91,9 @@ namespace RAGE
             return int.Parse(pieces[pieces.IndexOf("nested") + 1]);
         }
 
-        public static int GetNormalBlockIndex(this string nestedConditional)
+        public static int GetNormalBlockIndex(this string conditional)
         {
-            List<string> pieces = nestedConditional.Split('_').ToList();
-            if (pieces.Contains("nested"))
-            {
-                throw new Exception("Label contains 'nested' but is not an actual nested conditional block. Please try a different function name.");
-            }
+            List<string> pieces = conditional.Split('_').ToList();
             return int.Parse(pieces[pieces.Count - 1]);
         }
     }

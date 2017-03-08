@@ -43,7 +43,7 @@ namespace RAGE
             switch (GetType(line))
             {
                 case ControlLoopTypes.For:
-                IfLogic ifLogic = new IfLogic();
+                ForLogic ifLogic = new ForLogic();
                 Regex regex = new Regex(Utilities.FOR_LOOP_REGEX);
                 List<string> matches = Utilities.GetRegexGroups(regex.Matches(line));
                 ifLogic.IteratorVariable = matches[0];
