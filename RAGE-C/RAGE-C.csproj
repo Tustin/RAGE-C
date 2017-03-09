@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{02D2DFDA-7CBD-4431-AB4C-9C07D0D01D4B}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>RAGE_C</RootNamespace>
+    <RootNamespace>RAGE</RootNamespace>
     <AssemblyName>RAGE-C</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -42,8 +42,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core.cs" />
+    <Compile Include="Keyword.cs" />
+    <Compile Include="Lexer.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Token.cs" />
+    <Compile Include="TokenType.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
