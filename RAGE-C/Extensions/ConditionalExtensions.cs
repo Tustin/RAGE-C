@@ -68,7 +68,13 @@ namespace RAGE
 
         public static string FindBlockForCode(this Dictionary<string, List<string>> dict, string line)
         {
-            return dict.Where(a => a.Value.Any(b => b == line)).FirstOrDefault().Key;
+            var results = dict.Where(a => a.Value.Any(b => b == line));
+            if (results.Count() > 1)
+            {
+                int gg = 1;
+            }
+            return results.LastOrDefault().Key;
+
         }
 
         public static int GetNestedBlockIndex(this string nestedConditional)

@@ -23,19 +23,17 @@ namespace RAGE
             Code = new List<string>();
         }
 
-        public bool AreThereAnyUnclosedLogicBlocks()
+        public int GetIndexOfLastUnclosedBlock<T>()
         {
-            return Conditionals.Any(a => a.CodeEndLine == null);
-        }
-
-        public int GetIndexOfLastUnclosedLogicBlock()
-        {
-            return Conditionals.FindLastIndex(a => a.CodeEndLine == null);
-        }
-
-        public bool AreThereAnyUnclosedLoopBlocks()
-        {
-            return Loops.Any(a => a.CodeEndLine == null);
+            Type type = typeof(T);
+            if (type == typeof(Conditional))
+            {
+                return Conditionals.FindLastIndex(a => a.CodeEndLine == null);
+            }
+            else
+            {
+                return Loops.FindLastIndex(a => a.CodeEndLine == null);
+            }
         }
 
         public bool AreThereAnyUnclosedBlocks<T>()
@@ -51,9 +49,32 @@ namespace RAGE
             }
         }
 
-        public int GetIndexOfLastUnclosedLoopBlock()
+
+        public T GetLast<T>()
         {
-            return Loops.FindLastIndex(a => a.CodeEndLine == null);
+            Type type = typeof(T);
+            if (type == typeof(Conditional))
+            {
+                return (T)Convert.ChangeType(Conditionals.Last(), typeof(T));
+            }
+            else
+            {
+                return (T)Convert.ChangeType(Loops.Last(), typeof(T));
+            }
         }
+        public T GetLastParent<T>()
+        {
+            Type type = typeof(T);
+            if (type == typeof(Conditional))
+            {
+                return (T)Convert.ChangeType(Conditionals.Where(a => a.Parent == null).FirstOrDefault(), typeof(T));
+            }
+            else
+            {
+                return (T)Convert.ChangeType(Loops.Where(a => a.LoopParent == null).FirstOrDefault(), typeof(T));
+            }
+        }
+
+
     }
 }

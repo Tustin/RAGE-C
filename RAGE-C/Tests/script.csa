@@ -18,42 +18,36 @@ setF1 4
 :main_nested_3_if_end_4
 
 :main_nested_2_if_end_3
+push1 50
+setF1 11
 
 :main_nested_1_if_end_2
+PushString "peee"
+setF1 12
+push1 12
+setF1 13
 
 :main_nested_1_if_end_5
+pushS 500
+setF1 14
 
 :main_if_end_0
-push_1
-JumpFalse @main_if_end_0
-push_0
-setF1 8
 getF1 3
 push -1216765807
-JumpNE @main_if_end_1
+JumpNE main_if_end_1
 getF1 2
 push_0
-JumpLT @main_nested_1_if_end_2
+JumpLT main_nested_1_if_end_2
 push_5
 push_4
-JumpNE @main_nested_2_if_end_3
+JumpNE main_nested_2_if_end_3
 push_0
 setF1 9
 getF1 3
 getF1 2
-JumpNE @main_nested_3_if_end_4
+JumpNE main_nested_3_if_end_4
 PushString "oh fuck ya"
 setF1 10
-push1 50
-setF1 11
-PushString "peee"
-setF1 12
-push_1
-JumpFalse @main_nested_1_if_end_5
-push1 12
-setF1 13
-pushS 500
-setF1 14
 
 :main_if_end_1
 PushString "ok"
@@ -62,7 +56,7 @@ pushS 2323
 setF1 16
 push_1
 push_0
-JumpNE @main_if_end_6
+JumpNE main_if_end_6
 push_0
 setF1 17
 

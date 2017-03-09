@@ -11,8 +11,7 @@ namespace RAGE
     {
         public static string Float(string value)
         {
-            float val;
-            if (float.TryParse(value, out val))
+            if (float.TryParse(value, out float val))
             {
                 if (val >= -1.0f && val <= 7.0f)
                 {
@@ -62,11 +61,11 @@ namespace RAGE
                 else if (ival <= 255 && ival >= -255)
                 {
                     return $"push1 {ival}";
-                }
+                } //short (16 bits)
                 else if (ival > 255 && ival <= Int16.MaxValue)
                 {
                     return $"pushS {ival}";
-                }
+                } //24 bits (why rockstar?)
                 else if (ival > Int16.MaxValue && ival <= 16777215)
                 {
                     return $"pushI24 {ival}";

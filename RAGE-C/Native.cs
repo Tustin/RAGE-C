@@ -14,7 +14,8 @@ namespace RAGE
 
         public static void PopulateNativeTable()
         {
-            List<string> natives = File.ReadAllLines("natives.dat").ToList();
+            List<string> natives = File.ReadAllLines(Core.PROJECT_ROOT + "\\Resources\\natives.dat").ToList();
+
             foreach (string line in natives)
             {
                 List<string> items = line.Split(':').ToList();

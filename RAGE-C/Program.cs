@@ -9,7 +9,10 @@ namespace RAGE
     {
         static void Main(string[] args)
         {
-            Core.RawScriptCode = File.ReadAllLines("script.c").ToList();
+            //Get the folder with tests
+            string testsFolder = Core.PROJECT_ROOT + "\\Tests\\";
+
+            Core.RawScriptCode = File.ReadAllLines(testsFolder + "script.c").ToList();
 
             Native.PopulateNativeTable();
 
@@ -38,7 +41,7 @@ namespace RAGE
                 Core.AssemblyCode.AddRange(code);
             }
 
-            File.WriteAllLines("script.csa", Core.AssemblyCode.ToArray());
+            File.WriteAllLines(testsFolder + "script.csa", Core.AssemblyCode.ToArray());
 
             Logger.Log("Compilation finished!");
         }

@@ -81,12 +81,14 @@ namespace RAGE
                         startPosition = function.Code.Count + 2;
                     }
 
-                    Conditional conditional = new Conditional(ConditionalTypes.If, startPosition, null);
-                    conditional.Index = conditionalCount++;
-                    conditional.Function = function;
+                    Conditional conditional = new Conditional(ConditionalTypes.If, startPosition, null)
+                    {
+                        Index = conditionalCount++,
+                        Function = function
+                    };
 
                     //lets see if this conditional is nested
-                    if (function.Conditionals.AreThereAnyParentConditionals(conditional) && function.AreThereAnyUnclosedLogicBlocks())
+                    if (function.Conditionals.AreThereAnyParentConditionals(conditional) && function.AreThereAnyUnclosedBlocks<Conditional>())
                     {
                         Conditional lastConditional = function.Conditionals.GetLastConditional(conditional);
 
@@ -98,7 +100,7 @@ namespace RAGE
                         else
                         {
                             Conditional lastParent = function.Conditionals.GetLastUnclosedParentConditional();
-                            conditional.Parent = lastParent ?? throw new Exception("Tried getting a parent for nested loop, but failed");
+                            conditional.Parent = lastParent ?? throw new Exception("Tried getting a parent for nested conditional, but failed");
                         }
                     }
 
@@ -137,14 +139,14 @@ namespace RAGE
                         }
                         else
                         {
-                            ControlLoop lastParent = function.Loops.GetLastParentLoop();
+                            ControlLoop lastParent = function.GetLastParent<ControlLoop>();
                             loop.LoopParent = lastParent;
                         }
                     }
                     //do the same as above but if the loop is in a conditional block
                     if (function.AreThereAnyUnclosedBlocks<Conditional>())
                     {
-                        Conditional lastConditional = function.Conditionals.GetLastConditional();
+                        Conditional lastConditional = function.GetLast<Conditional>();
 
                         //since the last one isnt closed, we can assume its the parent of this one
                         if (lastConditional.CodeEndLine == null)
@@ -153,7 +155,7 @@ namespace RAGE
                         }
                         else
                         {
-                            Conditional lastParent = function.Conditionals.GetLastParentConditional();
+                            Conditional lastParent = function.GetLastParent<Conditional>();
                             loop.ConditionalParent = lastParent;
                         }
                     }
@@ -162,20 +164,19 @@ namespace RAGE
                     switch (loop.Type)
                     {
                         case ControlLoopTypes.For:
-                        ForLogic logic = (ForLogic)loop.Logic;
-                        function.LocalVariables.Add(new Variable("int", logic.IteratorVariable, logic.InitialIteratorValue.ToString(), function.frameCount++));
-                        break;
+                            ForLogic logic = (ForLogic)loop.Logic;
+                            function.LocalVariables.Add(new Variable("int", logic.IteratorVariable, logic.InitialIteratorValue.ToString(), function.frameCount++));
+                            break;
                     }
 
                     function.Loops.Add(loop);
                     function.Code.Add(line);
-                    inLoopBlock = true;
+                    //inLoopBlock = true;
                     continue;
                 }
 
-                //we found the function, are currently in it AND we're also in a logic block 
                 //we can assume this is an ending to a logic block        
-                if (foundFunction && line.Contains('}') && inFunctionBlock 
+                if (foundFunction && line.Contains('}') && inFunctionBlock
                     && function.AreThereAnyUnclosedBlocks<Conditional>()
                     && !function.AreThereAnyUnclosedBlocks<ControlLoop>())
                 {
@@ -183,16 +184,15 @@ namespace RAGE
                     {
                         throw new Exception("No conditionals have been found prior, how did you get this?");
                     }
-                    int lastUnclosedBlock = function.GetIndexOfLastUnclosedLogicBlock();
+                    int lastUnclosedBlock = function.GetIndexOfLastUnclosedBlock<Conditional>();
                     function.Conditionals[lastUnclosedBlock].CodeEndLine = function.Code.Count - 1;
                     inLogicBlock = false;
                     function.Code.Add(line);
                     continue;
                 }
 
-                //we found the function, are currently in it AND we're also in a logic block 
-                //we can assume this is an ending to a logic block        
-                if (foundFunction && line.Contains('}') && inFunctionBlock 
+                //we can assume this is an ending to a loop block        
+                if (foundFunction && line.Contains('}') && inFunctionBlock
                     && function.AreThereAnyUnclosedBlocks<ControlLoop>()
                     && !function.AreThereAnyUnclosedBlocks<Conditional>())
                 {
@@ -200,7 +200,7 @@ namespace RAGE
                     {
                         throw new Exception("No loops have been found prior, how did you get this?");
                     }
-                    int lastUnclosedBlock = function.GetIndexOfLastUnclosedLoopBlock();
+                    int lastUnclosedBlock = function.GetIndexOfLastUnclosedBlock<ControlLoop>();
                     function.Loops[lastUnclosedBlock].CodeEndLine = function.Code.Count - 1;
                     inLoopBlock = false;
                     function.Code.Add(line);
@@ -208,14 +208,14 @@ namespace RAGE
                 }
 
                 //if theres an unclosed if inside an unclosed loop or vice-versa
-                if (foundFunction && line.Contains('}') && inFunctionBlock 
-                    && function.AreThereAnyUnclosedBlocks<ControlLoop>() 
+                if (foundFunction && line.Contains('}') && inFunctionBlock
+                    && function.AreThereAnyUnclosedBlocks<ControlLoop>()
                     && function.AreThereAnyUnclosedBlocks<Conditional>())
                 {
                     //lets do it dirty for now
-                    int lastUnclosedLogicIndex = function.GetIndexOfLastUnclosedLogicBlock();
+                    int lastUnclosedLogicIndex = function.GetIndexOfLastUnclosedBlock<Conditional>();
                     Conditional lastUnclosedConditional = function.Conditionals[lastUnclosedLogicIndex];
-                    int lastUnclosedLoopIndex = function.GetIndexOfLastUnclosedLoopBlock();
+                    int lastUnclosedLoopIndex = function.GetIndexOfLastUnclosedBlock<ControlLoop>();
                     ControlLoop lastUnclosedLoop = function.Loops[lastUnclosedLoopIndex];
 
                     int closestUnclosedBlock = Math.Max(lastUnclosedConditional.CodeStartLine, lastUnclosedLoop.CodeStartLine);
@@ -223,11 +223,13 @@ namespace RAGE
                     {
                         function.Conditionals[lastUnclosedLogicIndex].CodeEndLine = function.Code.Count - 1;
                         inLogicBlock = false;
-                    } else if (closestUnclosedBlock == lastUnclosedLoop.CodeStartLine)
+                    }
+                    else if (closestUnclosedBlock == lastUnclosedLoop.CodeStartLine)
                     {
                         function.Loops[lastUnclosedLoopIndex].CodeEndLine = function.Code.Count - 1;
                         inLoopBlock = false;
-                    } else
+                    }
+                    else
                     {
                         throw new Exception("Unable to find last unclosed block");
                     }
@@ -317,8 +319,10 @@ namespace RAGE
             foreach (string line in function.Code)
             {
                 List<string> linePieces = line.ExplodeAndClean(' ');
+
                 //find where this code goes
                 string labelBlock = organizedBlocks.FindBlockForCode(line);
+
                 //if code isnt in a conditional block, then just put it in the main function code
                 if (labelBlock == null)
                 {
@@ -363,13 +367,13 @@ namespace RAGE
                         }
                         if (thisConditional.Logic.LogicType == ConditionalLogicTypes.NotEqual)
                         {
-                            asmFunction.LabelBlocks[labelBlock].Add("Not");
+                            asmFunction.LabelBlocks[labelBlock].Add(Bitwise.Generate(BitwiseType.Not));
                         }
                         else if (thisConditional.Logic.LogicType != ConditionalLogicTypes.Equal)
                         {
                             throw new Exception("Trying to use short-hand conditional logic on invalid logic type");
                         }
-                        asmFunction.LabelBlocks[labelBlock].Add($"JumpFalse @{label}");
+                        asmFunction.LabelBlocks[labelBlock].Add(Jump.Generate(JumpType.False, label));
                     }
                     else
                     {
@@ -378,23 +382,23 @@ namespace RAGE
                         {
                             //each one will equate to the inverse of it so it jumps properly
                             case ConditionalLogicTypes.Equal:
-                            asmFunction.LabelBlocks[labelBlock].Add($"JumpNE @{label}");
-                            break;
+                                asmFunction.LabelBlocks[labelBlock].Add(Jump.Generate(JumpType.NotEqual, label));
+                                break;
                             case ConditionalLogicTypes.NotEqual:
-                            asmFunction.LabelBlocks[labelBlock].Add($"JumpEQ @{label}");
-                            break;
+                                asmFunction.LabelBlocks[labelBlock].Add(Jump.Generate(JumpType.Equal, label));
+                                break;
                             case ConditionalLogicTypes.LessThan:
-                            asmFunction.LabelBlocks[labelBlock].Add($"JumpGT @{label}");
-                            break;
+                                asmFunction.LabelBlocks[labelBlock].Add(Jump.Generate(JumpType.GreaterThan, label));
+                                break;
                             case ConditionalLogicTypes.LessThanEqual:
-                            asmFunction.LabelBlocks[labelBlock].Add($"JumpGE @{label}");
-                            break;
+                                asmFunction.LabelBlocks[labelBlock].Add(Jump.Generate(JumpType.GreaterThanEqual, label));
+                                break;
                             case ConditionalLogicTypes.GreaterThan:
-                            asmFunction.LabelBlocks[labelBlock].Add($"JumpLT @{label}");
-                            break;
+                                asmFunction.LabelBlocks[labelBlock].Add(Jump.Generate(JumpType.LessThan, label));
+                                break;
                             case ConditionalLogicTypes.GreaterThanEqual:
-                            asmFunction.LabelBlocks[labelBlock].Add($"JumpLE @{label}");
-                            break;
+                                asmFunction.LabelBlocks[labelBlock].Add(Jump.Generate(JumpType.LessThanEqual, label));
+                                break;
                         }
                     }
                     conditionalsHit++;
@@ -408,12 +412,12 @@ namespace RAGE
                     switch (thisLoop.Type)
                     {
                         case ControlLoopTypes.For:
-                        ForLogic logic = (ForLogic)thisLoop.Logic;
-                        //will clean this up later
-                        asmFunction.LabelBlocks[labelBlock].Add(Push.Generate(logic.InitialIteratorValue.ToString()));
-                        Variable localVar = function.LocalVariables.GetLocalVariable(logic.IteratorVariable);
-                        asmFunction.LabelBlocks[labelBlock].Add(FrameVar.Set(localVar));
-                        break;
+                            ForLogic logic = (ForLogic)thisLoop.Logic;
+                            //will clean this up later
+                            asmFunction.LabelBlocks[labelBlock].Add(Push.Generate(logic.InitialIteratorValue.ToString()));
+                            Variable localVar = function.LocalVariables.GetLocalVariable(logic.IteratorVariable);
+                            asmFunction.LabelBlocks[labelBlock].Add(FrameVar.Set(localVar));
+                            break;
                     }
                     asmFunction.LabelBlocks[labelBlock].Add($":{label}");
                     loopsHit++;
