@@ -4,3 +4,9 @@ Call @main
 Return 0 0
 
 :main
+CallNative player_id 0 1
+PushString "adder1"
+CallNative get_hash_key 1 1
+Return 0 0
+:booger
+Return 0 0

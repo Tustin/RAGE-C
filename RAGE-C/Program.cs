@@ -39,6 +39,9 @@ namespace RAGE
 
             ParseTreeWalker.Default.Walk(listener, parser.compilationUnit());
 
+            Logger.Log("Finished walking parse tree");
+
+            Logger.Log("Writing assembly to output file...");
             //CBaseListener c = new CBaseListener();
 
             List<string> final = new List<string>();
@@ -50,6 +53,8 @@ namespace RAGE
             }
 
             File.WriteAllLines(Core.PROJECT_ROOT + "\\Tests\\script.csa",final.ToArray());
+
+            Logger.Log("Successfully saved assembly!");
         }
     }
 }

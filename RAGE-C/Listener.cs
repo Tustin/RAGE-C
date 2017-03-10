@@ -39,9 +39,10 @@ namespace RAGE
         //End of a function
         public override void ExitFunctionDefinition([NotNull] CParser.FunctionDefinitionContext context)
         {
-            base.ExitFunctionDefinition(context);
+            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Return.Generate());
+            Logger.Log($"Leaving function '{currentFunction.Name}'");
+            currentFunction = null;
         }
-
 
         //New variables
         public override void EnterDeclarationSpecifier([NotNull] CParser.DeclarationSpecifierContext context)
@@ -81,68 +82,77 @@ namespace RAGE
             string value = context.GetText();
             value = value.Replace(";", "");
 
-            //Do type checking
-            if (value == "true" || value == "false")
+            VariableValueType valueType = Utilities.GetType(currentFunction, value);
+
+            currentVariable.ValueType = valueType;
+            currentVariable.Value.Value = value;
+
+            //Try to parse the arguments
+            if (valueType == VariableValueType.NativeCall || valueType == VariableValueType.LocalCall)
             {
-                currentVariable.ValueType = VariableValueType.Bool;
-                currentVariable.Value.Value = value;
-            }
-            else if (Regex.IsMatch(value, "^[0-9]+$"))
-            {
-                currentVariable.ValueType = VariableValueType.Int;
-                currentVariable.Value.Value = value;
-            }
-            else if (Regex.IsMatch(value, "^[0-9.]+$"))
-            {
-                currentVariable.ValueType = VariableValueType.Float;
-                currentVariable.Value.Value = value;
-            }
-            else if (Regex.IsMatch(value, "^\".+[^\"\']\"$"))
-            {
-                currentVariable.ValueType = VariableValueType.String;
-                currentVariable.Value.Value = value;
-            }
-            else if (Regex.IsMatch(value, "^\\w+\\("))
-            {
+                //Clean up the function call
                 string stripped = Regex.Replace(value, "\\(.*\\)", "");
-                if (Native.IsFunctionANative(stripped))
-                {
-                    currentVariable.ValueType = VariableValueType.NativeCall;
-                    currentVariable.Value.Value = stripped;
-                }
-                else if (Core.Functions.ContainFunction(stripped))
-                {
-                    currentVariable.ValueType = VariableValueType.LocalCall;
-                    currentVariable.Value.Value = stripped;
-                }
-            }
-            else if (Regex.IsMatch(value, "^\\w+"))
-            {
-                if (currentFunction.Variables.ContainVariable(value))
-                {
-                    currentVariable.ValueType = VariableValueType.Variable;
-                    currentVariable.Value.Value = value;
-                }
-            }
-            else
-            {
-                throw new Exception($"Unable to parse value for variable '{currentVariable.Name}'");
+                currentVariable.Value.Value = stripped;
+                Regex reg = new Regex(@"\(([a-zA-Z0-9,\s""']*)\)");
+                List<string> matches = reg.Matches(value).GetRegexGroups();
+                if (matches.Count == 1 && matches[0] == "") return;
+                string arguments = matches[0];
+                currentVariable.Value.Arguments = Utilities.GetListOfArguments(arguments);
             }
         }
 
+        //Parse variable function call arguments and generate push instructions
+        public override void ExitInitializer([NotNull] CParser.InitializerContext context)
+        {
+            //Generate list of arguments
+            if (currentVariable.ValueType == VariableValueType.LocalCall
+                || currentVariable.ValueType == VariableValueType.NativeCall)
+            {
+                foreach (Argument arg in currentVariable.Value.Arguments)
+                {
+                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(arg.Value, arg.Type));
+                }
 
-        //If, else, switch
+                //Generate either local call or native call
+                switch (currentVariable.ValueType)
+                {
+                    case VariableValueType.LocalCall:
+                        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Local(currentVariable.Value.Value));
+                        break;
+                    case VariableValueType.NativeCall:
+                        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Native(currentVariable.Value.Value,
+                            currentVariable.Value.Arguments.Count, true));
+                        break;
+                }
+            }
+        }
+
+        //Entering if, else, switch
         public override void EnterSelectionStatement([NotNull] CParser.SelectionStatementContext context)
         {
             string gg = context.GetText();
             base.EnterSelectionStatement(context);
         }
 
-        //For, while
+        //Exiting if, else, switch
+        public override void ExitSelectionStatement([NotNull] CParser.SelectionStatementContext context)
+        {
+            string ff = context.GetText();
+            base.ExitSelectionStatement(context);
+        }
+
+        //Entering for, while
         public override void EnterIterationStatement([NotNull] CParser.IterationStatementContext context)
         {
             string test = context.GetText();
             base.EnterIterationStatement(context);
+        }
+
+        //Exiting for, while
+        public override void ExitIterationStatement([NotNull] CParser.IterationStatementContext context)
+        {
+            string code = context.GetText();
+            base.ExitIterationStatement(context);
         }
 
         public override void EnterAssignmentOperator([NotNull] CParser.AssignmentOperatorContext context)

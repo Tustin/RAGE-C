@@ -33,3 +33,7 @@ void main() {
     }
     string baba = "should be in last block";
 }
+
+int booger() {
+    bool something = true;
+}

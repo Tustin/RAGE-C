@@ -8,7 +8,7 @@ namespace RAGE
 {
     public class Argument
     {
-        public string Type { get; set; }
+        public VariableValueType Type { get; set; }
         public string Value { get; set; }
     }
 }

@@ -51,6 +51,10 @@
     <Compile Include="Argument.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="Native.cs" />
+    <Compile Include="Opcodes\Call.cs" />
+    <Compile Include="Opcodes\FrameVar.cs" />
+    <Compile Include="Opcodes\Push.cs" />
+    <Compile Include="Opcodes\Return.cs" />
     <Compile Include="Parser\CBaseListener.cs" />
     <Compile Include="Parser\CLexer.cs" />
     <Compile Include="Parser\CListener.cs" />
