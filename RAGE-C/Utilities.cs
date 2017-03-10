@@ -14,5 +14,21 @@ namespace RAGE
             List<string> pieces = line.Split(delimiter).ToList();
             return pieces;
         }
+
+        public static bool ContainFunction(this List<Function> functions, string name)
+        {
+            return functions.Any(a => a.Name == name);
+        }
+
+        public static Function GetFunction(this List<Function> functions, string name)
+        {
+            return functions.Where(a => a.Name == name).FirstOrDefault();
+        }
+
+        public static bool ContainVariable(this List<Variable> variables, string name)
+        {
+            return variables.Any(a => a.Name == name);
+        }
+
     }
 }

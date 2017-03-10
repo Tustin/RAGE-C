@@ -1,4 +1,4 @@
-void main () {
+void main() {
     int id = player_id();
     int hash = get_hash_key("adder1");
     for (int i = 0; i < 10; i++) {
@@ -32,9 +32,4 @@ void main () {
         bool cool = false;
     }
     string baba = "should be in last block";
-}
-
-
-int fuck(int poopy) {
-    
 }
