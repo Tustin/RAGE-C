@@ -1,0 +1,7 @@
+:__script__entry
+Function 0 2 0
+Call @main
+Return 0 0
+
+:main
+:fuck

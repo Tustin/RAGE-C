@@ -9,8 +9,9 @@ namespace RAGE
 
         public static void Log(string message)
         {
-            Console.WriteLine($"[{timer.Elapsed.TotalSeconds}] {message}");
+            Console.WriteLine($"[{timer.Elapsed.ToString("mm\\:ss\\.ff")}] {message}");
         }
+
         public static void LogError(string message)
         {
             Console.Write($"[{timer.Elapsed.TotalSeconds}] ");

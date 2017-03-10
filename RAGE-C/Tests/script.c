@@ -33,3 +33,8 @@ void main () {
     }
     string baba = "should be in last block";
 }
+
+
+int fuck(int poopy) {
+    
+}
