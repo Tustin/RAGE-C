@@ -1,0 +1,12 @@
+:__script_entry__
+Function 0 2 0
+Call @main
+Return 0 0
+
+:main
+Function 0 3 0
+:if_block_begin_1
+push_0
+setF1 2
+if_block_end_1
+Return 0 0

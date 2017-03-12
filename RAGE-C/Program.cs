@@ -12,10 +12,9 @@ namespace RAGE
     {
         static void Main(string[] args)
         {
-
             Native.PopulateNativeTable();
 
-            AntlrFileStream fs = new AntlrFileStream(Core.PROJECT_ROOT + "\\Tests\\script.c");
+            AntlrFileStream fs = new AntlrFileStream(Core.PROJECT_ROOT + "\\Tests\\test.c");
 
             Core.AssemblyCode = new Dictionary<string, List<string>>();
 
@@ -33,7 +32,7 @@ namespace RAGE
 
             ParseTreeWalker walker = new ParseTreeWalker();
 
-            MyListener listener = new MyListener();
+            RAGEListener listener = new RAGEListener();
 
             Logger.Log("Starting to walk parse tree...");
 
@@ -52,7 +51,7 @@ namespace RAGE
                 final.AddRange(item.Value);
             }
 
-            File.WriteAllLines(Core.PROJECT_ROOT + "\\Tests\\script.csa",final.ToArray());
+            File.WriteAllLines(Core.PROJECT_ROOT + "\\Tests\\test.csa",final.ToArray());
 
             Logger.Log("Successfully saved assembly!");
         }

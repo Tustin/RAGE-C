@@ -31,50 +31,55 @@ namespace RAGE
             return variables.Any(a => a.Name == name);
         }
 
+        public static Variable GetVariable(this List<Variable> variables, string name)
+        {
+            return variables.Where(a => a.Name == name).FirstOrDefault();
+        }
+
         public static KeyValuePair<string, List<string>> FindFunction(this Dictionary<string, List<string>> dictionary, string name)
         {
             return dictionary.Where(a => a.Key == name).FirstOrDefault();
         }
 
-        public static VariableValueType GetType(Function function, string value)
+        public static VariableTypes GetType(Function function, string value)
         {
             //Do type checking
             if (value == "true" || value == "false")
             {
-                return VariableValueType.Bool;
+                return VariableTypes.Bool;
             }
             else if (Regex.IsMatch(value, "^[0-9]+$"))
             {
-                return VariableValueType.Int;
+                return VariableTypes.Int;
             }
             else if (Regex.IsMatch(value, "^[0-9.]+$"))
             {
-                return VariableValueType.Float;
+                return VariableTypes.Float;
             }
             else if (Regex.IsMatch(value, "^\".+[^\"\']\"$"))
             {
-                return VariableValueType.String;
+                return VariableTypes.String;
             }
             else if (Regex.IsMatch(value, "^\\w+\\("))
             {
                 string stripped = Regex.Replace(value, "\\(.*\\)", "");
                 if (Native.IsFunctionANative(stripped))
                 {
-                    return VariableValueType.NativeCall;
+                    return VariableTypes.NativeCall;
                 }
                 else if (Core.Functions.ContainFunction(stripped))
                 {
-                    return VariableValueType.LocalCall;
+                    return VariableTypes.LocalCall;
                 }
 
             }
             else if (Regex.IsMatch(value, "^\\w+"))
             {
-                if (function == null) return VariableValueType.Variable;
+                if (function == null) return VariableTypes.Variable;
 
                 if (function.Variables.ContainVariable(value))
                 {
-                    return VariableValueType.Variable;
+                    return VariableTypes.Variable;
                 }
             }
             throw new Exception($"Unable to parse value '{value}'");

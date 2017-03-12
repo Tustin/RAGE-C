@@ -1,3 +1,7 @@
+int booger() {
+    bool something = true;
+}
+
 void main() {
     int id = player_id();
     int hash = get_hash_key("adder1");
@@ -12,7 +16,7 @@ void main() {
     }
     if (hash == 0xB779A091) {
         if (id > 0) {
-            if(5 == 4) {
+            if(5 * 4 == 20 || true == true) {
                 bool var = false;
                 if (hash == id) {
                     string farts = "oh fuck ya";
@@ -32,8 +36,4 @@ void main() {
         bool cool = false;
     }
     string baba = "should be in last block";
-}
-
-int booger() {
-    bool something = true;
 }

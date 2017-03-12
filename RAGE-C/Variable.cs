@@ -14,7 +14,7 @@ namespace RAGE
 
         public string Type { get; set; }
 
-        public VariableValueType ValueType { get; set; }
+        public VariableTypes ValueType { get; set; }
 
         public VariableValue Value { get; set; } 
 

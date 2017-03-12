@@ -16,7 +16,7 @@ namespace RAGE
         {
             get
             {
-                return Variables.Count + 2;
+                return Variables.Count + 1;
             }
         }
 

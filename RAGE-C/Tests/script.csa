@@ -1,12 +1,62 @@
-:__script__entry
+:__script_entry__
 Function 0 2 0
 Call @main
 Return 0 0
 
+:booger
+Function 0 3 0
+push_1
+setF1 2
+Return 0 0
 :main
+Function 0 19 0
 CallNative player_id 0 1
+setF1 2
 PushString "adder1"
 CallNative get_hash_key 1 1
-Return 0 0
-:booger
+setF1 3
+push_0
+setF1 4
+PushString "in loop body"
+setF1 5
+:if_block_begin_1
+push_0
+setF1 6
+getF1 4
+setF1 7
+if_block_end_1
+push_0
+setF1 8
+:if_block_begin_2
+:if_block_begin_3
+:if_block_begin_4
+push_0
+setF1 9
+:if_block_begin_5
+PushString "oh fuck ya"
+setF1 10
+if_block_end_5
+if_block_end_4
+push1 50
+setF1 11
+if_block_end_3
+PushString "peee"
+setF1 12
+:if_block_begin_6
+push1 12
+setF1 13
+if_block_end_6
+pushS 500
+setF1 14
+if_block_end_2
+PushString "ok"
+setF1 15
+pushS 2323
+setF1 16
+:if_block_begin_7
+push_0
+setF1 17
+if_block_end_7
+PushString "should be in last block"
+setF1 18
 Return 0 0
