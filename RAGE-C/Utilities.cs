@@ -41,48 +41,66 @@ namespace RAGE
             return dictionary.Where(a => a.Key == name).FirstOrDefault();
         }
 
-        public static VariableTypes GetType(Function function, string value)
+        public static VariableType GetType(Function function, string value)
         {
             //Do type checking
             if (value == "true" || value == "false")
             {
-                return VariableTypes.Bool;
+                return VariableType.Bool;
             }
             else if (Regex.IsMatch(value, "^[0-9]+$"))
             {
-                return VariableTypes.Int;
+                return VariableType.Int;
             }
             else if (Regex.IsMatch(value, "^[0-9.]+$"))
             {
-                return VariableTypes.Float;
+                return VariableType.Float;
             }
             else if (Regex.IsMatch(value, "^\".+[^\"\']\"$"))
             {
-                return VariableTypes.String;
+                return VariableType.String;
             }
             else if (Regex.IsMatch(value, "^\\w+\\("))
             {
                 string stripped = Regex.Replace(value, "\\(.*\\)", "");
                 if (Native.IsFunctionANative(stripped))
                 {
-                    return VariableTypes.NativeCall;
+                    return VariableType.NativeCall;
                 }
                 else if (Core.Functions.ContainFunction(stripped))
                 {
-                    return VariableTypes.LocalCall;
+                    return VariableType.LocalCall;
                 }
 
             }
             else if (Regex.IsMatch(value, "^\\w+"))
             {
-                if (function == null) return VariableTypes.Variable;
+                if (function == null) return VariableType.Variable;
 
                 if (function.Variables.ContainVariable(value))
                 {
-                    return VariableTypes.Variable;
+                    return VariableType.Variable;
                 }
             }
             throw new Exception($"Unable to parse value '{value}'");
+        }
+
+        public static VariableType GetTypeFromDeclaration(string type)
+        {
+            switch (type)
+            {
+                case "bool":
+                    return VariableType.Bool;
+                case "string":
+                    return VariableType.String;
+                case "float":
+                    return VariableType.Float;
+                case "int":
+                    return VariableType.Int;
+                //@TODO: Add GTA related types (Ped, Entity, Hash, etc) (would just be ints)
+                default:
+                    throw new Exception("Unsupported variable type");
+            }
         }
 
         public static List<Argument> GetListOfArguments(string args)

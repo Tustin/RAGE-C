@@ -4,9 +4,18 @@ Call @main
 Return 0 0
 
 :main
-Function 0 3 0
-:if_block_begin_1
-push_0
+Function 0 5 0
+push_5
 setF1 2
-if_block_end_1
+Jump @if_block_end_1
+PushString "yep"
+setF1 3
+Jump @if_block_end_3
+push_5
+setF1 4
+:if_block_end_3
+:if_block_end_2
+push_0
+setF1 5
+:if_block_end_1
 Return 0 0

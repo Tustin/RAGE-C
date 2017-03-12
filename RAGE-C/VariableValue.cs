@@ -11,6 +11,8 @@ namespace RAGE
         public string Value { get; set; }
         public List<Argument> Arguments { get; set; }
 
+        public VariableType Type { get; set; }
+
         public VariableValue()
         {
             Arguments = new List<Argument>();

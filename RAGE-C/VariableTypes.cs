@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RAGE
 {
-    public enum VariableTypes
+    public enum VariableType
     {
         Bool,
         Int,

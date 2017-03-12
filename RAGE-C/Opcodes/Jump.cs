@@ -21,21 +21,21 @@ namespace RAGE
             switch (type)
             {
                 case JumpType.Equal:
-                    return $"JumpEQ {label}";
+                    return $"JumpEQ @{label}";
                 case JumpType.False:
-                    return $"JumpFalse {label}";
+                    return $"JumpFalse @{label}";
                 case JumpType.GreaterThan:
-                    return $"JumpGT {label}";
+                    return $"JumpGT @{label}";
                 case JumpType.GreaterThanEqual:
-                    return $"JumpGE {label}";
+                    return $"JumpGE @{label}";
                 case JumpType.LessThan:
-                    return $"JumpLT {label}";
+                    return $"JumpLT @{label}";
                 case JumpType.LessThanEqual:
-                    return $"JumpLE {label}";
+                    return $"JumpLE @{label}";
                 case JumpType.NotEqual:
-                    return $"JumpNE {label}";
+                    return $"JumpNE @{label}";
                 case JumpType.Unconditional:
-                    return $"Jump {label}";
+                    return $"Jump @{label}";
                 default:
                     throw new Exception("Invalid jump type");
             }

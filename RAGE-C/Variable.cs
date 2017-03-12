@@ -12,9 +12,7 @@ namespace RAGE
 
         public int FrameId { get; set; }
 
-        public string Type { get; set; }
-
-        public VariableTypes ValueType { get; set; }
+        public VariableType Type { get; set; }
 
         public VariableValue Value { get; set; } 
 
@@ -22,7 +20,7 @@ namespace RAGE
         {
             Name = name;
             FrameId = id;
-            Type = type;
+            Type = Utilities.GetTypeFromDeclaration(type);
             Value = new VariableValue();
         }
     }

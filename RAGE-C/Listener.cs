@@ -9,8 +9,8 @@ namespace RAGE
     public class RAGEListener : CBaseListener
     {
         //Stuff that gets populated as the walker goes through the tree
-        Function currentFunction;
-        Variable currentVariable;
+        public static Function currentFunction;
+        public static Variable currentVariable;
 
         public static List<(string label, int id, CParser.SelectionStatementContext context)> conditionalContexts;
 
@@ -75,18 +75,11 @@ namespace RAGE
         }
 
         //New variables
-        public override void EnterDeclarationSpecifier(CParser.DeclarationSpecifierContext context)
+        public override void EnterDeclaration([NotNull] CParser.DeclarationContext context)
         {
-            string type = context.GetText();
+            string type = context.GetChild(0).GetText();
 
-            //This function will get the data type for the function as well
-            //Just do this check to see if the current node is for the function or not
-            if (currentFunction.ReturnType == null)
-            {
-                currentFunction.ReturnType = type;
-                return;
-            }
-            currentVariable = new Variable(null, currentFunction.FrameVars, type);
+            currentVariable = new Variable(null, currentFunction.FrameVars + 1, type);
             currentFunction.Variables.Add(currentVariable);
         }
 
@@ -112,13 +105,13 @@ namespace RAGE
             string value = context.GetText();
             value = value.Replace(";", "");
 
-            VariableTypes valueType = Utilities.GetType(currentFunction, value);
+            VariableType valueType = Utilities.GetType(currentFunction, value);
 
-            currentVariable.ValueType = valueType;
             currentVariable.Value.Value = value;
+            currentVariable.Value.Type = valueType;
 
             //Try to parse the arguments
-            if (valueType == VariableTypes.NativeCall || valueType == VariableTypes.LocalCall)
+            if (valueType == VariableType.NativeCall || valueType == VariableType.LocalCall)
             {
                 //Clean up the function call
                 string stripped = Regex.Replace(value, "\\(.*\\)", "");
@@ -135,8 +128,8 @@ namespace RAGE
         public override void ExitInitializer(CParser.InitializerContext context)
         {
             //Generate list of arguments
-            if (currentVariable.ValueType == VariableTypes.LocalCall
-                || currentVariable.ValueType == VariableTypes.NativeCall)
+            if (currentVariable.Value.Type == VariableType.LocalCall
+                || currentVariable.Value.Type == VariableType.NativeCall)
             {
                 foreach (Argument arg in currentVariable.Value.Arguments)
                 {
@@ -145,21 +138,21 @@ namespace RAGE
 
             }
             //Generate either function calls or just push args
-            switch (currentVariable.ValueType)
+            switch (currentVariable.Value.Type)
             {
-                case VariableTypes.LocalCall:
+                case VariableType.LocalCall:
                     Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Local(currentVariable.Value.Value));
                     break;
-                case VariableTypes.NativeCall:
+                case VariableType.NativeCall:
                     Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Native(currentVariable.Value.Value,
                         currentVariable.Value.Arguments.Count, true));
                     break;
-                case VariableTypes.Variable:
+                case VariableType.Variable:
                     Variable variable = currentFunction.Variables.GetVariable(currentVariable.Value.Value);
                     Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Get(variable));
                     break;
                 default:
-                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(currentVariable.Value.Value, currentVariable.ValueType));
+                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(currentVariable.Value.Value, currentVariable.Value.Type));
                     break;
             }
 
@@ -174,9 +167,12 @@ namespace RAGE
             if (statement.StartsWith("if"))
             {
                 conditionalContexts.Add(($"if_block_end_{currentConditionalCount}", currentConditionalCount, context));
-                visitor.VisitExpression(context.expression());
+                var output = (List<string>)visitor.VisitExpression(context.expression());
 
-                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":if_block_begin_{currentConditionalCount}"); //@Cleanup: Remove this because its not necessary for ifs
+                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(output);
+
+
+                //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":if_block_begin_{currentConditionalCount}"); //@Cleanup: Remove this because its not necessary for ifs
                 currentConditionalCount++;
             }
             else if (statement.StartsWith("else"))
@@ -196,7 +192,7 @@ namespace RAGE
         {
             //Find the scope with the context (for the end label)
             var contextScope = conditionalContexts.Where(a => a.context == context).FirstOrDefault();
-            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(contextScope.label);
+            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":{contextScope.label}");
         }
 
         //Entering for, while
