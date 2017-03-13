@@ -15,5 +15,6 @@ namespace RAGE
         NativeCall,
         LocalCall,
         Variable,
+        Void,
     }
 }

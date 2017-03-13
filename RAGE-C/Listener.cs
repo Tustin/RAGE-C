@@ -44,9 +44,13 @@ namespace RAGE
             string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
             string type = context.GetChild(0).GetText();
 
-            if (!Core.IsDataType(type))
+            VariableType vType = Utilities.GetTypeFromDeclaration(type);
+
+            if (!Function.IsValidType(vType))
             {
-                throw new Exception($"Data type for function '{name}' is not supported.");
+                //Won't get thrown because GetTypeFromDeclaration will throw an exception on error
+                //We'll keep it here for the future (possibly)
+                throw new Exception($"Type of function {name} is not valid");
             }
 
             //Add the default function entry instruction
@@ -56,7 +60,7 @@ namespace RAGE
                 "Function 0 2 0"
             });
 
-            currentFunction = new Function(name, type);
+            currentFunction = new Function(name, vType);
             Core.Functions.Add(currentFunction);
             Logger.Log($"Entering function '{name}'...");
         }
@@ -65,8 +69,8 @@ namespace RAGE
         public override void ExitFunctionDefinition(CParser.FunctionDefinitionContext context)
         {
             var function = Core.AssemblyCode.FindFunction(currentFunction.Name);
-            //Update the frame variable count for the function entry
             string funcEntry = function.Value[0];
+            //@TODO: Update first 0 for param count
             funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {currentFunction.FrameVars} 0");
             function.Value[0] = funcEntry;
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Return.Generate());
@@ -93,6 +97,11 @@ namespace RAGE
                 //EnterDirectDeclarator will have the function name as a declarator so we wanna ignore that
                 if (Core.Functions.ContainFunction(variableName)) return;
 
+                if (currentFunction.Variables.ContainVariable(variableName))
+                {
+                    throw new Exception($"Variable {variableName} already exists in this function scope");
+                }
+
                 currentVariable.Name = variableName;
 
                 Logger.Log($"({currentFunction.Name}) - Parsed variable '{variableName}'");
@@ -104,10 +113,17 @@ namespace RAGE
         {
             string value = context.GetText();
             value = value.Replace(";", "");
+            //Do any arithmetic that this variable might have
+            var resp = (ExpressionResponse)visitor.VisitAssignmentExpression(context.assignmentExpression());
 
-            VariableType valueType = Utilities.GetType(currentFunction, value);
+            VariableType valueType = Utilities.GetType(currentFunction, resp.Data.ToString());
 
-            currentVariable.Value.Value = value;
+            if (valueType != currentVariable.Type)
+            {
+                throw new Exception($"Value of '{currentVariable.Name}' does not match it's type");
+            }
+
+            currentVariable.Value.Value = resp.Data.ToString();
             currentVariable.Value.Type = valueType;
 
             //Try to parse the arguments
@@ -158,6 +174,11 @@ namespace RAGE
 
             //Generate the variable to store the value into
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Set(currentVariable));
+        }
+
+        public override void EnterAssignmentExpression([NotNull] CParser.AssignmentExpressionContext context)
+        {
+            base.EnterAssignmentExpression(context);
         }
 
         //Entering if, else, switch

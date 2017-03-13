@@ -9,9 +9,9 @@ namespace RAGE
     public class Return
     {
         //@Update: Give this some options for returning values
-        public static string Generate()
+        public static string Generate(int argumentCount = 0, bool isReturning = false)
         {
-            return $"Return 0 0";
+            return $"Return {argumentCount} {Convert.ToInt32(isReturning)}";
         }
     }
 }

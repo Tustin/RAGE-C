@@ -44,7 +44,7 @@ namespace RAGE
         public static VariableType GetType(Function function, string value)
         {
             //Do type checking
-            if (value == "true" || value == "false")
+            if (value.ToLower() == "true" || value.ToLower() == "false")
             {
                 return VariableType.Bool;
             }
@@ -69,6 +69,10 @@ namespace RAGE
                 }
                 else if (Core.Functions.ContainFunction(stripped))
                 {
+                    if (Core.Functions.GetFunction(stripped).Type == VariableType.Void)
+                    {
+                        throw new Exception($"Function {stripped} is void and does not return a value");
+                    }
                     return VariableType.LocalCall;
                 }
 
@@ -97,6 +101,8 @@ namespace RAGE
                     return VariableType.Float;
                 case "int":
                     return VariableType.Int;
+                case "void":
+                    return VariableType.Void;
                 //@TODO: Add GTA related types (Ped, Entity, Hash, etc) (would just be ints)
                 default:
                     throw new Exception("Unsupported variable type");
