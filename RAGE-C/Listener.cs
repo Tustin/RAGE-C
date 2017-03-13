@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Antlr4.Runtime.Misc;
 using System.Linq;
+using Antlr4.Runtime;
+using static CParser;
 
 namespace RAGE
 {
@@ -13,17 +15,22 @@ namespace RAGE
         public static Variable currentVariable;
 
         public static List<(string label, int id, CParser.SelectionStatementContext context)> conditionalContexts;
+        public static List<(string label, int id, CParser.IterationStatementContext context)> iteratorContexts;
+        public static List<(string label, int id, ParserRuleContext context)> storedContexts;
 
         RAGEVisitor visitor;
 
         List<string> conditionalLabels = new List<string>();
 
         int currentConditionalCount = 1;
+        int currentIteratorCount = 1;
 
         public RAGEListener()
         {
             visitor = new RAGEVisitor();
-            conditionalContexts = new List<(string label, int id, CParser.SelectionStatementContext context)>();
+            //conditionalContexts = new List<(string label, int id, CParser.SelectionStatementContext context)>();
+            //iteratorContexts = new List<(string label, int id, CParser.IterationStatementContext context)>();
+            storedContexts = new List<(string label, int id, ParserRuleContext context)>();
         }
 
         //New functions
@@ -99,7 +106,8 @@ namespace RAGE
 
                 if (currentFunction.Variables.ContainVariable(variableName))
                 {
-                    throw new Exception($"Variable {variableName} already exists in this function scope");
+                    //throw new Exception($"Variable {variableName} already exists in this function scope");
+                    return;
                 }
 
                 currentVariable.Name = variableName;
@@ -118,7 +126,7 @@ namespace RAGE
 
             VariableType valueType = Utilities.GetType(currentFunction, resp.Data.ToString());
 
-            if (valueType != currentVariable.Type)
+            if (valueType != currentVariable.Type && valueType != VariableType.LocalCall && valueType != VariableType.NativeCall)
             {
                 throw new Exception($"Value of '{currentVariable.Name}' does not match it's type");
             }
@@ -176,29 +184,28 @@ namespace RAGE
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Set(currentVariable));
         }
 
-        public override void EnterAssignmentExpression([NotNull] CParser.AssignmentExpressionContext context)
-        {
-            base.EnterAssignmentExpression(context);
-        }
-
         //Entering if, else, switch
         public override void EnterSelectionStatement(CParser.SelectionStatementContext context)
         {
             string statement = context.GetText();
             if (statement.StartsWith("if"))
             {
-                conditionalContexts.Add(($"if_block_end_{currentConditionalCount}", currentConditionalCount, context));
+                int count = storedContexts.Count(a => a.context is SelectionStatementContext);
+                storedContexts.Add(($"if_block_end_{count}", count, context));
+                //conditionalContexts.Add(($"if_block_end_{currentConditionalCount}", currentConditionalCount, context));
                 var output = (List<string>)visitor.VisitExpression(context.expression());
 
                 Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(output);
 
-
-                //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":if_block_begin_{currentConditionalCount}"); //@Cleanup: Remove this because its not necessary for ifs
-                currentConditionalCount++;
+                //currentConditionalCount++;
             }
             else if (statement.StartsWith("else"))
             {
                 throw new Exception("Else not supported");
+            }
+            else if (statement.StartsWith("switch"))
+            {
+                throw new Exception("Switches not supported yet");
             }
         }
 
@@ -212,15 +219,36 @@ namespace RAGE
         public override void ExitSelectionStatement(CParser.SelectionStatementContext context)
         {
             //Find the scope with the context (for the end label)
-            var contextScope = conditionalContexts.Where(a => a.context == context).FirstOrDefault();
+            var contextScope = storedContexts.Where(a => a.context == context).FirstOrDefault();
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":{contextScope.label}");
         }
 
         //Entering for, while
-        public override void EnterIterationStatement(CParser.IterationStatementContext context)
+        public override void EnterIterationStatement(IterationStatementContext context)
         {
-            string test = context.GetText();
-            base.EnterIterationStatement(context);
+            string loop = context.GetText();
+
+            //Generate the variable for the for loop
+            var variable = (Variable)visitor.VisitDeclaration(context.declaration());
+            currentFunction.Variables.Add(variable);
+
+            if (loop.StartsWith("for"))
+            {
+                int count = storedContexts.Count(a => a.context is IterationStatementContext);
+                storedContexts.Add(($"for_loop_{count}", count, context));
+
+                //iteratorContexts.Add(($"for_loop_{currentIteratorCount}", currentIteratorCount, context));
+                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":for_loop_{count}");
+
+                foreach (CParser.ExpressionContext expression in context.expression())
+                {
+                    var test = (List<string>)visitor.VisitExpression(expression);
+                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(test);
+
+                }
+
+                //currentIteratorCount++;
+            }
         }
 
         //Exiting for, while

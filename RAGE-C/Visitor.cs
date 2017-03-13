@@ -25,15 +25,35 @@ namespace RAGE
     }
     public class RAGEVisitor : CBaseVisitor<Object>
     {
+        public override object VisitDeclaration([NotNull] CParser.DeclarationContext context)
+        {
+            string delcaration = context.GetText();
+            string type = context.GetChild(0).GetText();
+            if (context.GetChild(0).GetText() != "int")
+            {
+                throw new Exception("For loops iterators can only be instantiated with integers");
+            }
+            //Ugh, why doesn't this context have an assignment context?!?!
+            //For loops will just be limited to int i = {some integer or variable}
+            List<string> pieces = context.GetChild(1).GetText().ExplodeAndClean('=');
+            string varName = pieces[0];
+            string value = pieces[1];
+
+            Variable variable = new Variable(varName, RAGEListener.currentFunction.FrameVars + 1, type);
+            variable.Value.Value = value;
+            variable.Value.Type = VariableType.Int;
+            return variable;
+        }
+
+
         public override object VisitExpression([NotNull] CParser.ExpressionContext context)
         {
             List<string> code = new List<string>();
             string expression = context.GetText();
 
             //Get the context for the selection statement
-            var selectionContext = RAGEListener.conditionalContexts.Where(a => a.context == context.Parent).FirstOrDefault();
-            //var test = VisitChildren(context.children[0])
-            // var gg = context.children;
+            var selectionContext = RAGEListener.storedContexts.Where(a => a.context == context.Parent).FirstOrDefault();
+
             //We'll do some optimizations here
             //No need to push 0 or 1 to the stack if the expression is just true or false
             //If false, we'll just always jump to the if statement end, but otherwise it'll just continue the flow
@@ -56,14 +76,38 @@ namespace RAGE
 
         public override object VisitAssignmentExpression([NotNull] CParser.AssignmentExpressionContext context)
         {
-            return VisitConditionalExpression(context.conditionalExpression());
-        }
+            if (context.assignmentExpression() == null)
+            {
+                return VisitConditionalExpression(context.conditionalExpression());
+            }
 
+            string sdfgsd = context.unaryExpression().GetText();
+            ExpressionResponse left = (ExpressionResponse)VisitUnaryExpression(context.unaryExpression());
+            ExpressionResponse right = (ExpressionResponse)VisitAssignmentExpression(context.assignmentExpression());
+
+            Variable variable = RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
+            List<string> code = new List<string>();
+
+            switch (context.GetChild(1).GetText())
+            {
+                case "+=":
+                    //This will always be a variable
+                    code.Add(FrameVar.Get(variable));
+                    code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, Convert.ToInt32(right.Data.ToString())));
+                    code.Add(FrameVar.Set(variable));
+                    return new ExpressionResponse(VariableType.Int, null, code);
+            }
+            throw new Exception("Invalid operator");
+        }
+        public override object VisitAssignmentOperator([NotNull] CParser.AssignmentOperatorContext context)
+        {
+            string cgg = context.GetText();
+            return base.VisitAssignmentOperator(context);
+        }
         public override object VisitConditionalExpression([NotNull] CParser.ConditionalExpressionContext context)
         {
             return VisitLogicalOrExpression(context.logicalOrExpression());
         }
-
         public override object VisitLogicalOrExpression([NotNull] CParser.LogicalOrExpressionContext context)
         {
             if (context.logicalOrExpression() == null)
@@ -102,7 +146,6 @@ namespace RAGE
             {
                 return VisitEqualityExpression(context.inclusiveOrExpression().exclusiveOrExpression().andExpression().equalityExpression());
             }
-
             ExpressionResponse left = (ExpressionResponse)VisitLogicalAndExpression(context.logicalAndExpression());
             ExpressionResponse right = (ExpressionResponse)VisitEqualityExpression(context.inclusiveOrExpression().exclusiveOrExpression().andExpression().equalityExpression());
 
@@ -296,7 +339,7 @@ namespace RAGE
 
             }
             throw new Exception("Unsupported operator");
-        }
+        }     
         public override object VisitMultiplicativeExpression([NotNull] CParser.MultiplicativeExpressionContext context)
         {
             if (context.multiplicativeExpression() == null)
@@ -328,19 +371,6 @@ namespace RAGE
                                 throw new Exception("Right operand variable type is not equal to the left operand type");
                             }
                         }
-                        //@TODO: Make something to get variables that hold variables, etc... (to determine it's type)
-                        //while (RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString()).ValueType != VariableTypes.Variable)
-                        //{
-
-                        //}
-
-                        //If the two sides aren't the same type and they're not a function call or variable, it's not allowed
-                        //if (left.Type != VariableTypes.Variable || right.Type != VariableTypes.Variable
-                        //    || left.Type != VariableTypes.NativeCall || right.Type != VariableTypes.NativeCall
-                        //    || left.Type != VariableTypes.LocalCall || right.Type != VariableTypes.LocalCall)
-                        //{
-                        //    throw new Exception("Cannot use operand '*' on two different types.");
-                        //}
                     }
                     if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Int, (int)left.Data * (int)right.Data, new List<string>());
                     if ((left.Data != null && left.Data.Equals(0)) || (right.Data != null && right.Data.Equals(0))) return new ExpressionResponse(VariableType.Int, 0, new List<string>());
@@ -375,7 +405,19 @@ namespace RAGE
             }
             throw new Exception("Unsupported operator");
         }
-
+        public override object VisitUnaryExpression([NotNull] CParser.UnaryExpressionContext context)
+        {
+            if (context == null)
+            {
+                throw new Exception();
+            }
+            string item = context.GetText();
+            if (!RAGEListener.currentFunction.Variables.ContainVariable(item))
+            {
+                throw new Exception($"Unary expression {context.unaryOperator().GetText()} on {item} is not possible");
+            }
+            return new ExpressionResponse(VariableType.Variable, item, new List<string>());
+        }
         private object ParseType(CParser.CastExpressionContext context)
         {
             string value = context.GetText();

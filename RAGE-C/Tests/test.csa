@@ -4,20 +4,30 @@ Call @main
 Return 0 0
 
 :main
-Function 0 6 0
-push_5
+Function 0 10 0
+CallNative player_ped_id 0 1
 setF1 2
-push1 25
-setF1 3
-Jump @if_block_end_1
-PushString "yep"
-setF1 4
-Jump @if_block_end_3
 push_5
+setF1 3
+push1 25
+setF1 4
+Jump @if_block_end_0
+PushString "yep"
 setF1 5
-:if_block_end_3
-:if_block_end_2
-push_0
+Jump @if_block_end_2
+push_5
 setF1 6
+:if_block_end_2
 :if_block_end_1
+:for_loop_0
+getF1 7
+Add1 1
+setF1 7
+push_0
+setF1 8
+PushString "im in the loop!!!"
+setF1 9
+push_0
+setF1 10
+:if_block_end_0
 Return 0 0

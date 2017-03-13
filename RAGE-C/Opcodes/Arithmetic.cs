@@ -15,6 +15,7 @@ namespace RAGE
             Multiplication,
             Division,
             Modulus,
+
         }
         public static string Generate(ArithmeticType type)
         {
@@ -33,6 +34,35 @@ namespace RAGE
                 default:
                     throw new Exception("Invalid arithmetic operation");
             }
+        }
+        public static string GenerateInline(ArithmeticType type, int num)
+        {
+            if (type == ArithmeticType.Addition)
+            {
+                if (num < Byte.MaxValue)
+                {
+                    return $"Add1 {num}";
+                }
+                else if(num < Int16.MaxValue)
+                {
+                    return $"Add2 {num}";
+                }
+                throw new Exception("Inline addition opcode cannot be larger than 16 bits (2 bytes)");
+
+            }
+            if (type == ArithmeticType.Multiplication)
+            {
+                if (num < Byte.MaxValue)
+                {
+                    return $"Mult1 {num}";
+                }
+                else if (num < Int16.MaxValue)
+                {
+                    return $"Mult2 {num}";
+                }
+                throw new Exception("Inline multiplication opcode cannot be larger than 16 bits (2 bytes)");
+            }
+            throw new Exception("Only addition and multiplication have inline opcodes");
         }
     }
 
