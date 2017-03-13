@@ -30,9 +30,9 @@ namespace RAGE
 
         public static string Bool(string value)
         {
-            if (value == "true" || value == "false")
+            if (value.ToLower() == "true" || value.ToLower() == "false")
             {
-                return value == "true" ? "push_1" : "push_0";
+                return value.ToLower() == "true" ? "push_1" : "push_0";
             }
             else
             {
