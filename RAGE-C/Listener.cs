@@ -14,27 +14,20 @@ namespace RAGE
         public static Function currentFunction;
         public static Variable currentVariable;
 
-        public static List<(string label, int id, CParser.SelectionStatementContext context)> conditionalContexts;
-        public static List<(string label, int id, CParser.IterationStatementContext context)> iteratorContexts;
         public static List<(string label, int id, ParserRuleContext context)> storedContexts;
 
         RAGEVisitor visitor;
 
         List<string> conditionalLabels = new List<string>();
 
-        int currentConditionalCount = 1;
-        int currentIteratorCount = 1;
-
         public RAGEListener()
         {
             visitor = new RAGEVisitor();
-            //conditionalContexts = new List<(string label, int id, CParser.SelectionStatementContext context)>();
-            //iteratorContexts = new List<(string label, int id, CParser.IterationStatementContext context)>();
             storedContexts = new List<(string label, int id, ParserRuleContext context)>();
         }
 
         //New functions
-        public override void EnterFunctionDefinition(CParser.FunctionDefinitionContext context)
+        public override void EnterFunctionDefinition(FunctionDefinitionContext context)
         {
             //Generate script entry point if it doesn't already exist
             if (Core.AssemblyCode.Count == 0)
@@ -72,8 +65,14 @@ namespace RAGE
             Logger.Log($"Entering function '{name}'...");
         }
 
+        public override void EnterDeclarationSpecifier([NotNull] DeclarationSpecifierContext context)
+        {
+            string cc = context.GetText();
+
+            base.EnterDeclarationSpecifier(context);
+        }
         //End of a function
-        public override void ExitFunctionDefinition(CParser.FunctionDefinitionContext context)
+        public override void ExitFunctionDefinition(FunctionDefinitionContext context)
         {
             var function = Core.AssemblyCode.FindFunction(currentFunction.Name);
             string funcEntry = function.Value[0];
@@ -86,20 +85,24 @@ namespace RAGE
         }
 
         //New variables
-        public override void EnterDeclaration([NotNull] CParser.DeclarationContext context)
+        public override void EnterDeclaration([NotNull] DeclarationContext context)
         {
             string type = context.GetChild(0).GetText();
-
+            List<string> pieces = context.GetChild(1).GetText().ExplodeAndClean('=');
+            string varName = pieces[0];
+            string value = pieces[1];
+            //Was probably set by the visitor for a loop
+            if (currentFunction.Variables.ContainVariable(varName)) return;
             currentVariable = new Variable(null, currentFunction.FrameVars + 1, type);
             currentFunction.Variables.Add(currentVariable);
         }
 
-        //Variable names
-        public override void EnterDirectDeclarator(CParser.DirectDeclaratorContext ctx)
+        ////Variable names
+        public override void EnterDirectDeclarator(DirectDeclaratorContext context)
         {
-            if (ctx.Identifier() != null)
+            if (context.Identifier() != null)
             {
-                string variableName = ctx.GetText();
+                string variableName = context.GetText();
 
                 //EnterDirectDeclarator will have the function name as a declarator so we wanna ignore that
                 if (Core.Functions.ContainFunction(variableName)) return;
@@ -117,12 +120,12 @@ namespace RAGE
         }
 
         //Variable values
-        public override void EnterInitializer(CParser.InitializerContext context)
+        public override void EnterInitializer(InitializerContext context)
         {
             string value = context.GetText();
             value = value.Replace(";", "");
             //Do any arithmetic that this variable might have
-            var resp = (ExpressionResponse)visitor.VisitAssignmentExpression(context.assignmentExpression());
+            var resp = visitor.VisitAssignmentExpression(context.assignmentExpression());
 
             VariableType valueType = Utilities.GetType(currentFunction, resp.Data.ToString());
 
@@ -133,6 +136,7 @@ namespace RAGE
 
             currentVariable.Value.Value = resp.Data.ToString();
             currentVariable.Value.Type = valueType;
+
 
             //Try to parse the arguments
             if (valueType == VariableType.NativeCall || valueType == VariableType.LocalCall)
@@ -149,8 +153,9 @@ namespace RAGE
         }
 
         //Parse variable function call arguments and generate push instructions
-        public override void ExitInitializer(CParser.InitializerContext context)
+        public override void ExitInitializer(InitializerContext context)
         {
+            if (currentVariable.IsIterator) return;
             //Generate list of arguments
             if (currentVariable.Value.Type == VariableType.LocalCall
                 || currentVariable.Value.Type == VariableType.NativeCall)
@@ -159,7 +164,6 @@ namespace RAGE
                 {
                     Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(arg.Value, arg.Type));
                 }
-
             }
             //Generate either function calls or just push args
             switch (currentVariable.Value.Type)
@@ -185,19 +189,18 @@ namespace RAGE
         }
 
         //Entering if, else, switch
-        public override void EnterSelectionStatement(CParser.SelectionStatementContext context)
+        public override void EnterSelectionStatement(SelectionStatementContext context)
         {
             string statement = context.GetText();
             if (statement.StartsWith("if"))
             {
                 int count = storedContexts.Count(a => a.context is SelectionStatementContext);
+
                 storedContexts.Add(($"if_block_end_{count}", count, context));
-                //conditionalContexts.Add(($"if_block_end_{currentConditionalCount}", currentConditionalCount, context));
-                var output = (List<string>)visitor.VisitExpression(context.expression());
 
-                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(output);
+                var output = visitor.VisitExpression(context.expression());
 
-                //currentConditionalCount++;
+                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(output.Assembly);
             }
             else if (statement.StartsWith("else"))
             {
@@ -209,14 +212,8 @@ namespace RAGE
             }
         }
 
-        public override void EnterExpression([NotNull] CParser.ExpressionContext context)
-        {
-            string ff = context.GetText();
-            base.EnterExpression(context);
-        }
-
         //Exiting if, else, switch
-        public override void ExitSelectionStatement(CParser.SelectionStatementContext context)
+        public override void ExitSelectionStatement(SelectionStatementContext context)
         {
             //Find the scope with the context (for the end label)
             var contextScope = storedContexts.Where(a => a.context == context).FirstOrDefault();
@@ -229,36 +226,45 @@ namespace RAGE
             string loop = context.GetText();
 
             //Generate the variable for the for loop
-            var variable = (Variable)visitor.VisitDeclaration(context.declaration());
-            currentFunction.Variables.Add(variable);
-
+            var variable = visitor.VisitDeclaration(context.declaration());
+            if (!(variable.Data is Variable v))
+            {
+                throw new Exception("Expected a Variable object from VisitDeclaration");
+            }
+            currentFunction.Variables.Add(v);
+            currentVariable = v;
             if (loop.StartsWith("for"))
             {
                 int count = storedContexts.Count(a => a.context is IterationStatementContext);
                 storedContexts.Add(($"for_loop_{count}", count, context));
-
-                //iteratorContexts.Add(($"for_loop_{currentIteratorCount}", currentIteratorCount, context));
+                //Push the value of the iterator into the variable before the for loop label
+                //Otherwise we would constantly have infinite loops
+                var titties = Core.AssemblyCode.FindFunction(currentFunction.Name);
+                titties.Value.Add(Push.Generate(v.Value.Value, v.Value.Type));
+                titties.Value.Add(FrameVar.Set(v));
                 Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":for_loop_{count}");
-
-                foreach (CParser.ExpressionContext expression in context.expression())
-                {
-                    var test = (List<string>)visitor.VisitExpression(expression);
-                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(test);
-
-                }
-
-                //currentIteratorCount++;
             }
         }
 
         //Exiting for, while
-        public override void ExitIterationStatement(CParser.IterationStatementContext context)
+        public override void ExitIterationStatement(IterationStatementContext context)
         {
+            var storedContext = storedContexts.Where(a => a.context == context).First();
+
+            //Reverse it so it evaluates the incrementing first before doing the comparison
+            foreach (ExpressionContext expression in context.expression().Reverse())
+            {
+                var test = visitor.VisitExpression(expression);
+                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(test.Assembly);
+
+            }
+            //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($"Jump {storedContext.label}");
+
             string code = context.GetText();
             base.ExitIterationStatement(context);
         }
 
-        public override void EnterAssignmentOperator(CParser.AssignmentOperatorContext context)
+        public override void EnterAssignmentOperator(AssignmentOperatorContext context)
         {
             string gg = context.GetText();
             base.EnterAssignmentOperator(context);

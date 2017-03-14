@@ -6,86 +6,102 @@ using System.Threading.Tasks;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 using Antlr4.Runtime;
+using static CParser;
+using System.Text.RegularExpressions;
 
 namespace RAGE
 {
-    public class ExpressionResponse
+    public class RAGEVisitor : CBaseVisitor<Value>
     {
-        internal VariableType Type { get; set; }
-        internal object Data { get; set; }
-        internal List<string> Assembly { get; set; }
 
-        public ExpressionResponse(VariableType type, object data, List<string> asm)
+        public override Value VisitDeclaration(DeclarationContext context)
         {
-            Type = type;
-            Data = data;
-            Assembly = asm;
-        }
-        public ExpressionResponse() { }
-    }
-    public class RAGEVisitor : CBaseVisitor<Object>
-    {
-        public override object VisitDeclaration([NotNull] CParser.DeclarationContext context)
-        {
-            string delcaration = context.GetText();
+            Value val = new Value();
+
+            string declaration = context.GetText();
+
             string type = context.GetChild(0).GetText();
-            if (context.GetChild(0).GetText() != "int")
-            {
-                throw new Exception("For loops iterators can only be instantiated with integers");
-            }
+
             //Ugh, why doesn't this context have an assignment context?!?!
             //For loops will just be limited to int i = {some integer or variable}
             List<string> pieces = context.GetChild(1).GetText().ExplodeAndClean('=');
             string varName = pieces[0];
             string value = pieces[1];
 
+            VariableType valueType = Utilities.GetType(RAGEListener.currentFunction, value);
+
             Variable variable = new Variable(varName, RAGEListener.currentFunction.FrameVars + 1, type);
+
+            //Try to parse the arguments
+            if (valueType == VariableType.NativeCall || valueType == VariableType.LocalCall)
+            {
+                //Clean up the function call
+                Regex reg = new Regex(@"\(([a-zA-Z0-9,\s""']*)\)");
+                List<string> matches = reg.Matches(value).GetRegexGroups();
+                if (matches.Count > 1)
+                {
+                    string arguments = matches[0];
+                    variable.Value.Arguments = Utilities.GetListOfArguments(arguments);
+                }
+
+            }
+            string stripped = Regex.Replace(value, "\\(.*\\)", "");
+            value = stripped;
             variable.Value.Value = value;
-            variable.Value.Type = VariableType.Int;
-            return variable;
+            variable.Value.Type = valueType;
+            variable.IsIterator = true;
+            val.Data = variable;
+            return val;
         }
 
+        //The current context of the visitor (will be null if this isn't an expression)
+        public static (string label, int id, ParserRuleContext context) currentContext;
 
-        public override object VisitExpression([NotNull] CParser.ExpressionContext context)
+        public override Value VisitExpression(ExpressionContext context)
         {
-            List<string> code = new List<string>();
+            Value val = new Value();
+
             string expression = context.GetText();
 
             //Get the context for the selection statement
-            var selectionContext = RAGEListener.storedContexts.Where(a => a.context == context.Parent).FirstOrDefault();
+            currentContext = RAGEListener.storedContexts.Where(a => a.context == context.Parent).FirstOrDefault();
 
             //We'll do some optimizations here
             //No need to push 0 or 1 to the stack if the expression is just true or false
             //If false, we'll just always jump to the if statement end, but otherwise it'll just continue the flow
-            if (expression == "true") return code;
+            if (expression == "true") return val;
             if (expression == "false")
             {
-                code.Add(Jump.Generate(JumpType.Unconditional, selectionContext.label));
-                return code;
+                val.Assembly.Add(Jump.Generate(JumpType.Unconditional, currentContext.label));
+                return val;
             }
-            ExpressionResponse output = (ExpressionResponse)VisitAssignmentExpression(context.assignmentExpression());
-            if (output.Type == VariableType.Bool && output.Data.Equals(true)) return code;
-            if (output.Type == VariableType.Bool && output.Data.Equals(false))
+            Value output = VisitAssignmentExpression(context.assignmentExpression());
+
+            if (output.Data != null)
             {
-                code.Add(Jump.Generate(JumpType.Unconditional, selectionContext.label));
-                return code;
+                if (output.Type == VariableType.Bool && output.Data.Equals(true)) return val;
+                if (output.Type == VariableType.Bool && output.Data.Equals(false))
+                {
+                    val.Assembly.Add(Jump.Generate(JumpType.Unconditional, currentContext.label));
+                    return val;
+                }
             }
-            code.AddRange(output.Assembly);
-            return code;
+            val.Assembly.AddRange(output.Assembly);
+            return val;
         }
 
-        public override object VisitAssignmentExpression([NotNull] CParser.AssignmentExpressionContext context)
+        public override Value VisitAssignmentExpression([NotNull] AssignmentExpressionContext context)
         {
             if (context.assignmentExpression() == null)
             {
                 return VisitConditionalExpression(context.conditionalExpression());
             }
 
-            string sdfgsd = context.unaryExpression().GetText();
-            ExpressionResponse left = (ExpressionResponse)VisitUnaryExpression(context.unaryExpression());
-            ExpressionResponse right = (ExpressionResponse)VisitAssignmentExpression(context.assignmentExpression());
+            Value left = VisitUnaryExpression(context.unaryExpression());
+            Value right = VisitAssignmentExpression(context.assignmentExpression());
 
             Variable variable = RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
+
             List<string> code = new List<string>();
 
             switch (context.GetChild(1).GetText())
@@ -95,28 +111,25 @@ namespace RAGE
                     code.Add(FrameVar.Get(variable));
                     code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, Convert.ToInt32(right.Data.ToString())));
                     code.Add(FrameVar.Set(variable));
-                    return new ExpressionResponse(VariableType.Int, null, code);
+                    return new Value(VariableType.Int, null, code);
             }
             throw new Exception("Invalid operator");
         }
-        public override object VisitAssignmentOperator([NotNull] CParser.AssignmentOperatorContext context)
-        {
-            string cgg = context.GetText();
-            return base.VisitAssignmentOperator(context);
-        }
-        public override object VisitConditionalExpression([NotNull] CParser.ConditionalExpressionContext context)
+
+        public override Value VisitConditionalExpression(ConditionalExpressionContext context)
         {
             return VisitLogicalOrExpression(context.logicalOrExpression());
         }
-        public override object VisitLogicalOrExpression([NotNull] CParser.LogicalOrExpressionContext context)
+
+        public override Value VisitLogicalOrExpression(LogicalOrExpressionContext context)
         {
             if (context.logicalOrExpression() == null)
             {
                 return VisitLogicalAndExpression(context.logicalAndExpression());
             }
 
-            ExpressionResponse left = (ExpressionResponse)VisitLogicalOrExpression(context.logicalOrExpression());
-            ExpressionResponse right = (ExpressionResponse)VisitLogicalAndExpression(context.logicalAndExpression());
+            Value left = VisitLogicalOrExpression(context.logicalOrExpression());
+            Value right = VisitLogicalAndExpression(context.logicalAndExpression());
 
             List<string> code = new List<string>();
 
@@ -125,9 +138,9 @@ namespace RAGE
                 throw new Exception("Invalid types");
             }
             if (left.Data != null && right.Data != null)
-                return new ExpressionResponse(VariableType.Bool, (bool)left.Data | (bool)right.Data, new List<string>());
+                return new Value(VariableType.Bool, (bool)left.Data | (bool)right.Data, new List<string>());
             if ((left.Data != null && left.Data.Equals(true)) || (right.Data != null && right.Data.Equals(true)))
-                return new ExpressionResponse(VariableType.Bool, true, new List<string>());
+                return new Value(VariableType.Bool, true, new List<string>());
 
             if (left.Data != null)
             {
@@ -138,16 +151,17 @@ namespace RAGE
                 code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
             }
             code.Add(Jump.Generate(JumpType.NotEqual, "nnfnfn"));
-            return new ExpressionResponse(VariableType.Bool, null, code);
+            return new Value(VariableType.Bool, null, code);
         }
-        public override object VisitLogicalAndExpression([NotNull] CParser.LogicalAndExpressionContext context)
+
+        public override Value VisitLogicalAndExpression(LogicalAndExpressionContext context)
         {
             if (context.logicalAndExpression() == null)
             {
                 return VisitEqualityExpression(context.inclusiveOrExpression().exclusiveOrExpression().andExpression().equalityExpression());
             }
-            ExpressionResponse left = (ExpressionResponse)VisitLogicalAndExpression(context.logicalAndExpression());
-            ExpressionResponse right = (ExpressionResponse)VisitEqualityExpression(context.inclusiveOrExpression().exclusiveOrExpression().andExpression().equalityExpression());
+            Value left = VisitLogicalAndExpression(context.logicalAndExpression());
+            Value right = VisitEqualityExpression(context.inclusiveOrExpression().exclusiveOrExpression().andExpression().equalityExpression());
 
             List<string> code = new List<string>();
 
@@ -156,9 +170,9 @@ namespace RAGE
                 throw new Exception("Invalid types");
             }
             if (left.Data != null && right.Data != null)
-                return new ExpressionResponse(VariableType.Bool, (bool)left.Data & (bool)right.Data, new List<string>());
+                return new Value(VariableType.Bool, (bool)left.Data & (bool)right.Data, new List<string>());
             if ((left.Data != null && left.Data.Equals(false)) || (right.Data != null && right.Data.Equals(false)))
-                return new ExpressionResponse(VariableType.Bool, false, new List<string>());
+                return new Value(VariableType.Bool, false, new List<string>());
 
             if (left.Data != null)
             {
@@ -169,24 +183,25 @@ namespace RAGE
                 code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
             }
             code.Add(Jump.Generate(JumpType.Equal, "nnfnfn"));
-            return new ExpressionResponse(VariableType.Bool, null, code);
+            return new Value(VariableType.Bool, null, code);
         }
-        public override object VisitEqualityExpression([NotNull] CParser.EqualityExpressionContext context)
+
+        public override Value VisitEqualityExpression(EqualityExpressionContext context)
         {
             if (context.equalityExpression() == null)
             {
                 return VisitRelationalExpression(context.relationalExpression());
             }
 
-            ExpressionResponse left = (ExpressionResponse)VisitEqualityExpression(context.equalityExpression());
-            ExpressionResponse right = (ExpressionResponse)VisitRelationalExpression(context.relationalExpression());
+            Value left = VisitEqualityExpression(context.equalityExpression());
+            Value right = VisitRelationalExpression(context.relationalExpression());
 
             List<string> code = new List<string>();
 
             switch (context.GetChild(1).ToString())
             {
                 case "==":
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Bool, left.Data.Equals(right.Data), new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, left.Data.Equals(right.Data), new List<string>());
 
                     if (left.Data != null)
                     {
@@ -197,9 +212,9 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Jump.Generate(JumpType.Equal, "dfsdf"));
-                    return new ExpressionResponse(VariableType.Bool, null, code);
+                    return new Value(VariableType.Bool, null, code);
                 case "!=":
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Bool, !left.Data.Equals(right.Data), new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, !left.Data.Equals(right.Data), new List<string>());
 
                     if (left.Data != null)
                     {
@@ -210,45 +225,75 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Jump.Generate(JumpType.NotEqual, "dfsdf"));
-                    return new ExpressionResponse(VariableType.Bool, null, code);
+                    return new Value(VariableType.Bool, null, code);
             }
             throw new Exception("Unsupported operator");
         }
-        public override object VisitRelationalExpression([NotNull] CParser.RelationalExpressionContext context)
+
+        public override Value VisitRelationalExpression(RelationalExpressionContext context)
         {
             if (context.relationalExpression() == null)
             {
                 return VisitAdditiveExpression(context.shiftExpression().additiveExpression());
             }
 
-            ExpressionResponse left = (ExpressionResponse)VisitRelationalExpression(context.relationalExpression());
-            ExpressionResponse right = (ExpressionResponse)VisitAdditiveExpression(context.shiftExpression().additiveExpression());
+            Value left = VisitRelationalExpression(context.relationalExpression());
+            Value right = VisitAdditiveExpression(context.shiftExpression().additiveExpression());
 
             List<string> code = new List<string>();
 
-            if (left.Type != VariableType.Int || right.Type != VariableType.Int && (left.Type != VariableType.Variable || right.Type != VariableType.Variable))
+            //Right now, values being compared by relational operators must be integers
+            //They can also be variables which are integer values
+            if (left.Type != VariableType.Int || right.Type != VariableType.Int
+            && (left.Type != VariableType.Variable || right.Type != VariableType.Variable))
             {
-                throw new Exception("Cannot use relational operands on non-integer values");
+                throw new Exception("Cannot use relational operators on non-integer values");
             }
+
+            //If we're in an iterator context, we want to return the assembly code either way...
+            //The assembly code will do the comparison on the two values
+            bool isIterator = (currentContext.context is IterationStatementContext);
 
             switch (context.GetChild(1).ToString())
             {
                 case "<":
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
-
+                    //If it's not an iterator context, then it's free to return the two values (if possible)
+                    if (!isIterator)
+                    {
+                        if (left.Data != null && right.Data != null)
+                        {
+                            return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+                        }
+                    }
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                        if (left.OriginalVariable != null)
+                        {
+                            code.Add(FrameVar.Get(left.OriginalVariable));
+
+                        }
+                        else
+                        {
+                            code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                        }
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                        if (right.OriginalVariable != null)
+                        {
+                            code.Add(FrameVar.Get(right.OriginalVariable));
+
+                        }
+                        else
+                        {
+                            code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                        }
                     }
-                    code.Add(Compare.Generate(CompareType.LessThan));
-                    return new ExpressionResponse(VariableType.Bool, null, code);
+                    code.Add(Jump.Generate(JumpType.LessThan, currentContext.label));
+                    return new Value(VariableType.Bool, null, code);
 
                 case "<=":
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
 
                     if (left.Data != null)
                     {
@@ -259,10 +304,10 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Compare.Generate(CompareType.LessThanEqual));
-                    return new ExpressionResponse(VariableType.Bool, null, code);
+                    return new Value(VariableType.Bool, null, code);
 
                 case ">":
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
 
                     if (left.Data != null)
                     {
@@ -273,10 +318,10 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Compare.Generate(CompareType.GreaterThan));
-                    return new ExpressionResponse(VariableType.Bool, null, code);
+                    return new Value(VariableType.Bool, null, code);
 
                 case ">=":
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
 
                     if (left.Data != null)
                     {
@@ -287,19 +332,20 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Compare.Generate(CompareType.GreaterThan));
-                    return new ExpressionResponse(VariableType.Bool, null, code);
+                    return new Value(VariableType.Bool, null, code);
             }
             throw new Exception("Unsupported operator");
         }
-        public override object VisitAdditiveExpression([NotNull] CParser.AdditiveExpressionContext context)
+
+        public override Value VisitAdditiveExpression(AdditiveExpressionContext context)
         {
             if (context.additiveExpression() == null)
             {
                 return VisitMultiplicativeExpression(context.multiplicativeExpression());
             }
 
-            ExpressionResponse left = (ExpressionResponse)VisitAdditiveExpression(context.additiveExpression());
-            ExpressionResponse right = (ExpressionResponse)VisitMultiplicativeExpression(context.multiplicativeExpression());
+            Value left = VisitAdditiveExpression(context.additiveExpression());
+            Value right = VisitMultiplicativeExpression(context.multiplicativeExpression());
 
             List<string> code = new List<string>();
 
@@ -307,9 +353,9 @@ namespace RAGE
             {
                 case "+":
                     if (left.Type != right.Type && (left.Type != VariableType.Variable || right.Type != VariableType.Variable)) throw new Exception("Cannot use operand '+' on two different types.");
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Int, (int)left.Data + (int)right.Data, new List<string>());
-                    if (left.Data != null && left.Data.Equals(0)) return new ExpressionResponse(VariableType.Int, (int)right.Data, new List<string>());
-                    if (right.Data != null && right.Data.Equals(0)) return new ExpressionResponse(VariableType.Int, (int)left.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(VariableType.Int, (int)left.Data + (int)right.Data, new List<string>());
+                    if (left.Data != null && left.Data.Equals(0)) return new Value(VariableType.Int, (int)right.Data, new List<string>());
+                    if (right.Data != null && right.Data.Equals(0)) return new Value(VariableType.Int, (int)left.Data, new List<string>());
 
                     if (left.Data != null)
                     {
@@ -320,12 +366,12 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
-                    return new ExpressionResponse(VariableType.Int, null, code);
+                    return new Value(VariableType.Int, null, code);
                 case "-":
                     if (left.Type != right.Type && (left.Type != VariableType.Variable || right.Type != VariableType.Variable)) throw new Exception("Cannot use operand '-' on two different types.");
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Int, (int)left.Data - (int)right.Data, new List<string>());
-                    if (left.Data != null && left.Data.Equals(0)) return new ExpressionResponse(VariableType.Int, (int)right.Data, new List<string>());
-                    if (right.Data != null && right.Data.Equals(0)) return new ExpressionResponse(VariableType.Int, (int)left.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(VariableType.Int, (int)left.Data - (int)right.Data, new List<string>());
+                    if (left.Data != null && left.Data.Equals(0)) return new Value(VariableType.Int, (int)right.Data, new List<string>());
+                    if (right.Data != null && right.Data.Equals(0)) return new Value(VariableType.Int, (int)left.Data, new List<string>());
                     if (left.Data != null)
                     {
                         code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
@@ -335,20 +381,21 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
-                    return new ExpressionResponse(VariableType.Int, null, code);
+                    return new Value(VariableType.Int, null, code);
 
             }
             throw new Exception("Unsupported operator");
-        }     
-        public override object VisitMultiplicativeExpression([NotNull] CParser.MultiplicativeExpressionContext context)
+        }
+
+        public override Value VisitMultiplicativeExpression(MultiplicativeExpressionContext context)
         {
             if (context.multiplicativeExpression() == null)
             {
                 return ParseType(context.castExpression());
             }
 
-            ExpressionResponse left = (ExpressionResponse)VisitMultiplicativeExpression(context.multiplicativeExpression());
-            ExpressionResponse right = (ExpressionResponse)ParseType(context.castExpression());
+            Value left = VisitMultiplicativeExpression(context.multiplicativeExpression());
+            Value right = ParseType(context.castExpression());
 
             List<string> code = new List<string>();
 
@@ -372,23 +419,39 @@ namespace RAGE
                             }
                         }
                     }
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Int, (int)left.Data * (int)right.Data, new List<string>());
-                    if ((left.Data != null && left.Data.Equals(0)) || (right.Data != null && right.Data.Equals(0))) return new ExpressionResponse(VariableType.Int, 0, new List<string>());
+                    if (left.Data != null && right.Data != null && left.Type != VariableType.Variable && right.Type != VariableType.Variable) return new Value(VariableType.Int, (int)left.Data * (int)right.Data, new List<string>());
+                    if ((left.Data != null && left.Data.Equals(0)) || (right.Data != null && right.Data.Equals(0))) return new Value(VariableType.Int, 0, new List<string>());
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                        if (left.Type == VariableType.Variable)
+                        {
+                            Variable var = RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
+                            code.Add(FrameVar.Get(var));
+                        }
+                        else
+                        {
+                            code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                        }
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                        if (right.Type == VariableType.Variable)
+                        {
+                            Variable var = RAGEListener.currentFunction.Variables.GetVariable(right.Data.ToString());
+                            code.Add(FrameVar.Get(var));
+                        }
+                        else
+                        {
+                            code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                        }
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Multiplication));
-                    return new ExpressionResponse(VariableType.Int, null, code);
+                    return new Value(VariableType.Int, null, code);
                 case "/":
                     if (left.Type != right.Type && (left.Type != VariableType.Variable || right.Type != VariableType.Variable)) throw new Exception("Cannot use operand '/' on two different types.");
                     if (right.Data.Equals(0)) throw new Exception("Divide by zero?! IMPOSSIBRU!!!!!");
 
-                    if (left.Data != null && right.Data != null) return new ExpressionResponse(VariableType.Int, (int)left.Data / (int)right.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(VariableType.Int, (int)left.Data / (int)right.Data, new List<string>());
                     if (left.Data != null)
                     {
                         code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
@@ -398,14 +461,15 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
-                    return new ExpressionResponse(VariableType.Int, null, code);
+                    return new Value(VariableType.Int, null, code);
 
                     //@Incomplete: Add modulus
 
             }
             throw new Exception("Unsupported operator");
         }
-        public override object VisitUnaryExpression([NotNull] CParser.UnaryExpressionContext context)
+
+        public override Value VisitUnaryExpression(UnaryExpressionContext context)
         {
             if (context == null)
             {
@@ -416,16 +480,18 @@ namespace RAGE
             {
                 throw new Exception($"Unary expression {context.unaryOperator().GetText()} on {item} is not possible");
             }
-            return new ExpressionResponse(VariableType.Variable, item, new List<string>());
+            return new Value(VariableType.Variable, item, new List<string>());
         }
-        private object ParseType(CParser.CastExpressionContext context)
+
+        private Value ParseType(CParser.CastExpressionContext context)
         {
             string value = context.GetText();
 
             VariableType type = Utilities.GetType(RAGEListener.currentFunction, value);
-
+            Variable var = null;
             if (type == VariableType.Variable)
             {
+                var = RAGEListener.currentFunction.Variables.GetVariable(value);
                 value = GetValueFromVariable(value);
                 type = Utilities.GetType(RAGEListener.currentFunction, value);
             }
@@ -433,25 +499,26 @@ namespace RAGE
             switch (type)
             {
                 case VariableType.Int:
-                    return new ExpressionResponse(VariableType.Int, Convert.ToInt32(value), new List<string>());
+                    return new Value(VariableType.Int, Convert.ToInt32(value), new List<string>(), var);
                 case VariableType.Bool:
-                    return new ExpressionResponse(VariableType.Bool, Convert.ToBoolean(value), new List<string>());
+                    return new Value(VariableType.Bool, Convert.ToBoolean(value), new List<string>(), var);
                 case VariableType.Float:
-                    return new ExpressionResponse(VariableType.Float, Convert.ToSingle(value), new List<string>());
+                    return new Value(VariableType.Float, Convert.ToSingle(value), new List<string>(), var);
                 case VariableType.String:
-                    return new ExpressionResponse(VariableType.String, value, new List<string>());
+                    return new Value(VariableType.String, value, new List<string>(), var);
                 case VariableType.Variable:
                     //This will only be returned if the variable is set from a native or local function
-                    return new ExpressionResponse(VariableType.Variable, value, new List<string>());
+                    return new Value(VariableType.Variable, value, new List<string>(), var);
                 case VariableType.NativeCall:
-                    return new ExpressionResponse(VariableType.NativeCall, value, new List<string>());
+                    return new Value(VariableType.NativeCall, value, new List<string>(), var);
                 case VariableType.LocalCall:
-                    return new ExpressionResponse(VariableType.LocalCall, value, new List<string>());
+                    return new Value(VariableType.LocalCall, value, new List<string>(), var);
                 default:
                     throw new Exception("Not implemented yet");
 
             }
         }
+
         private string GetValueFromVariable(string variable)
         {
             string tempValue = variable;
@@ -459,12 +526,13 @@ namespace RAGE
             do
             {
                 var = RAGEListener.currentFunction.Variables.GetVariable(tempValue);
-                if (var.Value.Type == VariableType.LocalCall || var.Value.Type == VariableType.NativeCall) break; 
+                if (var.Value.Type == VariableType.LocalCall || var.Value.Type == VariableType.NativeCall) break;
                 tempValue = var.Value.Value;
             }
             while (var.Type == VariableType.Variable);
             Logger.Log($"Parsed variable '{variable}' and got value {tempValue}");
             return tempValue;
         }
+
     }
 }

@@ -5,29 +5,33 @@ Return 0 0
 
 :main
 Function 0 10 0
+push1 100
+setF1 2 //test
 CallNative player_ped_id 0 1
-setF1 2
+setF1 3 //id
 push_5
-setF1 3
+setF1 4 //b
 push1 25
-setF1 4
-Jump @if_block_end_0
+setF1 5 //a
 PushString "yep"
-setF1 5
+setF1 6 //coolio
 Jump @if_block_end_2
 push_5
-setF1 6
+setF1 7 //ohno
 :if_block_end_2
 :if_block_end_1
+push_0
+setF1 8 //i
 :for_loop_0
-getF1 7
-Add1 1
-setF1 7
-push_0
-setF1 8
 PushString "im in the loop!!!"
-setF1 9
+setF1 9 //inloop
+getF1 8 //i
+Add1 1
+setF1 8 //i
+getF1 8 //i
+push1 10
+JumpLT @for_loop_0
 push_0
-setF1 10
+setF1 10 //var
 :if_block_end_0
 Return 0 0

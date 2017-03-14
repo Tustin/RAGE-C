@@ -16,6 +16,8 @@ namespace RAGE
 
         public VariableValue Value { get; set; } 
 
+        public bool IsIterator { get; set; }
+
         public Variable(string name, int id, string type)
         {
             Name = name;
