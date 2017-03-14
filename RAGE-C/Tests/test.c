@@ -16,6 +16,10 @@ void main() {
             string inloop = "im in the loop!!!";
         }
 
+        while (b > 5) {
+            string inwhile = "im a while loop!!!";
+        }
+
         bool var = false;
     }
 }

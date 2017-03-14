@@ -65,11 +65,24 @@ namespace RAGE
             Logger.Log($"Entering function '{name}'...");
         }
 
-        public override void EnterDeclarationSpecifier([NotNull] DeclarationSpecifierContext context)
+        //Set a variable to something
+        public override void EnterExpression([NotNull] ExpressionContext context)
         {
-            string cc = context.GetText();
+            List<string> pieces = context.GetText().ExplodeAndClean('=');
+            if (pieces.Count != 2)
+            {
+                base.EnterExpression(context);
+                return;
+            }
+            string variableName = pieces[0];
+            string variableValue = pieces[1];
+            //@TODO: At some point this needs to check if the var is in scope
+            if (!currentFunction.Variables.ContainVariable(variableName)) {
+                return;
+            }
+            var data = visitor.VisitAssignmentExpression(context.assignmentExpression());
+            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(data.Assembly);
 
-            base.EnterDeclarationSpecifier(context);
         }
         //End of a function
         public override void ExitFunctionDefinition(FunctionDefinitionContext context)
@@ -225,24 +238,33 @@ namespace RAGE
         {
             string loop = context.GetText();
 
-            //Generate the variable for the for loop
-            var variable = visitor.VisitDeclaration(context.declaration());
-            if (!(variable.Data is Variable v))
-            {
-                throw new Exception("Expected a Variable object from VisitDeclaration");
-            }
-            currentFunction.Variables.Add(v);
-            currentVariable = v;
+            //For loops
             if (loop.StartsWith("for"))
             {
+                //Generate the variable for the for loop
+                var variable = visitor.VisitDeclaration(context.declaration());
+                if (!(variable.Data is Variable v))
+                {
+                    throw new Exception("Expected a Variable object from VisitDeclaration");
+                }
+                currentFunction.Variables.Add(v);
+                currentVariable = v;
+
                 int count = storedContexts.Count(a => a.context is IterationStatementContext);
-                storedContexts.Add(($"for_loop_{count}", count, context));
+                storedContexts.Add(($"loop_{count}", count, context));
                 //Push the value of the iterator into the variable before the for loop label
                 //Otherwise we would constantly have infinite loops
                 var titties = Core.AssemblyCode.FindFunction(currentFunction.Name);
                 titties.Value.Add(Push.Generate(v.Value.Value, v.Value.Type));
                 titties.Value.Add(FrameVar.Set(v));
-                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":for_loop_{count}");
+                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":loop_{count}");
+            }
+            //While loops
+            else if (loop.StartsWith("while"))
+            {
+                int count = storedContexts.Count(a => a.context is IterationStatementContext);
+                storedContexts.Add(($"loop_{count}", count, context));
+                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":loop_{count}");
             }
         }
 
@@ -250,6 +272,9 @@ namespace RAGE
         public override void ExitIterationStatement(IterationStatementContext context)
         {
             var storedContext = storedContexts.Where(a => a.context == context).First();
+
+            string code = context.GetText();
+
 
             //Reverse it so it evaluates the incrementing first before doing the comparison
             foreach (ExpressionContext expression in context.expression().Reverse())
@@ -260,7 +285,6 @@ namespace RAGE
             }
             //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($"Jump {storedContext.label}");
 
-            string code = context.GetText();
             base.ExitIterationStatement(context);
         }
 

@@ -112,6 +112,10 @@ namespace RAGE
                     code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, Convert.ToInt32(right.Data.ToString())));
                     code.Add(FrameVar.Set(variable));
                     return new Value(VariableType.Int, null, code);
+                case "=":
+                    code.Add(Push.Generate(right.Data.ToString(), variable.Type));
+                    code.Add(FrameVar.Set(variable));
+                    return new Value(VariableType.Int, null, code);
             }
             throw new Exception("Invalid operator");
         }

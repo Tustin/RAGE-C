@@ -4,8 +4,10 @@ Call @main
 Return 0 0
 
 :main
-Function 0 10 0
+Function 0 11 0
 push1 100
+setF1 2 //test
+push_5
 setF1 2 //test
 CallNative player_ped_id 0 1
 setF1 3 //id
@@ -22,7 +24,7 @@ setF1 7 //ohno
 :if_block_end_1
 push_0
 setF1 8 //i
-:for_loop_0
+:loop_0
 PushString "im in the loop!!!"
 setF1 9 //inloop
 getF1 8 //i
@@ -30,8 +32,12 @@ Add1 1
 setF1 8 //i
 getF1 8 //i
 push1 10
-JumpLT @for_loop_0
+JumpLT @loop_0
+:loop_1
+PushString "im a while loop!!!"
+setF1 10 //inwhile
+Jump @loop_1
 push_0
-setF1 10 //var
+setF1 11 //var
 :if_block_end_0
 Return 0 0
