@@ -11,8 +11,13 @@ void main() {
             }
         }
 
-        for (int i = 0; i < 10; i--) {
-            string inloop = "im in the loop!!!";
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 15; j++) {
+                string injloop = "im in the j loop!!!";
+            }
+            if (i < 3) {
+                string inloop = "i is less than 3";
+            }
         }
 
         while (b > 5) {

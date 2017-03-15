@@ -259,9 +259,10 @@ namespace RAGE
                 throw new Exception("Cannot use relational operators on non-integer values");
             }
 
-            //If we're in an iterator context, we want to return the assembly code either way...
-            //The assembly code will do the comparison on the two values
-            bool isIterator = (currentContext.context is IterationStatementContext);
+
+            //Lets just output the variables here because fuck optimization
+            //Saves some headache with the compiler parsing logic on variables that might be changed
+            bool isIterator = (currentContext.context is IterationStatementContext) | (currentContext.context is SelectionStatementContext);
 
             switch (context.GetChild(1).ToString())
             {
