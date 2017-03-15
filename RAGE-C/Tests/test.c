@@ -1,7 +1,6 @@
 void main() {
     int test = 10 * 10;
     test = 5;
-    int id = player_ped_id();
     int b = 5;
     int a = 5 * b;
     if(true) {
@@ -12,7 +11,7 @@ void main() {
             }
         }
 
-        for (int i = 0; i < 10; i += 1) {
+        for (int i = 0; i < 10; i--) {
             string inloop = "im in the loop!!!";
         }
 

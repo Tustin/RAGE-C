@@ -100,7 +100,19 @@ namespace RAGE
             Value left = VisitUnaryExpression(context.unaryExpression());
             Value right = VisitAssignmentExpression(context.assignmentExpression());
 
-            Variable variable = RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
+            Variable variable;
+            if (left.OriginalVariable != null)
+            {
+                variable = left.OriginalVariable;
+            }
+            else
+            {
+                variable = RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
+            }
+            if (variable == null)
+            {
+                throw new Exception($"Failed to find variable {left.Data.ToString()}");
+            }
 
             List<string> code = new List<string>();
 
@@ -395,11 +407,11 @@ namespace RAGE
         {
             if (context.multiplicativeExpression() == null)
             {
-                return ParseType(context.castExpression());
+                return VisitCastExpression(context.castExpression());
             }
 
             Value left = VisitMultiplicativeExpression(context.multiplicativeExpression());
-            Value right = ParseType(context.castExpression());
+            Value right = VisitCastExpression(context.castExpression());
 
             List<string> code = new List<string>();
 
@@ -473,13 +485,24 @@ namespace RAGE
             throw new Exception("Unsupported operator");
         }
 
+        public override Value VisitCastExpression(CastExpressionContext context)
+        {
+            if (context.castExpression() != null)
+            {
+                throw new Exception("Casts are not supported");
+            }
+
+            return VisitUnaryExpression(context.unaryExpression());
+        }
+
         public override Value VisitUnaryExpression(UnaryExpressionContext context)
         {
-            if (context == null)
+            if (context.unaryExpression() == null)
             {
-                throw new Exception();
+                return VisitPostfixExpression(context.postfixExpression());
             }
             string item = context.GetText();
+
             if (!RAGEListener.currentFunction.Variables.ContainVariable(item))
             {
                 throw new Exception($"Unary expression {context.unaryOperator().GetText()} on {item} is not possible");
@@ -487,7 +510,43 @@ namespace RAGE
             return new Value(VariableType.Variable, item, new List<string>());
         }
 
-        private Value ParseType(CParser.CastExpressionContext context)
+        public override Value VisitPostfixExpression(PostfixExpressionContext context)
+        {
+            if (context.postfixExpression() == null)
+            {
+                return ParseType(context.primaryExpression());
+            }
+            string var = context.GetChild(0).GetText();
+            string symbol = context.GetChild(1).GetText();
+
+            if (!RAGEListener.currentFunction.Variables.ContainVariable(var))
+            {
+                throw new Exception($"Postfix operators ({symbol}) can only be used on variables");
+            }
+
+            List<string> code = new List<string>();
+            Variable variable = RAGEListener.currentFunction.Variables.GetVariable(var);
+
+            switch (symbol)
+            {
+                case "++":
+                    code.Add(FrameVar.Get(variable));
+                    code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
+                    code.Add(FrameVar.Set(variable));
+                    return new Value(VariableType.Int, null, code);
+                case "--":
+                    code.Add(FrameVar.Get(variable));
+                    code.Add(Push.Generate("1", VariableType.Int));
+                    code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
+                    code.Add(FrameVar.Set(variable));
+                    return new Value(VariableType.Int, null, code);
+                default:
+                    throw new Exception("Unknown postfix type");
+
+            }
+        }
+
+        private Value ParseType(PrimaryExpressionContext context)
         {
             string value = context.GetText();
 
