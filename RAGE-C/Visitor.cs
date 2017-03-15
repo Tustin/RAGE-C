@@ -100,15 +100,8 @@ namespace RAGE
             Value left = VisitUnaryExpression(context.unaryExpression());
             Value right = VisitAssignmentExpression(context.assignmentExpression());
 
-            Variable variable;
-            if (left.OriginalVariable != null)
-            {
-                variable = left.OriginalVariable;
-            }
-            else
-            {
-                variable = RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
-            }
+            Variable variable = left.OriginalVariable ?? RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
+
             if (variable == null)
             {
                 throw new Exception($"Failed to find variable {left.Data.ToString()}");
