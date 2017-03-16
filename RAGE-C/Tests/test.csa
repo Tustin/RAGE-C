@@ -4,12 +4,11 @@ Call @main
 Return 0 0
 
 :main
-Function 0 3 0
-push_5
+Function 0 4 0
+push1 15
 setF1 2 //a
-getF1 2 //a
-Add1 1
+push1 15
 setF1 2 //a
-pFrame1 2 //&a
-CallNative delete_vehicle 1 0
+push1 10
+setF1 3 //b
 Return 0 0

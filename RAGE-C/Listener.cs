@@ -68,6 +68,8 @@ namespace RAGE
         //Set a variable to something
         public override void EnterExpression(ExpressionContext context)
         {
+            var poo = visitor.VisitExpression(context);
+            string aa = context.assignmentExpression().GetText();
             List<string> pieces = context.GetText().ExplodeAndClean('=');
             if (pieces.Count != 2)
             {
@@ -79,7 +81,7 @@ namespace RAGE
             //@TODO: At some point this needs to check if the var is in scope
             if (!currentFunction.Variables.ContainVariable(variableName))
             {
-                return;
+                throw new Exception("Variable does not exist");
             }
             var data = visitor.VisitAssignmentExpression(context.assignmentExpression());
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(data.Assembly);
@@ -101,69 +103,85 @@ namespace RAGE
         //New variables
         public override void EnterDeclaration(DeclarationContext context)
         {
-            string type = context.GetChild(0).GetText();
-            List<string> pieces = context.GetChild(1).GetText().ExplodeAndClean('=');
-            string varName = pieces[0];
-            string value = pieces[1];
-            //Was probably set by the visitor for a loop
-            if (currentFunction.Variables.ContainVariable(varName)) return;
-            currentVariable = new Variable(null, currentFunction.FrameVars + 1, type);
-            currentFunction.Variables.Add(currentVariable);
+            string gg = context.GetText();
+
+            Value res = visitor.VisitDeclaration(context);
+
+            if (res.Data == null)
+            {
+                throw new Exception("Found variable declaration but got null");
+            }
+
+            currentVariable = (Variable)res.Data;
+
+            if (currentVariable.Value != null && !currentVariable.Value.IsDefault)
+            {
+                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(res.Assembly);
+            }
+
+            //string type = context.GetChild(0).GetText();
+            //List<string> pieces = context.GetChild(1).GetText().ExplodeAndClean('=');
+            //string varName = pieces[0];
+            //string value = pieces[1];
+            ////Was probably set by the visitor for a loop
+            //if (currentFunction.Variables.ContainVariable(varName)) return;
+            //currentVariable = new Variable(null, currentFunction.FrameVars + 1, type);
+            //currentFunction.Variables.Add(currentVariable);
         }
 
-        //Variable names
-        public override void EnterDirectDeclarator(DirectDeclaratorContext context)
-        {
-            if (context.Identifier() != null)
-            {
-                string variableName = context.GetText();
+        ////Variable names
+        //public override void EnterDirectDeclarator(DirectDeclaratorContext context)
+        //{
+        //    if (context.Identifier() != null)
+        //    {
+        //        string variableName = context.GetText();
 
-                //EnterDirectDeclarator will have the function name as a declarator so we wanna ignore that
-                if (Core.Functions.ContainFunction(variableName)) return;
+        //        //EnterDirectDeclarator will have the function name as a declarator so we wanna ignore that
+        //        if (Core.Functions.ContainFunction(variableName)) return;
 
-                if (currentFunction.Variables.ContainVariable(variableName))
-                {
-                    //throw new Exception($"Variable {variableName} already exists in this function scope");
-                    return;
-                }
+        //        if (currentFunction.Variables.ContainVariable(variableName))
+        //        {
+        //            //throw new Exception($"Variable {variableName} already exists in this function scope");
+        //            return;
+        //        }
 
-                currentVariable.Name = variableName;
+        //        currentVariable.Name = variableName;
 
-                Logger.Log($"({currentFunction.Name}) - Parsed variable '{variableName}'");
-            }
-        }
+        //        Logger.Log($"({currentFunction.Name}) - Parsed variable '{variableName}'");
+        //    }
+        //}
 
-        //Variable values
-        public override void EnterInitializer(InitializerContext context)
-        {
-            string value = context.GetText();
-            value = value.Replace(";", "");
-            //Do any arithmetic that this variable might have
-            var resp = visitor.VisitAssignmentExpression(context.assignmentExpression());
+        ////Variable values
+        //public override void EnterInitializer(InitializerContext context)
+        //{
+        //    string value = context.GetText();
+        //    value = value.Replace(";", "");
+        //    //Do any arithmetic that this variable might have
+        //    var resp = visitor.VisitAssignmentExpression(context.assignmentExpression());
 
-            if (resp.Type == VariableType.Address)
-            {
-                throw new Exception("Address of variable cannot be stored in variables");
-            }
+        //    if (resp.Type == VariableType.Address)
+        //    {
+        //        throw new Exception("Address of variable cannot be stored in variables");
+        //    }
 
-            //Just add the code to the stack
-            if (resp.Type == VariableType.NativeCall || resp.Type == VariableType.LocalCall)
-            {
+        //    //Just add the code to the stack
+        //    if (resp.Type == VariableType.NativeCall || resp.Type == VariableType.LocalCall)
+        //    {
 
 
-            }
-            VariableType valueType = Utilities.GetType(currentFunction, resp.Data.ToString());
+        //    }
+        //    VariableType valueType = Utilities.GetType(currentFunction, resp.Data.ToString());
 
-            if (valueType != currentVariable.Type && valueType != VariableType.LocalCall && valueType != VariableType.NativeCall)
-            {
-                throw new Exception($"Value of '{currentVariable.Name}' does not match it's type");
-            }
+        //    if (valueType != currentVariable.Type && valueType != VariableType.LocalCall && valueType != VariableType.NativeCall)
+        //    {
+        //        throw new Exception($"Value of '{currentVariable.Name}' does not match it's type");
+        //    }
 
-            currentVariable.Value.Value = resp.Data.ToString();
-            currentVariable.Value.Type = valueType;
-        }
+        //    currentVariable.Value.Value = resp.Data.ToString();
+        //    currentVariable.Value.Type = valueType;
+        //}
 
-        //Parse variable function call arguments and generate push instructions
+        ////Parse variable function call arguments and generate push instructions
         public override void ExitInitializer(InitializerContext context)
         {
             if (currentVariable.IsIterator) return;
@@ -201,11 +219,18 @@ namespace RAGE
 
         public override void EnterBlockItem([NotNull] BlockItemContext context)
         {
+            string aa = context.GetText();
             base.EnterBlockItem(context);
         }
 
         public override void EnterStatement([NotNull] StatementContext context)
         {
+            if (context.expressionStatement() == null)
+            {
+                base.EnterStatement(context);
+                return;
+            }
+
             var res = visitor.VisitExpression(context.expressionStatement().expression());
 
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(res.Assembly);

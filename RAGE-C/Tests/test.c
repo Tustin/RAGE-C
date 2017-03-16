@@ -1,5 +1,5 @@
 void main() {
-    int a = 5;
-    a++;
-    delete_vehicle(&a);
+    int a;
+    a = 15;
+    int b = 10;
 }

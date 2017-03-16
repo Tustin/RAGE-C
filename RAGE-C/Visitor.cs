@@ -13,45 +13,66 @@ namespace RAGE
 {
     public class RAGEVisitor : CBaseVisitor<Value>
     {
-
         public override Value VisitDeclaration(DeclarationContext context)
         {
-            Value val = new Value();
+            Value value = new Value();
 
-            string declaration = context.GetText();
-
-            string type = context.GetChild(0).GetText();
-
-            //Ugh, why doesn't this context have an assignment context?!?!
-            //For loops will just be limited to int i = {some integer or variable}
-            List<string> pieces = context.GetChild(1).GetText().ExplodeAndClean('=');
-            string varName = pieces[0];
-            string value = pieces[1];
-
-            VariableType valueType = Utilities.GetType(RAGEListener.currentFunction, value);
-
-            Variable variable = new Variable(varName, RAGEListener.currentFunction.FrameVars + 1, type);
-
-            //Try to parse the arguments
-            if (valueType == VariableType.NativeCall || valueType == VariableType.LocalCall)
+            string varName = null;
+            string varType = null;
+            //Fucking dumb
+            if (context.children.Count == 2)
             {
-                //Clean up the function call
-                Regex reg = new Regex(@"\(([a-zA-Z0-9,\s""']*)\)");
-                List<string> matches = reg.Matches(value).GetRegexGroups();
-                if (matches.Count > 1)
-                {
-                    string arguments = matches[0];
-                    variable.Value.Arguments = Utilities.GetListOfArguments(arguments);
-                }
-
+                varName = context.GetChild(0).GetChild(1).GetText();
+                varType = context.GetChild(0).GetChild(0).GetText();
             }
-            string stripped = Regex.Replace(value, "\\(.*\\)", "");
-            value = stripped;
-            variable.Value.Value = value;
-            variable.Value.Type = valueType;
-            variable.IsIterator = true;
-            val.Data = variable;
-            return val;
+            else if (context.children.Count == 3)
+            {
+                //Even dumber
+                varName = context.GetChild(1).GetText().Split('=')[0];
+                varType = context.GetChild(0).GetText();
+            }
+
+            Variable variable = new Variable(varName, RAGEListener.currentFunction.FrameVars + 1, varType);
+
+            RAGEListener.currentFunction.Variables.Add(variable);
+
+            //See if this variable is being initialized
+            //If not, then we'll give it a default value
+            if (context.initDeclaratorList() != null)
+            {
+                var resp = VisitInitDeclarator(context.initDeclaratorList().initDeclarator());
+                value.Assembly = resp.Assembly;
+                if (resp.Data == null)
+                {
+                    throw new Exception();
+                }
+                variable.Value.Value = resp.Data.ToString();
+                variable.Value.Type = resp.Type;
+                variable.Value.IsDefault = false;
+            }
+            else
+            {
+                variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+                variable.Value.Type = variable.Type;
+                variable.Value.IsDefault = true;
+            }
+
+            string stripped = Regex.Replace(varName, "\\(.*\\)", "");
+
+            value.Data = variable;
+            return value;
+        }
+
+        public override Value VisitInitDeclarator(InitDeclaratorContext context)
+        {
+            Value value = new Value();
+
+            string varName = context.GetChild(0).GetText();
+            string varValue = context.GetChild(0).GetText();
+
+            var resp = VisitAssignmentExpression(context.initializer().assignmentExpression());
+
+            return resp;
         }
 
         //The current context of the visitor (will be null if this isn't an expression)
@@ -148,18 +169,19 @@ namespace RAGE
             }
             if (left.Data != null && right.Data != null)
                 return new Value(VariableType.Bool, (bool)left.Data | (bool)right.Data, new List<string>());
+
             if ((left.Data != null && left.Data.Equals(true)) || (right.Data != null && right.Data.Equals(true)))
                 return new Value(VariableType.Bool, true, new List<string>());
 
             if (left.Data != null)
             {
-                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
             }
             if (right.Data != null)
             {
-                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
             }
-            code.Add(Jump.Generate(JumpType.NotEqual, "nnfnfn"));
+            code.Add(Compare.Generate(CompareType.Equal));
             return new Value(VariableType.Bool, null, code);
         }
 
@@ -185,11 +207,11 @@ namespace RAGE
 
             if (left.Data != null)
             {
-                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
             }
             if (right.Data != null)
             {
-                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
             }
             code.Add(Jump.Generate(JumpType.Equal, "nnfnfn"));
             return new Value(VariableType.Bool, null, code);
@@ -214,11 +236,11 @@ namespace RAGE
 
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                     }
                     code.Add(Jump.Generate(JumpType.Equal, "dfsdf"));
                     return new Value(VariableType.Bool, null, code);
@@ -227,11 +249,11 @@ namespace RAGE
 
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                     }
                     code.Add(Jump.Generate(JumpType.NotEqual, "dfsdf"));
                     return new Value(VariableType.Bool, null, code);
@@ -272,6 +294,7 @@ namespace RAGE
                     {
                         if (left.Data != null && right.Data != null)
                         {
+
                             return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
                         }
                     }
@@ -369,11 +392,11 @@ namespace RAGE
 
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
                     return new Value(VariableType.Int, null, code);
@@ -384,11 +407,11 @@ namespace RAGE
                     if (right.Data != null && right.Data.Equals(0)) return new Value(VariableType.Int, (int)left.Data, new List<string>());
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
                     return new Value(VariableType.Int, null, code);
@@ -461,14 +484,20 @@ namespace RAGE
                     if (left.Type != right.Type && (left.Type != VariableType.Variable || right.Type != VariableType.Variable)) throw new Exception("Cannot use operand '/' on two different types.");
                     if (right.Data.Equals(0)) throw new Exception("Divide by zero?! IMPOSSIBRU!!!!!");
 
-                    if (left.Data != null && right.Data != null) return new Value(VariableType.Int, (int)left.Data / (int)right.Data, new List<string>());
+                    if (left.Data != null && right.Data != null)
+                    {
+                        code.Add(Push.Generate(left.Data.ToString(), VariableType.Int));
+                        code.Add(Push.Generate(right.Data.ToString(), VariableType.Int));
+                        code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
+                        return new Value(VariableType.Int, (int)left.Data / (int)right.Data, code);
+                    }
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(null, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
                     return new Value(VariableType.Int, null, code);
@@ -535,6 +564,7 @@ namespace RAGE
                     throw new Exception($"Invalid unary operator {op}");
             }
         }
+
         public override Value VisitPostfixExpression(PostfixExpressionContext context)
         {
             if (context.postfixExpression() == null)
@@ -634,7 +664,6 @@ namespace RAGE
 
             return new Value(VariableType.ArgListing, args, null);
         }
-
 
         private Value ParseType(PrimaryExpressionContext context)
         {

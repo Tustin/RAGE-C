@@ -109,25 +109,21 @@ namespace RAGE
             }
         }
 
-        public static List<Argument> GetListOfArguments(string args)
+        public static string GetDefaultValue(VariableType type)
         {
-            var result = new List<Argument>();
-
-            List<string> argsList = args.Split(',').ToList();
-
-            if (string.IsNullOrEmpty(argsList[0])) return result;
-
-            foreach (string arg in argsList)
+            switch (type)
             {
-                Argument finalArg = new Argument()
-                {
-                    Type = GetType(null, arg),
-                    Value = arg.Replace(" ", "")
-                };
-                result.Add(finalArg);
+                case VariableType.Int:
+                    return "0";
+                case VariableType.Float:
+                    return "0.0";
+                case VariableType.String:
+                    return "";
+                case VariableType.Bool:
+                    return "false";
+                default:
+                    throw new Exception($"No default value is defined for type {type}");
             }
-
-            return result;
         }
         public static List<string> GetRegexGroups(this MatchCollection collection)
         {
