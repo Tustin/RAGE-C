@@ -66,7 +66,7 @@ namespace RAGE
         }
 
         //Set a variable to something
-        public override void EnterExpression([NotNull] ExpressionContext context)
+        public override void EnterExpression(ExpressionContext context)
         {
             List<string> pieces = context.GetText().ExplodeAndClean('=');
             if (pieces.Count != 2)
@@ -77,20 +77,21 @@ namespace RAGE
             string variableName = pieces[0];
             string variableValue = pieces[1];
             //@TODO: At some point this needs to check if the var is in scope
-            if (!currentFunction.Variables.ContainVariable(variableName)) {
+            if (!currentFunction.Variables.ContainVariable(variableName))
+            {
                 return;
             }
             var data = visitor.VisitAssignmentExpression(context.assignmentExpression());
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(data.Assembly);
-
         }
+
         //End of a function
         public override void ExitFunctionDefinition(FunctionDefinitionContext context)
         {
             var function = Core.AssemblyCode.FindFunction(currentFunction.Name);
             string funcEntry = function.Value[0];
             //@TODO: Update first 0 for param count
-            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {currentFunction.FrameVars} 0");
+            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {currentFunction.FrameVars + 1} 0");
             function.Value[0] = funcEntry;
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Return.Generate());
             Logger.Log($"Leaving function '{currentFunction.Name}'");
@@ -98,7 +99,7 @@ namespace RAGE
         }
 
         //New variables
-        public override void EnterDeclaration([NotNull] DeclarationContext context)
+        public override void EnterDeclaration(DeclarationContext context)
         {
             string type = context.GetChild(0).GetText();
             List<string> pieces = context.GetChild(1).GetText().ExplodeAndClean('=');
@@ -110,7 +111,7 @@ namespace RAGE
             currentFunction.Variables.Add(currentVariable);
         }
 
-        ////Variable names
+        //Variable names
         public override void EnterDirectDeclarator(DirectDeclaratorContext context)
         {
             if (context.Identifier() != null)
@@ -140,6 +141,17 @@ namespace RAGE
             //Do any arithmetic that this variable might have
             var resp = visitor.VisitAssignmentExpression(context.assignmentExpression());
 
+            if (resp.Type == VariableType.Address)
+            {
+                throw new Exception("Address of variable cannot be stored in variables");
+            }
+
+            //Just add the code to the stack
+            if (resp.Type == VariableType.NativeCall || resp.Type == VariableType.LocalCall)
+            {
+
+
+            }
             VariableType valueType = Utilities.GetType(currentFunction, resp.Data.ToString());
 
             if (valueType != currentVariable.Type && valueType != VariableType.LocalCall && valueType != VariableType.NativeCall)
@@ -149,20 +161,6 @@ namespace RAGE
 
             currentVariable.Value.Value = resp.Data.ToString();
             currentVariable.Value.Type = valueType;
-
-
-            //Try to parse the arguments
-            if (valueType == VariableType.NativeCall || valueType == VariableType.LocalCall)
-            {
-                //Clean up the function call
-                string stripped = Regex.Replace(value, "\\(.*\\)", "");
-                currentVariable.Value.Value = stripped;
-                Regex reg = new Regex(@"\(([a-zA-Z0-9,\s""']*)\)");
-                List<string> matches = reg.Matches(value).GetRegexGroups();
-                if (matches.Count == 1 && matches[0] == "") return;
-                string arguments = matches[0];
-                currentVariable.Value.Arguments = Utilities.GetListOfArguments(arguments);
-            }
         }
 
         //Parse variable function call arguments and generate push instructions
@@ -199,6 +197,20 @@ namespace RAGE
 
             //Generate the variable to store the value into
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Set(currentVariable));
+        }
+
+        public override void EnterBlockItem([NotNull] BlockItemContext context)
+        {
+            base.EnterBlockItem(context);
+        }
+
+        public override void EnterStatement([NotNull] StatementContext context)
+        {
+            var res = visitor.VisitExpression(context.expressionStatement().expression());
+
+            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(res.Assembly);
+
+            base.EnterStatement(context);
         }
 
         //Entering if, else, switch

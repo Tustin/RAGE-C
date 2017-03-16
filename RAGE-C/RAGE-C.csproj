@@ -89,5 +89,11 @@
       <CustomToolNamespace>RootNamespace.Folder</CustomToolNamespace>
     </Antlr4>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Compiler\Compiler.csproj">
+      <Project>{66127ac6-df3e-4a19-9772-85d48d068895}</Project>
+      <Name>Compiler</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

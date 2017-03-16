@@ -493,52 +493,148 @@ namespace RAGE
         {
             if (context.unaryExpression() == null)
             {
-                return VisitPostfixExpression(context.postfixExpression());
-            }
-            string item = context.GetText();
+                if (context.unaryOperator() != null)
+                {
+                    Value op = VisitUnaryOperator(context.unaryOperator());
+                    string var = context.GetChild(1).GetText();
 
-            if (!RAGEListener.currentFunction.Variables.ContainVariable(item))
-            {
-                throw new Exception($"Unary expression {context.unaryOperator().GetText()} on {item} is not possible");
+                    if (!RAGEListener.currentFunction.Variables.ContainVariable(var))
+                    {
+                        throw new Exception($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible");
+                    }
+                    Variable v = RAGEListener.currentFunction.Variables.GetVariable(var);
+                    List<string> code = new List<string>();
+                    switch (op.Type)
+                    {
+                        case VariableType.Address:
+                            code.Add(FrameVar.GetPointer(v));
+                            return new Value(VariableType.Address, null, code);
+                    }
+                }
+                else
+                {
+                    return VisitPostfixExpression(context.postfixExpression());
+                }
             }
-            return new Value(VariableType.Variable, item, new List<string>());
+            return null;
         }
 
+        public override Value VisitUnaryOperator(UnaryOperatorContext context)
+        {
+            if (context == null)
+            {
+                throw new Exception();
+            }
+            string op = context.GetText();
+            switch (op)
+            {
+                //Address of
+                case "&":
+                    return new Value(VariableType.Address, null, null);
+                default:
+                    throw new Exception($"Invalid unary operator {op}");
+            }
+        }
         public override Value VisitPostfixExpression(PostfixExpressionContext context)
         {
             if (context.postfixExpression() == null)
             {
                 return ParseType(context.primaryExpression());
             }
-            string var = context.GetChild(0).GetText();
+            string expression = context.GetChild(0).GetText();
             string symbol = context.GetChild(1).GetText();
 
-            if (!RAGEListener.currentFunction.Variables.ContainVariable(var))
-            {
-                throw new Exception($"Postfix operators ({symbol}) can only be used on variables");
-            }
-
             List<string> code = new List<string>();
-            Variable variable = RAGEListener.currentFunction.Variables.GetVariable(var);
+            Variable variable = RAGEListener.currentFunction.Variables.GetVariable(expression);
 
             switch (symbol)
             {
                 case "++":
+                    if (!RAGEListener.currentFunction.Variables.ContainVariable(expression))
+                    {
+                        throw new Exception($"Postfix operators ({symbol}) can only be used on variables");
+                    }
                     code.Add(FrameVar.Get(variable));
                     code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
                     code.Add(FrameVar.Set(variable));
                     return new Value(VariableType.Int, null, code);
                 case "--":
+                    if (!RAGEListener.currentFunction.Variables.ContainVariable(expression))
+                    {
+                        throw new Exception($"Postfix operators ({symbol}) can only be used on variables");
+                    }
                     code.Add(FrameVar.Get(variable));
                     code.Add(Push.Generate("1", VariableType.Int));
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
                     code.Add(FrameVar.Set(variable));
                     return new Value(VariableType.Int, null, code);
+                case "(":
+                    if (Core.Functions.ContainFunction(expression))
+                    {
+
+                        var args = VisitArgumentExpressionList(context.argumentExpressionList());
+                        //No args
+                        if (args == null)
+                        {
+                            return new Value(VariableType.LocalCall, null, null);
+                        }
+                        //@TODO: Argument checking
+                    }
+                    else if (Native.IsFunctionANative(expression))
+                    {
+                        Value args = VisitArgumentExpressionList(context.argumentExpressionList());
+                        if (args == null)
+                        {
+                            code.Add(Call.Native(expression, 0, false));
+                            return new Value(VariableType.NativeCall, null, code);
+                        }
+
+                        List<Value> argsList = (List<Value>)args.Data;
+                        argsList.Reverse();
+
+                        //Generate the code
+                        foreach (Value v in argsList)
+                        {
+                            if (v.Assembly.Count == 0)
+                            {
+                                code.Add(Push.Generate(v.Data.ToString(), v.Type));
+                            }
+                            else
+                            {
+                                code.AddRange(v.Assembly);
+                            }
+                        }
+                        code.Add(Call.Native(expression, argsList.Count, false));
+                        return new Value(VariableType.NativeCall, null, code);
+                    }
+                    throw new Exception("Found open parens, but expression is not a function");
+
                 default:
                     throw new Exception("Unknown postfix type");
 
             }
         }
+
+        public override Value VisitArgumentExpressionList(ArgumentExpressionListContext context)
+        {
+            //Means theres no args being passed
+            if (context == null)
+            {
+                return null;
+            }
+
+            List<Value> args = new List<Value>();
+
+            //Loop through each arg and evaluate it
+            while (context != null)
+            {
+                args.Add(VisitAssignmentExpression(context.assignmentExpression()));
+                context = context.argumentExpressionList();
+            }
+
+            return new Value(VariableType.ArgListing, args, null);
+        }
+
 
         private Value ParseType(PrimaryExpressionContext context)
         {

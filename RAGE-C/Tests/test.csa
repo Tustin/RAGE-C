@@ -4,53 +4,12 @@ Call @main
 Return 0 0
 
 :main
-Function 0 12 0
-push1 100
-setF1 2 //test
+Function 0 3 0
 push_5
-setF1 2 //test
-push_5
-setF1 3 //b
-push1 25
-setF1 4 //a
-PushString "yep"
-setF1 5 //coolio
-Jump @if_block_end_2
-push_5
-setF1 6 //ohno
-:if_block_end_2
-:if_block_end_1
-push_0
-setF1 7 //i
-:loop_0
-push_0
-setF1 8 //j
-:loop_1
-PushString "im in the j loop!!!"
-setF1 9 //injloop
-getF1 8 //j
+setF1 2 //a
+getF1 2 //a
 Add1 1
-setF1 8 //j
-getF1 8 //j
-push1 15
-JumpLT @loop_1
-getF1 7 //i
-push_3
-JumpLT @if_block_end_3
-PushString "i is less than 3"
-setF1 10 //inloop
-:if_block_end_3
-getF1 7 //i
-Add1 1
-setF1 7 //i
-getF1 7 //i
-push1 10
-JumpLT @loop_0
-:loop_2
-PushString "im a while loop!!!"
-setF1 11 //inwhile
-Jump @loop_2
-push_0
-setF1 12 //var
-:if_block_end_0
+setF1 2 //a
+pFrame1 2 //&a
+CallNative delete_vehicle 1 0
 Return 0 0

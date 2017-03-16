@@ -16,5 +16,7 @@ namespace RAGE
         LocalCall,
         Variable,
         Void,
+        Address,
+        ArgListing,
     }
 }
