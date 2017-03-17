@@ -48,7 +48,7 @@ namespace RAGE
             {
                 return VariableType.Bool;
             }
-            else if (Regex.IsMatch(value, "^[0-9]+$"))
+            else if (Regex.IsMatch(value, "^(-)?[0-9]+$") || Regex.IsMatch(value, "^0x[0-9a-zA-Z]+$"))
             {
                 return VariableType.Int;
             }

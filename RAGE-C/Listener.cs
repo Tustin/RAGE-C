@@ -73,7 +73,7 @@ namespace RAGE
             List<string> pieces = context.GetText().ExplodeAndClean('=');
             if (pieces.Count != 2)
             {
-                base.EnterExpression(context);
+                var test = visitor.VisitExpression(context);
                 return;
             }
             string variableName = pieces[0];
@@ -116,7 +116,9 @@ namespace RAGE
 
             if (currentVariable.Value != null && !currentVariable.Value.IsDefault)
             {
-                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(res.Assembly);
+                var current = Core.AssemblyCode.FindFunction(currentFunction.Name).Value;
+                current.AddRange(res.Assembly);
+                current.Add(FrameVar.Set(currentVariable));
             }
 
             //string type = context.GetChild(0).GetText();
@@ -182,39 +184,40 @@ namespace RAGE
         //}
 
         ////Parse variable function call arguments and generate push instructions
+
         public override void ExitInitializer(InitializerContext context)
         {
-            if (currentVariable.IsIterator) return;
-            //Generate list of arguments
-            if (currentVariable.Value.Type == VariableType.LocalCall
-                || currentVariable.Value.Type == VariableType.NativeCall)
-            {
-                foreach (Argument arg in currentVariable.Value.Arguments)
-                {
-                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(arg.Value, arg.Type));
-                }
-            }
-            //Generate either function calls or just push args
-            switch (currentVariable.Value.Type)
-            {
-                case VariableType.LocalCall:
-                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Local(currentVariable.Value.Value));
-                    break;
-                case VariableType.NativeCall:
-                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Native(currentVariable.Value.Value,
-                        currentVariable.Value.Arguments.Count, true));
-                    break;
-                case VariableType.Variable:
-                    Variable variable = currentFunction.Variables.GetVariable(currentVariable.Value.Value);
-                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Get(variable));
-                    break;
-                default:
-                    Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(currentVariable.Value.Value, currentVariable.Value.Type));
-                    break;
-            }
+            //if (currentVariable.IsIterator) return;
+            ////Generate list of arguments
+            //if (currentVariable.Value.Type == VariableType.LocalCall
+            //    || currentVariable.Value.Type == VariableType.NativeCall)
+            //{
+            //    foreach (Argument arg in currentVariable.Value.Arguments)
+            //    {
+            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(arg.Value, arg.Type));
+            //    }
+            //}
+            ////Generate either function calls or just push args
+            //switch (currentVariable.Value.Type)
+            //{
+            //    case VariableType.LocalCall:
+            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Local(currentVariable.Value.Value));
+            //        break;
+            //    case VariableType.NativeCall:
+            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Native(currentVariable.Value.Value,
+            //            currentVariable.Value.Arguments.Count, true));
+            //        break;
+            //    case VariableType.Variable:
+            //        Variable variable = currentFunction.Variables.GetVariable(currentVariable.Value.Value);
+            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Get(variable));
+            //        break;
+            //    default:
+            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(currentVariable.Value.Value, currentVariable.Value.Type));
+            //        break;
+            //}
 
-            //Generate the variable to store the value into
-            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Set(currentVariable));
+            ////Generate the variable to store the value into
+            //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Set(currentVariable));
         }
 
         public override void EnterBlockItem([NotNull] BlockItemContext context)

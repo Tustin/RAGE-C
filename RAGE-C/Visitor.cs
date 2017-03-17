@@ -19,6 +19,7 @@ namespace RAGE
 
             string varName = null;
             string varType = null;
+
             //Fucking dumb
             if (context.children.Count == 2)
             {
@@ -42,11 +43,10 @@ namespace RAGE
             {
                 var resp = VisitInitDeclarator(context.initDeclaratorList().initDeclarator());
                 value.Assembly = resp.Assembly;
-                if (resp.Data == null)
+                if (resp.Data != null)
                 {
-                    throw new Exception();
+                    variable.Value.Value = resp.Data.ToString();
                 }
-                variable.Value.Value = resp.Data.ToString();
                 variable.Value.Type = resp.Type;
                 variable.Value.IsDefault = false;
             }
@@ -96,6 +96,7 @@ namespace RAGE
                 val.Assembly.Add(Jump.Generate(JumpType.Unconditional, currentContext.label));
                 return val;
             }
+
             Value output = VisitAssignmentExpression(context.assignmentExpression());
 
             if (output.Data != null)
@@ -108,6 +109,7 @@ namespace RAGE
                 }
             }
             val.Assembly.AddRange(output.Assembly);
+            val.Type = output.Type;
             return val;
         }
 
@@ -238,11 +240,19 @@ namespace RAGE
                     {
                         code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
+                    else
+                    {
+                        code.AddRange(left.Assembly);
+                    }
                     if (right.Data != null)
                     {
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                     }
-                    code.Add(Jump.Generate(JumpType.Equal, "dfsdf"));
+                    else
+                    {
+                        code.AddRange(right.Assembly);
+                    }
+                    code.Add(Jump.Generate(JumpType.NotEqual, currentContext.label));
                     return new Value(VariableType.Bool, null, code);
                 case "!=":
                     if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, !left.Data.Equals(right.Data), new List<string>());
@@ -251,11 +261,19 @@ namespace RAGE
                     {
                         code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
+                    else
+                    {
+                        code.AddRange(left.Assembly);
+                    }
                     if (right.Data != null)
                     {
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                     }
-                    code.Add(Jump.Generate(JumpType.NotEqual, "dfsdf"));
+                    else
+                    {
+                        code.AddRange(right.Assembly);
+                    }
+                    code.Add(Jump.Generate(JumpType.Equal, currentContext.label));
                     return new Value(VariableType.Bool, null, code);
             }
             throw new Exception("Unsupported operator");
@@ -394,9 +412,17 @@ namespace RAGE
                     {
                         code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
+                    else
+                    {
+                        code.AddRange(left.Assembly);
+                    }
                     if (right.Data != null)
                     {
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                    }
+                    else
+                    {
+                        code.AddRange(right.Assembly);
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
                     return new Value(VariableType.Int, null, code);
@@ -409,9 +435,17 @@ namespace RAGE
                     {
                         code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
                     }
+                    else
+                    {
+                        code.AddRange(left.Assembly);
+                    }
                     if (right.Data != null)
                     {
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                    }
+                    else
+                    {
+                        code.AddRange(right.Assembly);
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
                     return new Value(VariableType.Int, null, code);
@@ -503,7 +537,6 @@ namespace RAGE
                     return new Value(VariableType.Int, null, code);
 
                     //@Incomplete: Add modulus
-
             }
             throw new Exception("Unsupported operator");
         }
@@ -525,6 +558,7 @@ namespace RAGE
                 if (context.unaryOperator() != null)
                 {
                     Value op = VisitUnaryOperator(context.unaryOperator());
+
                     string var = context.GetChild(1).GetText();
 
                     if (!RAGEListener.currentFunction.Variables.ContainVariable(var))
@@ -555,6 +589,7 @@ namespace RAGE
                 throw new Exception();
             }
             string op = context.GetText();
+
             switch (op)
             {
                 //Address of
@@ -601,7 +636,6 @@ namespace RAGE
                 case "(":
                     if (Core.Functions.ContainFunction(expression))
                     {
-
                         var args = VisitArgumentExpressionList(context.argumentExpressionList());
                         //No args
                         if (args == null)
@@ -671,26 +705,44 @@ namespace RAGE
 
             VariableType type = Utilities.GetType(RAGEListener.currentFunction, value);
             Variable var = null;
-            if (type == VariableType.Variable)
-            {
-                var = RAGEListener.currentFunction.Variables.GetVariable(value);
-                value = GetValueFromVariable(value);
-                type = Utilities.GetType(RAGEListener.currentFunction, value);
-            }
+            List<string> code = new List<string>();
+            //if (type == VariableType.Variable)
+            //{
+            //    var = RAGEListener.currentFunction.Variables.GetVariable(value);
+            //    value = GetValueFromVariable(value);
+            //    type = Utilities.GetType(RAGEListener.currentFunction, value);
+            //}
 
             switch (type)
             {
                 case VariableType.Int:
-                    return new Value(VariableType.Int, Convert.ToInt32(value), new List<string>(), var);
+                    int ival;
+                    if (value.StartsWith("0x"))
+                    {
+                        value = value.Replace("0x", "");
+                        ival = int.Parse(value, System.Globalization.NumberStyles.HexNumber);
+                        value = ival.ToString();
+                    }
+                    else
+                    {
+                        ival = int.Parse(value, System.Globalization.NumberStyles.HexNumber);
+
+                    }
+                    code.Add(Push.Generate(value, type));
+                    return new Value(VariableType.Int, ival, code, var);
                 case VariableType.Bool:
-                    return new Value(VariableType.Bool, Convert.ToBoolean(value), new List<string>(), var);
+                    code.Add(Push.Generate(value, type));
+                    return new Value(VariableType.Bool, Convert.ToBoolean(value), code, var);
                 case VariableType.Float:
-                    return new Value(VariableType.Float, Convert.ToSingle(value), new List<string>(), var);
+                    code.Add(Push.Generate(value, type));
+                    return new Value(VariableType.Float, Convert.ToSingle(value), code, var);
                 case VariableType.String:
-                    return new Value(VariableType.String, value, new List<string>(), var);
+                    code.Add(Push.Generate(value, type));
+                    return new Value(VariableType.String, value, code, var);
                 case VariableType.Variable:
-                    //This will only be returned if the variable is set from a native or local function
-                    return new Value(VariableType.Variable, value, new List<string>(), var);
+                    var = RAGEListener.currentFunction.Variables.GetVariable(value);
+                    code.Add(FrameVar.Get(var));
+                    return new Value(VariableType.Variable, value, code, var);
                 case VariableType.NativeCall:
                     return new Value(VariableType.NativeCall, value, new List<string>(), var);
                 case VariableType.LocalCall:
