@@ -650,16 +650,22 @@ namespace RAGE
                     }
                     else if (Native.IsFunctionANative(expression))
                     {
+                        Native native = Native.GetNative(expression);
                         Value args = VisitArgumentExpressionList(context.argumentExpressionList());
-                        if (args == null)
+                        if (args == null && native.Params.Count == 0)
                         {
-                            code.Add(Call.Native(expression, 0, false));
+                            code.Add(Call.Native(expression, 0, native.ResultsType != DataType.Void));
                             return new Value(DataType.NativeCall, null, code);
                         }
 
                         List<Value> argsList = (List<Value>)args.Data;
+
                         argsList.Reverse();
 
+                        if (argsList.Count != native.Params.Count)
+                        {
+                            throw new Exception($"{expression} expects {native.Params.Count} arguments, {argsList.Count} given");
+                        }
                         //Generate the code
                         foreach (Value v in argsList)
                         {
@@ -672,7 +678,7 @@ namespace RAGE
                                 code.AddRange(v.Assembly);
                             }
                         }
-                        code.Add(Call.Native(expression, argsList.Count, false));
+                        code.Add(Call.Native(expression, argsList.Count, native.ResultsType != DataType.Void));
                         return new Value(DataType.NativeCall, null, code);
                     }
                     throw new Exception("Found open parens, but expression is not a function");

@@ -5,15 +5,15 @@ Return 0 0
 
 :inVehicle
 Function 0 3 0
-CallNative player_ped_id 0 0
+CallNative player_ped_id 0 1
 push_0
-CallNative is_ped_in_any_vehicle 2 0
-CallNative player_ped_id 0 0
+CallNative is_ped_in_any_vehicle 2 1
+CallNative player_ped_id 0 1
 push_0
-CallNative get_vehicle_ped_is_in 2 0
+CallNative get_vehicle_ped_is_in 2 1
 setF1 2 //vehicle
 getF1 2 //vehicle
-CallNative get_entity_model 1 0
+CallNative get_entity_model 1 1
 push -1216765807
 JumpNE @if_block_end_1
 getF1 2 //vehicle

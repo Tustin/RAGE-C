@@ -82,6 +82,13 @@ namespace RAGE
             return Core.Natives.Native.Where(n => n.Name == native || n.JHash == native || n.x64 == native).Select(b => b.ResultsType).First();
         }
 
+        public static Native GetNative(string native)
+        {
+            native = native.ToUpper();
+            return Core.Natives.Native.Where(n => n.Name == native || n.JHash == native || n.x64 == native).First();
+
+        }
+
 
     }
 }
