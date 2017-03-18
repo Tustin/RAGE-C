@@ -101,8 +101,8 @@ namespace RAGE
 
             if (output.Data != null)
             {
-                if (output.Type == VariableType.Bool && output.Data.Equals(true)) return val;
-                if (output.Type == VariableType.Bool && output.Data.Equals(false))
+                if (output.Type == DataType.Bool && output.Data.Equals(true)) return val;
+                if (output.Type == DataType.Bool && output.Data.Equals(false))
                 {
                     val.Assembly.Add(Jump.Generate(JumpType.Unconditional, currentContext.label));
                     return val;
@@ -139,11 +139,11 @@ namespace RAGE
                     code.Add(FrameVar.Get(variable));
                     code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, Convert.ToInt32(right.Data.ToString())));
                     code.Add(FrameVar.Set(variable));
-                    return new Value(VariableType.Int, null, code);
+                    return new Value(DataType.Int, null, code);
                 case "=":
                     code.Add(Push.Generate(right.Data.ToString(), variable.Type));
                     code.Add(FrameVar.Set(variable));
-                    return new Value(VariableType.Int, null, code);
+                    return new Value(DataType.Int, null, code);
             }
             throw new Exception("Invalid operator");
         }
@@ -165,15 +165,15 @@ namespace RAGE
 
             List<string> code = new List<string>();
 
-            if (left.Type != VariableType.Bool || right.Type != VariableType.Bool)
+            if (left.Type != DataType.Bool || right.Type != DataType.Bool)
             {
                 throw new Exception("Invalid types");
             }
             if (left.Data != null && right.Data != null)
-                return new Value(VariableType.Bool, (bool)left.Data | (bool)right.Data, new List<string>());
+                return new Value(DataType.Bool, (bool)left.Data | (bool)right.Data, new List<string>());
 
             if ((left.Data != null && left.Data.Equals(true)) || (right.Data != null && right.Data.Equals(true)))
-                return new Value(VariableType.Bool, true, new List<string>());
+                return new Value(DataType.Bool, true, new List<string>());
 
             if (left.Data != null)
             {
@@ -184,7 +184,7 @@ namespace RAGE
                 code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
             }
             code.Add(Compare.Generate(CompareType.Equal));
-            return new Value(VariableType.Bool, null, code);
+            return new Value(DataType.Bool, null, code);
         }
 
         public override Value VisitLogicalAndExpression(LogicalAndExpressionContext context)
@@ -198,14 +198,14 @@ namespace RAGE
 
             List<string> code = new List<string>();
 
-            if (left.Type != VariableType.Bool || right.Type != VariableType.Bool)
+            if (left.Type != DataType.Bool || right.Type != DataType.Bool)
             {
                 throw new Exception("Invalid types");
             }
             if (left.Data != null && right.Data != null)
-                return new Value(VariableType.Bool, (bool)left.Data & (bool)right.Data, new List<string>());
+                return new Value(DataType.Bool, (bool)left.Data & (bool)right.Data, new List<string>());
             if ((left.Data != null && left.Data.Equals(false)) || (right.Data != null && right.Data.Equals(false)))
-                return new Value(VariableType.Bool, false, new List<string>());
+                return new Value(DataType.Bool, false, new List<string>());
 
             if (left.Data != null)
             {
@@ -216,7 +216,7 @@ namespace RAGE
                 code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
             }
             code.Add(Jump.Generate(JumpType.Equal, "nnfnfn"));
-            return new Value(VariableType.Bool, null, code);
+            return new Value(DataType.Bool, null, code);
         }
 
         public override Value VisitEqualityExpression(EqualityExpressionContext context)
@@ -234,7 +234,7 @@ namespace RAGE
             switch (context.GetChild(1).ToString())
             {
                 case "==":
-                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, left.Data.Equals(right.Data), new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(DataType.Bool, left.Data.Equals(right.Data), new List<string>());
 
                     if (left.Data != null)
                     {
@@ -253,9 +253,9 @@ namespace RAGE
                         code.AddRange(right.Assembly);
                     }
                     code.Add(Jump.Generate(JumpType.NotEqual, currentContext.label));
-                    return new Value(VariableType.Bool, null, code);
+                    return new Value(DataType.Bool, null, code);
                 case "!=":
-                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, !left.Data.Equals(right.Data), new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(DataType.Bool, !left.Data.Equals(right.Data), new List<string>());
 
                     if (left.Data != null)
                     {
@@ -274,7 +274,7 @@ namespace RAGE
                         code.AddRange(right.Assembly);
                     }
                     code.Add(Jump.Generate(JumpType.Equal, currentContext.label));
-                    return new Value(VariableType.Bool, null, code);
+                    return new Value(DataType.Bool, null, code);
             }
             throw new Exception("Unsupported operator");
         }
@@ -293,8 +293,8 @@ namespace RAGE
 
             //Right now, values being compared by relational operators must be integers
             //They can also be variables which are integer values
-            if (left.Type != VariableType.Int || right.Type != VariableType.Int
-            && (left.Type != VariableType.Variable || right.Type != VariableType.Variable))
+            if (left.Type != DataType.Int || right.Type != DataType.Int
+            && (left.Type != DataType.Variable || right.Type != DataType.Variable))
             {
                 throw new Exception("Cannot use relational operators on non-integer values");
             }
@@ -313,7 +313,7 @@ namespace RAGE
                         if (left.Data != null && right.Data != null)
                         {
 
-                            return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+                            return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
                         }
                     }
                     if (left.Data != null)
@@ -341,10 +341,10 @@ namespace RAGE
                         }
                     }
                     code.Add(Jump.Generate(JumpType.LessThan, currentContext.label));
-                    return new Value(VariableType.Bool, null, code);
+                    return new Value(DataType.Bool, null, code);
 
                 case "<=":
-                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
 
                     if (left.Data != null)
                     {
@@ -355,10 +355,10 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Compare.Generate(CompareType.LessThanEqual));
-                    return new Value(VariableType.Bool, null, code);
+                    return new Value(DataType.Bool, null, code);
 
                 case ">":
-                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
 
                     if (left.Data != null)
                     {
@@ -369,10 +369,10 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Compare.Generate(CompareType.GreaterThan));
-                    return new Value(VariableType.Bool, null, code);
+                    return new Value(DataType.Bool, null, code);
 
                 case ">=":
-                    if (left.Data != null && right.Data != null) return new Value(VariableType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+                    if (left.Data != null && right.Data != null) return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
 
                     if (left.Data != null)
                     {
@@ -383,7 +383,7 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                     }
                     code.Add(Compare.Generate(CompareType.GreaterThan));
-                    return new Value(VariableType.Bool, null, code);
+                    return new Value(DataType.Bool, null, code);
             }
             throw new Exception("Unsupported operator");
         }
@@ -403,10 +403,10 @@ namespace RAGE
             switch (context.GetChild(1).ToString())
             {
                 case "+":
-                    if (left.Type != right.Type && (left.Type != VariableType.Variable || right.Type != VariableType.Variable)) throw new Exception("Cannot use operand '+' on two different types.");
-                    if (left.Data != null && right.Data != null) return new Value(VariableType.Int, (int)left.Data + (int)right.Data, new List<string>());
-                    if (left.Data != null && left.Data.Equals(0)) return new Value(VariableType.Int, (int)right.Data, new List<string>());
-                    if (right.Data != null && right.Data.Equals(0)) return new Value(VariableType.Int, (int)left.Data, new List<string>());
+                    if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '+' on two different types.");
+                    if (left.Data != null && right.Data != null) return new Value(DataType.Int, (int)left.Data + (int)right.Data, new List<string>());
+                    if (left.Data != null && left.Data.Equals(0)) return new Value(DataType.Int, (int)right.Data, new List<string>());
+                    if (right.Data != null && right.Data.Equals(0)) return new Value(DataType.Int, (int)left.Data, new List<string>());
 
                     if (left.Data != null)
                     {
@@ -425,12 +425,12 @@ namespace RAGE
                         code.AddRange(right.Assembly);
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
-                    return new Value(VariableType.Int, null, code);
+                    return new Value(DataType.Int, null, code);
                 case "-":
-                    if (left.Type != right.Type && (left.Type != VariableType.Variable || right.Type != VariableType.Variable)) throw new Exception("Cannot use operand '-' on two different types.");
-                    if (left.Data != null && right.Data != null) return new Value(VariableType.Int, (int)left.Data - (int)right.Data, new List<string>());
-                    if (left.Data != null && left.Data.Equals(0)) return new Value(VariableType.Int, (int)right.Data, new List<string>());
-                    if (right.Data != null && right.Data.Equals(0)) return new Value(VariableType.Int, (int)left.Data, new List<string>());
+                    if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '-' on two different types.");
+                    if (left.Data != null && right.Data != null) return new Value(DataType.Int, (int)left.Data - (int)right.Data, new List<string>());
+                    if (left.Data != null && left.Data.Equals(0)) return new Value(DataType.Int, (int)right.Data, new List<string>());
+                    if (right.Data != null && right.Data.Equals(0)) return new Value(DataType.Int, (int)left.Data, new List<string>());
                     if (left.Data != null)
                     {
                         code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
@@ -448,7 +448,7 @@ namespace RAGE
                         code.AddRange(right.Assembly);
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
-                    return new Value(VariableType.Int, null, code);
+                    return new Value(DataType.Int, null, code);
 
             }
             throw new Exception("Unsupported operator");
@@ -471,14 +471,14 @@ namespace RAGE
                 case "*":
                     if (left.Type != right.Type)
                     {
-                        if (left.Type == VariableType.Variable)
+                        if (left.Type == DataType.Variable)
                         {
                             if (RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString()).Type != right.Type)
                             {
                                 throw new Exception("Left operand variable type is not equal to the right operand type");
                             }
                         }
-                        else if (right.Type == VariableType.Variable)
+                        else if (right.Type == DataType.Variable)
                         {
                             if (RAGEListener.currentFunction.Variables.GetVariable(right.Data.ToString()).Type != left.Type)
                             {
@@ -486,11 +486,11 @@ namespace RAGE
                             }
                         }
                     }
-                    if (left.Data != null && right.Data != null && left.Type != VariableType.Variable && right.Type != VariableType.Variable) return new Value(VariableType.Int, (int)left.Data * (int)right.Data, new List<string>());
-                    if ((left.Data != null && left.Data.Equals(0)) || (right.Data != null && right.Data.Equals(0))) return new Value(VariableType.Int, 0, new List<string>());
+                    if (left.Data != null && right.Data != null && left.Type != DataType.Variable && right.Type != DataType.Variable) return new Value(DataType.Int, (int)left.Data * (int)right.Data, new List<string>());
+                    if ((left.Data != null && left.Data.Equals(0)) || (right.Data != null && right.Data.Equals(0))) return new Value(DataType.Int, 0, new List<string>());
                     if (left.Data != null)
                     {
-                        if (left.Type == VariableType.Variable)
+                        if (left.Type == DataType.Variable)
                         {
                             Variable var = RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
                             code.Add(FrameVar.Get(var));
@@ -502,7 +502,7 @@ namespace RAGE
                     }
                     if (right.Data != null)
                     {
-                        if (right.Type == VariableType.Variable)
+                        if (right.Type == DataType.Variable)
                         {
                             Variable var = RAGEListener.currentFunction.Variables.GetVariable(right.Data.ToString());
                             code.Add(FrameVar.Get(var));
@@ -513,17 +513,17 @@ namespace RAGE
                         }
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Multiplication));
-                    return new Value(VariableType.Int, null, code);
+                    return new Value(DataType.Int, null, code);
                 case "/":
-                    if (left.Type != right.Type && (left.Type != VariableType.Variable || right.Type != VariableType.Variable)) throw new Exception("Cannot use operand '/' on two different types.");
+                    if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '/' on two different types.");
                     if (right.Data.Equals(0)) throw new Exception("Divide by zero?! IMPOSSIBRU!!!!!");
 
                     if (left.Data != null && right.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), VariableType.Int));
-                        code.Add(Push.Generate(right.Data.ToString(), VariableType.Int));
+                        code.Add(Push.Generate(left.Data.ToString(), DataType.Int));
+                        code.Add(Push.Generate(right.Data.ToString(), DataType.Int));
                         code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
-                        return new Value(VariableType.Int, (int)left.Data / (int)right.Data, code);
+                        return new Value(DataType.Int, (int)left.Data / (int)right.Data, code);
                     }
                     if (left.Data != null)
                     {
@@ -534,7 +534,7 @@ namespace RAGE
                         code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
-                    return new Value(VariableType.Int, null, code);
+                    return new Value(DataType.Int, null, code);
 
                     //@Incomplete: Add modulus
             }
@@ -569,9 +569,9 @@ namespace RAGE
                     List<string> code = new List<string>();
                     switch (op.Type)
                     {
-                        case VariableType.Address:
+                        case DataType.Address:
                             code.Add(FrameVar.GetPointer(v));
-                            return new Value(VariableType.Address, null, code);
+                            return new Value(DataType.Address, null, code);
                     }
                 }
                 else
@@ -594,7 +594,11 @@ namespace RAGE
             {
                 //Address of
                 case "&":
-                    return new Value(VariableType.Address, null, null);
+                    return new Value(DataType.Address, null, null);
+                case "!":
+                    //@TODO
+                    throw new NotImplementedException();
+                    break;
                 default:
                     throw new Exception($"Invalid unary operator {op}");
             }
@@ -622,17 +626,17 @@ namespace RAGE
                     code.Add(FrameVar.Get(variable));
                     code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
                     code.Add(FrameVar.Set(variable));
-                    return new Value(VariableType.Int, null, code);
+                    return new Value(DataType.Int, null, code);
                 case "--":
                     if (!RAGEListener.currentFunction.Variables.ContainVariable(expression))
                     {
                         throw new Exception($"Postfix operators ({symbol}) can only be used on variables");
                     }
                     code.Add(FrameVar.Get(variable));
-                    code.Add(Push.Generate("1", VariableType.Int));
+                    code.Add(Push.Generate("1", DataType.Int));
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
                     code.Add(FrameVar.Set(variable));
-                    return new Value(VariableType.Int, null, code);
+                    return new Value(DataType.Int, null, code);
                 case "(":
                     if (Core.Functions.ContainFunction(expression))
                     {
@@ -640,7 +644,7 @@ namespace RAGE
                         //No args
                         if (args == null)
                         {
-                            return new Value(VariableType.LocalCall, null, null);
+                            return new Value(DataType.LocalCall, null, null);
                         }
                         //@TODO: Argument checking
                     }
@@ -650,7 +654,7 @@ namespace RAGE
                         if (args == null)
                         {
                             code.Add(Call.Native(expression, 0, false));
-                            return new Value(VariableType.NativeCall, null, code);
+                            return new Value(DataType.NativeCall, null, code);
                         }
 
                         List<Value> argsList = (List<Value>)args.Data;
@@ -669,7 +673,7 @@ namespace RAGE
                             }
                         }
                         code.Add(Call.Native(expression, argsList.Count, false));
-                        return new Value(VariableType.NativeCall, null, code);
+                        return new Value(DataType.NativeCall, null, code);
                     }
                     throw new Exception("Found open parens, but expression is not a function");
 
@@ -696,14 +700,14 @@ namespace RAGE
                 context = context.argumentExpressionList();
             }
 
-            return new Value(VariableType.ArgListing, args, null);
+            return new Value(DataType.ArgListing, args, null);
         }
 
         private Value ParseType(PrimaryExpressionContext context)
         {
             string value = context.GetText();
 
-            VariableType type = Utilities.GetType(RAGEListener.currentFunction, value);
+            DataType type = Utilities.GetType(RAGEListener.currentFunction, value);
             Variable var = null;
             List<string> code = new List<string>();
             //if (type == VariableType.Variable)
@@ -715,7 +719,7 @@ namespace RAGE
 
             switch (type)
             {
-                case VariableType.Int:
+                case DataType.Int:
                     int ival;
                     if (value.StartsWith("0x"))
                     {
@@ -729,24 +733,24 @@ namespace RAGE
 
                     }
                     code.Add(Push.Generate(value, type));
-                    return new Value(VariableType.Int, ival, code, var);
-                case VariableType.Bool:
+                    return new Value(DataType.Int, ival, code, var);
+                case DataType.Bool:
                     code.Add(Push.Generate(value, type));
-                    return new Value(VariableType.Bool, Convert.ToBoolean(value), code, var);
-                case VariableType.Float:
+                    return new Value(DataType.Bool, Convert.ToBoolean(value), code, var);
+                case DataType.Float:
                     code.Add(Push.Generate(value, type));
-                    return new Value(VariableType.Float, Convert.ToSingle(value), code, var);
-                case VariableType.String:
+                    return new Value(DataType.Float, Convert.ToSingle(value), code, var);
+                case DataType.String:
                     code.Add(Push.Generate(value, type));
-                    return new Value(VariableType.String, value, code, var);
-                case VariableType.Variable:
+                    return new Value(DataType.String, value, code, var);
+                case DataType.Variable:
                     var = RAGEListener.currentFunction.Variables.GetVariable(value);
                     code.Add(FrameVar.Get(var));
-                    return new Value(VariableType.Variable, value, code, var);
-                case VariableType.NativeCall:
-                    return new Value(VariableType.NativeCall, value, new List<string>(), var);
-                case VariableType.LocalCall:
-                    return new Value(VariableType.LocalCall, value, new List<string>(), var);
+                    return new Value(DataType.Variable, value, code, var);
+                case DataType.NativeCall:
+                    return new Value(DataType.NativeCall, value, new List<string>(), var);
+                case DataType.LocalCall:
+                    return new Value(DataType.LocalCall, value, new List<string>(), var);
                 default:
                     throw new Exception("Not implemented yet");
 
@@ -760,10 +764,10 @@ namespace RAGE
             do
             {
                 var = RAGEListener.currentFunction.Variables.GetVariable(tempValue);
-                if (var.Value.Type == VariableType.LocalCall || var.Value.Type == VariableType.NativeCall) break;
+                if (var.Value.Type == DataType.LocalCall || var.Value.Type == DataType.NativeCall) break;
                 tempValue = var.Value.Value;
             }
-            while (var.Type == VariableType.Variable);
+            while (var.Type == DataType.Variable);
             Logger.Log($"Parsed variable '{variable}' and got value {tempValue}");
             return tempValue;
         }

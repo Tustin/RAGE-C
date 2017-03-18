@@ -12,7 +12,7 @@ namespace RAGE
 
         public List<Argument> Arguments { get; set; }
 
-        public VariableType Type { get; set; }
+        public DataType Type { get; set; }
 
         public bool IsDefault { get; set; }
 

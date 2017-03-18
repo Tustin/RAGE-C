@@ -35,6 +35,9 @@
     <Reference Include="Antlr4.Runtime.Standard">
       <HintPath>C:\Users\Josh\Desktop\Antlr4.Runtime.Standard.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.ValueTuple, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -51,6 +54,8 @@
     <Compile Include="Argument.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="Native.cs" />
+    <Compile Include="NativeJson.cs" />
+    <Compile Include="NativeParameter.cs" />
     <Compile Include="Opcodes\Arithmetic.cs" />
     <Compile Include="Opcodes\Bitwise.cs" />
     <Compile Include="Opcodes\Call.cs" />

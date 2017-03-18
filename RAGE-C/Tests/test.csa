@@ -8,8 +8,6 @@ Function 0 3 0
 CallNative player_ped_id 0 0
 push_0
 CallNative is_ped_in_any_vehicle 2 0
-push_1
-JumpNE @if_block_end_0
 CallNative player_ped_id 0 0
 push_0
 CallNative get_vehicle_ped_is_in 2 0

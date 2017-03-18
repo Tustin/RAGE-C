@@ -12,7 +12,7 @@ namespace RAGE
 
         public int FrameId { get; set; }
 
-        public VariableType Type { get; set; }
+        public DataType Type { get; set; }
 
         public VariableValue Value { get; set; } 
 

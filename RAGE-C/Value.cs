@@ -11,7 +11,7 @@ namespace RAGE
     /// </summary>
     public class Value
     {
-        internal VariableType Type { get; set; }
+        internal DataType Type { get; set; }
         internal object Data { get; set; }
         internal List<string> Assembly { get; set; }
         //This is if the value inside a variable is a const and can be equated by the compiler
@@ -19,7 +19,7 @@ namespace RAGE
         internal Variable OriginalVariable { get; set; }
 
 
-        public Value(VariableType type, object data, List<string> asm, Variable original = null) : base()
+        public Value(DataType type, object data, List<string> asm, Variable original = null) : base()
         {
             Type = type;
             Data = data;

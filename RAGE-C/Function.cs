@@ -10,7 +10,7 @@ namespace RAGE
     {
         public string Name { get; set; }
 
-        public VariableType Type { get; set; }
+        public DataType Type { get; set; }
 
         public int FrameVars
         {
@@ -29,7 +29,7 @@ namespace RAGE
             Variables = new List<Variable>();
         }
 
-        public Function(string name, VariableType returnType)
+        public Function(string name, DataType returnType)
         {
             Name = name;
             Type = returnType;
@@ -37,13 +37,13 @@ namespace RAGE
         }
 
         //Because a func shouldnt return a local var or native (duh)
-        public static bool IsValidType(VariableType type)
+        public static bool IsValidType(DataType type)
         {
-            return (type == VariableType.Void 
-                || type == VariableType.Int 
-                || type == VariableType.Bool 
-                || type == VariableType.Float 
-                || type == VariableType.String);
+            return (type == DataType.Void 
+                || type == DataType.Int 
+                || type == DataType.Bool 
+                || type == DataType.Float 
+                || type == DataType.String);
         }
     }
 }

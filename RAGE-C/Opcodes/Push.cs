@@ -81,17 +81,17 @@ namespace RAGE
             }
         }
 
-        public static string Generate(string value, VariableType valueType)
+        public static string Generate(string value, DataType valueType)
         {
             switch (valueType)
             {
-                case VariableType.Bool:
+                case DataType.Bool:
                     return Bool(value);
-                case VariableType.Float:
+                case DataType.Float:
                     return Float(value);
-                case VariableType.String:
+                case DataType.String:
                     return String(value);
-                case VariableType.Int:
+                case DataType.Int:
                     return Int(value);
                 default:
                     return null;

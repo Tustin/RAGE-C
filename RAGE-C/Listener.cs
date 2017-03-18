@@ -44,7 +44,7 @@ namespace RAGE
             string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
             string type = context.GetChild(0).GetText();
 
-            VariableType vType = Utilities.GetTypeFromDeclaration(type);
+            DataType vType = Utilities.GetTypeFromDeclaration(type);
 
             if (!Function.IsValidType(vType))
             {

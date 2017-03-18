@@ -12,7 +12,11 @@ namespace RAGE
     {
         static void Main(string[] args)
         {
+            Logger.Log("Populating native table...");
+
             Native.PopulateNativeTable();
+
+            Logger.Log($"Added {Core.Natives.Native.Count} natives to native table");
 
             AntlrFileStream fs = new AntlrFileStream(Core.PROJECT_ROOT + "\\Tests\\test.c");
 

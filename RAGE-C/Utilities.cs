@@ -41,85 +41,113 @@ namespace RAGE
             return dictionary.Where(a => a.Key == name).FirstOrDefault();
         }
 
-        public static VariableType GetType(Function function, string value)
+        public static DataType GetType(Function function, string value)
         {
             //Do type checking
             if (value.ToLower() == "true" || value.ToLower() == "false")
             {
-                return VariableType.Bool;
+                return DataType.Bool;
             }
             else if (Regex.IsMatch(value, "^(-)?[0-9]+$") || Regex.IsMatch(value, "^0x[0-9a-zA-Z]+$"))
             {
-                return VariableType.Int;
+                return DataType.Int;
             }
             else if (Regex.IsMatch(value, "^[0-9.]+$"))
             {
-                return VariableType.Float;
+                return DataType.Float;
             }
             else if (Regex.IsMatch(value, "^\".+[^\"\']\"$"))
             {
-                return VariableType.String;
+                return DataType.String;
             }
             else if (Regex.IsMatch(value, "^\\w+\\("))
             {
                 string stripped = Regex.Replace(value, "\\(.*\\)", "");
                 if (Native.IsFunctionANative(stripped))
                 {
-                    return VariableType.NativeCall;
+                    return DataType.NativeCall;
                 }
                 else if (Core.Functions.ContainFunction(stripped))
                 {
-                    if (Core.Functions.GetFunction(stripped).Type == VariableType.Void)
+                    if (Core.Functions.GetFunction(stripped).Type == DataType.Void)
                     {
                         throw new Exception($"Function {stripped} is void and does not return a value");
                     }
-                    return VariableType.LocalCall;
+                    return DataType.LocalCall;
                 }
 
             }
             else if (Regex.IsMatch(value, "^\\w+"))
             {
-                if (function == null) return VariableType.Variable;
+                if (function == null) return DataType.Variable;
 
                 if (function.Variables.ContainVariable(value))
                 {
-                    return VariableType.Variable;
+                    return DataType.Variable;
                 }
             }
             throw new Exception($"Unable to parse value '{value}'");
         }
 
-        public static VariableType GetTypeFromDeclaration(string type)
+        public static DataType GetTypeFromDeclaration(string type)
         {
             switch (type)
             {
                 case "bool":
-                    return VariableType.Bool;
+                case "BOOL":
+                    return DataType.Bool;
                 case "string":
-                    return VariableType.String;
+                case "char*":
+                    return DataType.String;
                 case "float":
-                    return VariableType.Float;
+                    return DataType.Float;
                 case "int":
-                    return VariableType.Int;
+                case "Entity":
+                case "Player":
+                case "FireId":
+                case "Ped":
+                case "Vehicle":
+                case "Cam":
+                case "CarGenerator":
+                case "Group":
+                case "Train":
+                case "Pickup":
+                case "Object":
+                case "Weapon":
+                case "Interior":
+                case "Blip":
+                case "Texture":
+                case "TextureDict":
+                case "CoverPoint":
+                case "Camera":
+                case "TaskSequence":
+                case "ColourIndex":
+                case "Sphere":
+                case "ScrHandle":
+                case "Any":
+                case "uint":
+                case "Hash":
+                    return DataType.Int;
                 case "void":
-                    return VariableType.Void;
+                case "Void":
+                    return DataType.Void;
                 //@TODO: Add GTA related types (Ped, Entity, Hash, etc) (would just be ints)
                 default:
                     throw new Exception("Unsupported variable type");
             }
         }
 
-        public static string GetDefaultValue(VariableType type)
+        public static string GetDefaultValue(DataType type)
         {
             switch (type)
             {
-                case VariableType.Int:
+                case DataType.Int:
                     return "0";
-                case VariableType.Float:
+                case DataType.Float:
                     return "0.0";
-                case VariableType.String:
+                case DataType.String:
                     return "";
-                case VariableType.Bool:
+                case DataType.Bool:
                     return "false";
                 default:
                     throw new Exception($"No default value is defined for type {type}");

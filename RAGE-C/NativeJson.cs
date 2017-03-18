@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace RAGE
 {
-    public class Argument
+    public class NativeJson
     {
-        public DataType Type { get; set; }
-        public string Value { get; set; }
+        public IList<Native> Native { get; set; }
     }
 }
