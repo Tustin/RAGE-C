@@ -13,6 +13,9 @@ namespace RAGE
 {
     public class RAGEVisitor : CBaseVisitor<Value>
     {
+        //The current context of the visitor (will be null if this isn't an expression)
+        public StoredContext CurrentContext;
+
         public override Value VisitDeclaration(DeclarationContext context)
         {
             Value value = new Value();
@@ -75,9 +78,6 @@ namespace RAGE
             return resp;
         }
 
-        //The current context of the visitor (will be null if this isn't an expression)
-        public static (string label, int id, ParserRuleContext context) currentContext;
-
         public override Value VisitExpression(ExpressionContext context)
         {
             Value val = new Value();
@@ -85,15 +85,22 @@ namespace RAGE
             string expression = context.GetText();
 
             //Get the context for the selection statement
-            currentContext = RAGEListener.storedContexts.Where(a => a.context == context.Parent).FirstOrDefault();
+            CurrentContext = RAGEListener.storedContexts.Where(a => a.Context == context.Parent).FirstOrDefault();
 
             //We'll do some optimizations here
             //No need to push 0 or 1 to the stack if the expression is just true or false
             //If false, we'll just always jump to the if statement end, but otherwise it'll just continue the flow
-            if (expression == "true") return val;
+            if (expression == "true")
+            {
+                if (CurrentContext.Context is IterationStatementContext)
+                {
+                    val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
+                    return val;
+                }
+            }
             if (expression == "false")
             {
-                val.Assembly.Add(Jump.Generate(JumpType.Unconditional, currentContext.label));
+                val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
                 return val;
             }
 
@@ -104,8 +111,18 @@ namespace RAGE
                 if (output.Type == DataType.Bool && output.Data.Equals(true)) return val;
                 if (output.Type == DataType.Bool && output.Data.Equals(false))
                 {
-                    val.Assembly.Add(Jump.Generate(JumpType.Unconditional, currentContext.label));
+                    val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
                     return val;
+                }
+            }
+            //If the if expression doesnt have ==, then the result will come back as a type other than bool
+            if (output.Type != DataType.Bool && CurrentContext != null)
+            {
+                switch (output.Type)
+                {
+                    case DataType.NativeCall:
+                        output.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
+                        break;
                 }
             }
             val.Assembly.AddRange(output.Assembly);
@@ -141,7 +158,14 @@ namespace RAGE
                     code.Add(FrameVar.Set(variable));
                     return new Value(DataType.Int, null, code);
                 case "=":
-                    code.Add(Push.Generate(right.Data.ToString(), variable.Type));
+                    if (right.Data == null)
+                    {
+                        code.AddRange(right.Assembly);
+                    }
+                    else
+                    {
+                        code.Add(Push.Generate(right.Data.ToString(), variable.Type));
+                    }
                     code.Add(FrameVar.Set(variable));
                     return new Value(DataType.Int, null, code);
             }
@@ -252,7 +276,7 @@ namespace RAGE
                     {
                         code.AddRange(right.Assembly);
                     }
-                    code.Add(Jump.Generate(JumpType.NotEqual, currentContext.label));
+                    code.Add(Jump.Generate(JumpType.NotEqual, CurrentContext.Label));
                     return new Value(DataType.Bool, null, code);
                 case "!=":
                     if (left.Data != null && right.Data != null) return new Value(DataType.Bool, !left.Data.Equals(right.Data), new List<string>());
@@ -273,7 +297,7 @@ namespace RAGE
                     {
                         code.AddRange(right.Assembly);
                     }
-                    code.Add(Jump.Generate(JumpType.Equal, currentContext.label));
+                    code.Add(Jump.Generate(JumpType.Equal, CurrentContext.Label));
                     return new Value(DataType.Bool, null, code);
             }
             throw new Exception("Unsupported operator");
@@ -302,7 +326,7 @@ namespace RAGE
 
             //Lets just output the variables here because fuck optimization
             //Saves some headache with the compiler parsing logic on variables that might be changed
-            bool isIterator = (currentContext.context is IterationStatementContext) | (currentContext.context is SelectionStatementContext);
+            bool isIterator = (CurrentContext.Context is IterationStatementContext) | (CurrentContext.Context is SelectionStatementContext);
 
             switch (context.GetChild(1).ToString())
             {
@@ -340,7 +364,7 @@ namespace RAGE
                             code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
                         }
                     }
-                    code.Add(Jump.Generate(JumpType.LessThan, currentContext.label));
+                    code.Add(Jump.Generate(JumpType.LessThan, CurrentContext.Label));
                     return new Value(DataType.Bool, null, code);
 
                 case "<=":
@@ -561,7 +585,7 @@ namespace RAGE
 
                     string var = context.GetChild(1).GetText();
 
-                    if (!RAGEListener.currentFunction.Variables.ContainVariable(var))
+                    if (!RAGEListener.currentFunction.Variables.ContainVariable(var) && op.Type == DataType.Address)
                     {
                         throw new Exception($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible");
                     }
@@ -572,6 +596,9 @@ namespace RAGE
                         case DataType.Address:
                             code.Add(FrameVar.GetPointer(v));
                             return new Value(DataType.Address, null, code);
+                        case DataType.Not:
+                            CurrentContext.Property = DataType.Not;
+                            return new Value(DataType.Not, null, code);
                     }
                 }
                 else
@@ -596,9 +623,7 @@ namespace RAGE
                 case "&":
                     return new Value(DataType.Address, null, null);
                 case "!":
-                    //@TODO
-                    throw new NotImplementedException();
-                    break;
+                    return new Value(DataType.Not, null, null);
                 default:
                     throw new Exception($"Invalid unary operator {op}");
             }
@@ -652,10 +677,20 @@ namespace RAGE
                     {
                         Native native = Native.GetNative(expression);
                         Value args = VisitArgumentExpressionList(context.argumentExpressionList());
+                        var ff = CurrentContext;
                         if (args == null && native.Params.Count == 0)
                         {
                             code.Add(Call.Native(expression, 0, native.ResultsType != DataType.Void));
+                            if (CurrentContext?.Property == DataType.Not)
+                            {
+                                code.Add(Bitwise.Generate(BitwiseType.Not));
+                                CurrentContext.Property = DataType.Void;
+                            }
                             return new Value(DataType.NativeCall, null, code);
+                        }
+                        else if (args == null && native.Params.Count != 0)
+                        {
+                            throw new Exception($"{expression} takes {native.Params.Count} arguments, none given");
                         }
 
                         List<Value> argsList = (List<Value>)args.Data;
@@ -679,6 +714,11 @@ namespace RAGE
                             }
                         }
                         code.Add(Call.Native(expression, argsList.Count, native.ResultsType != DataType.Void));
+                        if (CurrentContext?.Property == DataType.Not)
+                        {
+                            code.Add(Bitwise.Generate(BitwiseType.Not));
+                            CurrentContext.Property = DataType.Void;
+                        }
                         return new Value(DataType.NativeCall, null, code);
                     }
                     throw new Exception("Found open parens, but expression is not a function");
@@ -736,7 +776,6 @@ namespace RAGE
                     else
                     {
                         ival = int.Parse(value, System.Globalization.NumberStyles.HexNumber);
-
                     }
                     code.Add(Push.Generate(value, type));
                     return new Value(DataType.Int, ival, code, var);

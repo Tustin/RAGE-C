@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 namespace RAGE
@@ -36,7 +33,6 @@ namespace RAGE
 
             ParseTreeWalker walker = new ParseTreeWalker();
 
-            //CBaseListener listener = new CBaseListener();
             RAGEListener listener = new RAGEListener();
 
             Logger.Log("Starting to walk parse tree...");
@@ -46,20 +42,19 @@ namespace RAGE
             Logger.Log("Finished walking parse tree");
 
             Logger.Log("Writing assembly to output file...");
-            //CBaseListener c = new CBaseListener();
 
             List<string> final = new List<string>();
 
+            final.Add($"//Compiled using RAGE-C by Tustin {DateTime.Now.ToShortDateString()}");
             foreach (KeyValuePair<string, List<string>> item in Core.AssemblyCode)
             {
                 final.Add($":{item.Key}");
                 final.AddRange(item.Value);
+                final.Add("");
+
             }
 
             File.WriteAllLines(Core.PROJECT_ROOT + "\\Tests\\test.csa",final.ToArray());
-
-            //Compiler compiler = new Compiler(final);
-            //compiler.Compile();
 
             Logger.Log("Successfully saved assembly!");
         }

@@ -14,7 +14,7 @@ namespace RAGE
         public static Function currentFunction;
         public static Variable currentVariable;
 
-        public static List<(string label, int id, ParserRuleContext context)> storedContexts;
+        public static List<StoredContext> storedContexts;
 
         RAGEVisitor visitor;
 
@@ -23,7 +23,7 @@ namespace RAGE
         public RAGEListener()
         {
             visitor = new RAGEVisitor();
-            storedContexts = new List<(string label, int id, ParserRuleContext context)>();
+            storedContexts = new List<StoredContext>();
         }
 
         //New functions
@@ -37,12 +37,14 @@ namespace RAGE
                     "Function 0 2 0",
                     "Call @main",
                     "Return 0 0",
-                    ""
                 });
             }
 
             string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
             string type = context.GetChild(0).GetText();
+
+            var comp = context.declarationSpecifiers();
+            var ff = comp.declarationSpecifier()[0].alignmentSpecifier();
 
             DataType vType = Utilities.GetTypeFromDeclaration(type);
 
@@ -65,26 +67,10 @@ namespace RAGE
             Logger.Log($"Entering function '{name}'...");
         }
 
-        //Set a variable to something
-        public override void EnterExpression(ExpressionContext context)
+        public override void EnterDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
         {
-            var poo = visitor.VisitExpression(context);
-            string aa = context.assignmentExpression().GetText();
-            List<string> pieces = context.GetText().ExplodeAndClean('=');
-            if (pieces.Count != 2)
-            {
-                var test = visitor.VisitExpression(context);
-                return;
-            }
-            string variableName = pieces[0];
-            string variableValue = pieces[1];
-            //@TODO: At some point this needs to check if the var is in scope
-            if (!currentFunction.Variables.ContainVariable(variableName))
-            {
-                throw new Exception("Variable does not exist");
-            }
-            var data = visitor.VisitAssignmentExpression(context.assignmentExpression());
-            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(data.Assembly);
+            string ff = context.GetText();
+            base.EnterDeclarationSpecifiers(context);
         }
 
         //End of a function
@@ -99,7 +85,11 @@ namespace RAGE
             Logger.Log($"Leaving function '{currentFunction.Name}'");
             currentFunction = null;
         }
-
+        public override void EnterPostfixExpression([NotNull] PostfixExpressionContext context)
+        {
+            string aa = context.GetText();
+            base.EnterPostfixExpression(context);
+        }
         //New variables
         public override void EnterDeclaration(DeclarationContext context)
         {
@@ -131,102 +121,48 @@ namespace RAGE
             //currentFunction.Variables.Add(currentVariable);
         }
 
-        ////Variable names
-        //public override void EnterDirectDeclarator(DirectDeclaratorContext context)
-        //{
-        //    if (context.Identifier() != null)
-        //    {
-        //        string variableName = context.GetText();
-
-        //        //EnterDirectDeclarator will have the function name as a declarator so we wanna ignore that
-        //        if (Core.Functions.ContainFunction(variableName)) return;
-
-        //        if (currentFunction.Variables.ContainVariable(variableName))
-        //        {
-        //            //throw new Exception($"Variable {variableName} already exists in this function scope");
-        //            return;
-        //        }
-
-        //        currentVariable.Name = variableName;
-
-        //        Logger.Log($"({currentFunction.Name}) - Parsed variable '{variableName}'");
-        //    }
-        //}
-
-        ////Variable values
-        //public override void EnterInitializer(InitializerContext context)
-        //{
-        //    string value = context.GetText();
-        //    value = value.Replace(";", "");
-        //    //Do any arithmetic that this variable might have
-        //    var resp = visitor.VisitAssignmentExpression(context.assignmentExpression());
-
-        //    if (resp.Type == VariableType.Address)
-        //    {
-        //        throw new Exception("Address of variable cannot be stored in variables");
-        //    }
-
-        //    //Just add the code to the stack
-        //    if (resp.Type == VariableType.NativeCall || resp.Type == VariableType.LocalCall)
-        //    {
-
-
-        //    }
-        //    VariableType valueType = Utilities.GetType(currentFunction, resp.Data.ToString());
-
-        //    if (valueType != currentVariable.Type && valueType != VariableType.LocalCall && valueType != VariableType.NativeCall)
-        //    {
-        //        throw new Exception($"Value of '{currentVariable.Name}' does not match it's type");
-        //    }
-
-        //    currentVariable.Value.Value = resp.Data.ToString();
-        //    currentVariable.Value.Type = valueType;
-        //}
-
-        ////Parse variable function call arguments and generate push instructions
-
-        public override void ExitInitializer(InitializerContext context)
-        {
-            //if (currentVariable.IsIterator) return;
-            ////Generate list of arguments
-            //if (currentVariable.Value.Type == VariableType.LocalCall
-            //    || currentVariable.Value.Type == VariableType.NativeCall)
-            //{
-            //    foreach (Argument arg in currentVariable.Value.Arguments)
-            //    {
-            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(arg.Value, arg.Type));
-            //    }
-            //}
-            ////Generate either function calls or just push args
-            //switch (currentVariable.Value.Type)
-            //{
-            //    case VariableType.LocalCall:
-            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Local(currentVariable.Value.Value));
-            //        break;
-            //    case VariableType.NativeCall:
-            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Call.Native(currentVariable.Value.Value,
-            //            currentVariable.Value.Arguments.Count, true));
-            //        break;
-            //    case VariableType.Variable:
-            //        Variable variable = currentFunction.Variables.GetVariable(currentVariable.Value.Value);
-            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Get(variable));
-            //        break;
-            //    default:
-            //        Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Push.Generate(currentVariable.Value.Value, currentVariable.Value.Type));
-            //        break;
-            //}
-
-            ////Generate the variable to store the value into
-            //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(FrameVar.Set(currentVariable));
-        }
-
-        public override void EnterBlockItem([NotNull] BlockItemContext context)
+        public override void EnterDesignation([NotNull] DesignationContext context)
         {
             string aa = context.GetText();
-            base.EnterBlockItem(context);
+            base.EnterDesignation(context);
         }
 
-        public override void EnterStatement([NotNull] StatementContext context)
+        public override void EnterDesignator([NotNull] DesignatorContext context)
+        {
+            string aa = context.GetText();
+            base.EnterDesignator(context);
+        }
+
+        public override void EnterInitializer([NotNull] InitializerContext context)
+        {
+            string aa = context.GetText();
+            base.EnterInitializer(context);
+        }
+
+        //Set a variable to something
+        public override void EnterExpression(ExpressionContext context)
+        {
+            //string ff = context.GetText();
+            //var poo = visitor.VisitExpression(context);
+            //string aa = context.assignmentExpression().GetText();
+            //List<string> pieces = context.GetText().ExplodeAndClean('=');
+            //if (pieces.Count != 2)
+            //{
+            //    var test = visitor.VisitExpression(context);
+            //    return;
+            //}
+            //string variableName = pieces[0];
+            //string variableValue = pieces[1];
+            ////@TODO: At some point this needs to check if the var is in scope
+            //if (!currentFunction.Variables.ContainVariable(variableName))
+            //{
+            //    throw new Exception("Variable does not exist");
+            //}
+            //var data = visitor.VisitAssignmentExpression(context.assignmentExpression());
+            //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(data.Assembly);
+        }
+
+        public override void EnterStatement(StatementContext context)
         {
             if (context.expressionStatement() == null)
             {
@@ -237,23 +173,27 @@ namespace RAGE
             var res = visitor.VisitExpression(context.expressionStatement().expression());
 
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(res.Assembly);
-
-            base.EnterStatement(context);
         }
 
         //Entering if, else, switch
         public override void EnterSelectionStatement(SelectionStatementContext context)
         {
             string statement = context.GetText();
+
             if (statement.StartsWith("if"))
             {
-                int count = storedContexts.Count(a => a.context is SelectionStatementContext);
+                int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
 
-                storedContexts.Add(($"if_block_end_{count}", count, context));
+                StoredContext sc = new StoredContext($"if_block_end_{count}", count, context);
+
+                storedContexts.Add(sc);
+
+                visitor.CurrentContext = sc;
 
                 var output = visitor.VisitExpression(context.expression());
 
-                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(output.Assembly);
+                var code = Core.AssemblyCode.FindFunction(currentFunction.Name).Value;
+                code.AddRange(output.Assembly);
             }
             else if (statement.StartsWith("else"))
             {
@@ -269,8 +209,8 @@ namespace RAGE
         public override void ExitSelectionStatement(SelectionStatementContext context)
         {
             //Find the scope with the context (for the end label)
-            var contextScope = storedContexts.Where(a => a.context == context).FirstOrDefault();
-            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":{contextScope.label}");
+            var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
+            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":{contextScope.Label}");
         }
 
         //Entering for, while
@@ -290,20 +230,26 @@ namespace RAGE
                 currentFunction.Variables.Add(v);
                 currentVariable = v;
 
-                int count = storedContexts.Count(a => a.context is IterationStatementContext);
-                storedContexts.Add(($"loop_{count}", count, context));
+                int count = storedContexts.Count(a => a.Context is IterationStatementContext);
+                StoredContext sc = new StoredContext($"loop_{count}", count, context);
+                storedContexts.Add(sc);
+                visitor.CurrentContext = sc;
+
                 //Push the value of the iterator into the variable before the for loop label
                 //Otherwise we would constantly have infinite loops
-                var titties = Core.AssemblyCode.FindFunction(currentFunction.Name);
-                titties.Value.Add(Push.Generate(v.Value.Value, v.Value.Type));
-                titties.Value.Add(FrameVar.Set(v));
-                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":loop_{count}");
+                var func = Core.AssemblyCode.FindFunction(currentFunction.Name);
+                func.Value.Add(Push.Generate(v.Value.Value, v.Value.Type));
+                func.Value.Add(FrameVar.Set(v));
+                //Add label
+                func.Value.Add($":loop_{count}");
             }
             //While loops
             else if (loop.StartsWith("while"))
             {
-                int count = storedContexts.Count(a => a.context is IterationStatementContext);
-                storedContexts.Add(($"loop_{count}", count, context));
+                int count = storedContexts.Count(a => a.Context is IterationStatementContext);
+                StoredContext sc = new StoredContext($"loop_{count}", count, context);
+                storedContexts.Add(sc);
+                visitor.CurrentContext = sc;
                 Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":loop_{count}");
             }
         }
@@ -311,10 +257,9 @@ namespace RAGE
         //Exiting for, while
         public override void ExitIterationStatement(IterationStatementContext context)
         {
-            var storedContext = storedContexts.Where(a => a.context == context).First();
+            var storedContext = storedContexts.Where(a => a.Context == context).First();
 
             string code = context.GetText();
-
 
             //Reverse it so it evaluates the incrementing first before doing the comparison
             foreach (ExpressionContext expression in context.expression().Reverse())
@@ -328,10 +273,5 @@ namespace RAGE
             base.ExitIterationStatement(context);
         }
 
-        public override void EnterAssignmentOperator(AssignmentOperatorContext context)
-        {
-            string gg = context.GetText();
-            base.EnterAssignmentOperator(context);
-        }
     }
 }

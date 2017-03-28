@@ -18,5 +18,8 @@ namespace RAGE
         Void,
         Address,
         ArgListing,
+        Not,
+        Argument,
+
     }
 }
