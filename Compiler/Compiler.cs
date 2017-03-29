@@ -4,14 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-
+using RAGE.Compiler;
 namespace RAGE.Compiler
 {
     public class Compiler
     {
         internal List<string> AssemblyCode { get; set; }
-
         public Compiler(string filepath)
         {
             AssemblyCode = File.ReadAllLines(filepath).ToList();
@@ -22,66 +20,6 @@ namespace RAGE.Compiler
             AssemblyCode = code;
         }
 
-        private byte[] StringHexToBytes(string hex)
-        {
-            return Enumerable.Range(0, hex.Length)
-                     .Where(x => x % 2 == 0)
-                     .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                     .ToArray();
-        }
-
-        private byte[] DecimalToHex(string dec)
-        {
-            if (!int.TryParse(dec, out int num))
-            {
-                throw new Exception("Unable to parse int value");
-            }
-            var hex = num.ToString("X8");
-
-            return Enumerable.Range(0, hex.Length)
-                     .Where(x => x % 2 == 0)
-                     .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                     .ToArray();
-        }
-
-        private byte[] FloatToHex(string dec)
-        {
-            if (!float.TryParse(dec, out float num))
-            {
-                throw new Exception("Unable to parse float value");
-            }
-            var hex = num.ToString("X8");
-
-            return Enumerable.Range(0, hex.Length)
-                     .Where(x => x % 2 == 0)
-                     .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                     .ToArray();
-        }
-
-        private byte ByteToHex(string b)
-        {
-            if (!byte.TryParse(b, out byte num))
-            {
-                throw new Exception("Unable to parse byte. Are you using a value higher than 255 for push1-3?");
-            }
-            var hex = num.ToString("X2");
-
-            return Convert.ToByte(hex);
-        }
-        private uint Joaat(string input)
-        {
-            byte[] stingbytes = Encoding.UTF8.GetBytes(input.ToLower());
-            uint num1 = 0U;
-            for (int i = 0; i < stingbytes.Length; i++)
-            {
-                uint num2 = num1 + (uint)stingbytes[i];
-                uint num3 = num2 + (num2 << 10);
-                num1 = num3 ^ num3 >> 6;
-            }
-            uint num4 = num1 + (num1 << 3);
-            uint num5 = num4 ^ num4 >> 11;
-            return num5 + (num5 << 15);
-        }
         public byte[] Compile()
         {
             if (AssemblyCode == null || AssemblyCode.Count == 0)
@@ -104,9 +42,9 @@ namespace RAGE.Compiler
 
             return result;
         }
-
         internal byte[] Parse()
         {
+
             var bytes = new List<byte>();
             var StringData = new List<StringData>();
             var NativeData = new List<NativeData>();
@@ -263,26 +201,26 @@ namespace RAGE.Compiler
                         break;
                     case "push1":
                         bytes.Add(0x25);
-                        bytes.Add(ByteToHex(lineParts[1]));
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
                         break;
                     case "push2":
                         bytes.Add(0x26);
-                        bytes.Add(ByteToHex(lineParts[1]));
-                        bytes.Add(ByteToHex(lineParts[2]));
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        bytes.Add(Utilities.ByteToHex(lineParts[2]));
                         break;
                     case "push3":
                         bytes.Add(0x27);
-                        bytes.Add(ByteToHex(lineParts[1]));
-                        bytes.Add(ByteToHex(lineParts[2]));
-                        bytes.Add(ByteToHex(lineParts[3]));
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        bytes.Add(Utilities.ByteToHex(lineParts[2]));
+                        bytes.Add(Utilities.ByteToHex(lineParts[3]));
                         break;
                     case "push":
                         bytes.Add(0x28);
-                        bytes.AddRange(DecimalToHex(lineParts[1]));
+                        bytes.AddRange(Utilities.DecimalToHex(lineParts[1]));
                         break;
                     case "fpush":
                         bytes.Add(0x29);
-                        bytes.AddRange(FloatToHex(lineParts[1]));
+                        bytes.AddRange(Utilities.FloatToHex(lineParts[1]));
                         break;
                     case "dup"://1
                         bytes.Add(0x2A);
@@ -299,7 +237,7 @@ namespace RAGE.Compiler
                         }
                         else
                         {
-                            joaat = Joaat(lineParts[1]).ToString();
+                            joaat = Utilities.Joaat(lineParts[1]).ToString();
                         }
 
                         var data = NativeData.GetNativeSection(joaat);
@@ -318,13 +256,338 @@ namespace RAGE.Compiler
                         byte aa = (byte)((args << 2) | ret);
                         bytes.Add(aa);
                         var loc = data.NativeLocation.ToString("X4");
-                        bytes.AddRange(StringHexToBytes(loc));
+                        bytes.AddRange(Utilities.StringHexToBytes(loc));
                         break;
-
+                    case "function":
+                        bytes.Add(0x2D);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[2]));
+                        bytes.Add(Utilities.ByteToHex(lineParts[3]));
+                        break;
+                    case "return":
+                        bytes.Add(0x2E);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        bytes.Add(Utilities.ByteToHex(lineParts[2]));
+                        break;
+                    case "pget"://1
+                        bytes.Add(0x2F);
+                        break;
+                    case "pset"://1
+                        bytes.Add(0x30);
+                        break;
+                    case "ppeekset"://1
+                        bytes.Add(0x31);
+                        break;
+                    case "tostack"://1
+                        bytes.Add(0x32);
+                        break;
+                    case "fromstack"://1
+                        bytes.Add(0x33);
+                        break;
+                    case "arraygetp1"://2
+                        bytes.Add(0x34);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "arrayget1"://2
+                        bytes.Add(0x35);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "arrayset1"://2
+                        bytes.Add(0x36);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "pframe1"://2
+                        bytes.Add(0x37);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "getf1"://2
+                        bytes.Add(0x38);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "setf1"://2
+                        bytes.Add(0x39);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "pstatic1"://2
+                        bytes.Add(0x3A);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "staticget1"://2
+                        bytes.Add(0x3B);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "staticset1"://2
+                        bytes.Add(0x3C);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "add1"://2
+                        bytes.Add(0x3D);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "mult1"://2
+                        bytes.Add(0x3E);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "getstackimmediatep"://2
+                        bytes.Add(0x3F);
+                        break;
+                    case "getimmediatep1"://2
+                        bytes.Add(0x40);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "getimmediate1"://2
+                        bytes.Add(0x41);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "setimmediate1"://2
+                        bytes.Add(0x42);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "pushs"://2
+                        bytes.Add(0x43);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "add2"://3
+                        bytes.Add(0x44);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "mult2"://3
+                        bytes.Add(0x45);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "getimmediatep2"://3
+                        bytes.Add(0x46);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "getimmediate2"://3
+                        bytes.Add(0x47);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "setimmediate2"://3
+                        bytes.Add(0x48);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "arraygetp2"://3
+                        bytes.Add(0x49);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "arrayget2"://3
+                        bytes.Add(0x4A);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "arrayset2"://3
+                        bytes.Add(0x4B);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "pframe2"://3
+                        bytes.Add(0x4C);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "getf2"://3
+                        bytes.Add(0x4D);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "setf2"://3
+                        bytes.Add(0x4E);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "pstatic2"://3
+                        bytes.Add(0x4F);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "staticget2"://3
+                        bytes.Add(0x50);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "staticset2"://3
+                        bytes.Add(0x51);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "pglobal2"://3
+                        bytes.Add(0x52);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "globalget2"://3
+                        bytes.Add(0x53);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "globalset2"://3
+                        bytes.Add(0x54);
+                        bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
+                        break;
+                    case "jump"://2 special
+                        bytes.Add(0x55);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        break;
+                    case "jumpfalse"://2 special
+                        bytes.Add(0x56);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        break;
+                    case "jumpne"://2 special
+                        bytes.Add(0x57);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        break;
+                    case "jumpeq"://2 special
+                        bytes.Add(0x58);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        break;
+                    case "jumple"://2 special
+                        bytes.Add(0x59);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        break;
+                    case "jumplt"://2 special
+                        bytes.Add(0x5A);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        break;
+                    case "jumpge"://2 special
+                        bytes.Add(0x5B);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        break;
+                    case "jumpgt"://2 special
+                        bytes.Add(0x5C);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        break;
+                    case "call"://3 special
+                        bytes.Add(0x5D);
+                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        bytes.Add(0x00);
+                        bytes.Add(0x00);
+                        break;
+                    case "pglobal3"://4
+                        bytes.Add(0x5E);
+                        bytes.AddRange(Utilities.I24ToHex(lineParts[1]));
+                        break;
+                    case "globalget3"://4
+                        bytes.Add(0x5F);
+                        bytes.AddRange(Utilities.I24ToHex(lineParts[1]));
+                        break;
+                    case "globalset3"://4
+                        bytes.Add(0x60);
+                        bytes.AddRange(Utilities.I24ToHex(lineParts[1]));
+                        break;
+                    case "pushi24"://4
+                        bytes.Add(0x61);
+                        bytes.AddRange(Utilities.I24ToHex(lineParts[1]));
+                        break;
+                    case "switch"://special
+                        bytes.Add(0x62);
+                        throw new NotImplementedException();
+                    case "pushstring": //1 (special)
+                        byte[] stringData = Encoding.ASCII.GetBytes(lineParts[1]);
+                        var sdata = StringData.GetStringSection(stringData);
+                        if (sdata == null)
+                        {
+                            //Doesn't exist so add the string to the table
+                            sdata = new RAGE.Compiler.StringData()
+                            {
+                                StringLiteral = lineParts[1],
+                                StringStorage = stringData,
+                                StringOffset = StringData.Count,
+                            };
+                            StringData.Add(sdata);
+                        }
+                        var toPush = Utilities.CreatePushBeforePushString(sdata.StringOffset);
+                        bytes.Add((byte)toPush.opcode);
+                        bytes.AddRange(toPush.data);
+                        bytes.Add(0x63);
+                        break;
+                    case "gethash":
+                        bytes.Add(0x64);
+                        break;
+                    case "strcopy":
+                        bytes.Add(0x65);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "itos":
+                        bytes.Add(0x66);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "strcat":
+                        bytes.Add(0x67);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "strcatint":
+                        bytes.Add(0x68);
+                        bytes.Add(Utilities.ByteToHex(lineParts[1]));
+                        break;
+                    case "memcpy":
+                        bytes.Add(0x69); //giggity
+                        break;
+                    case "catch":
+                        bytes.Add(0x6A);
+                        break;
+                    case "throw":
+                        bytes.Add(0x6B);
+                        break;
+                    case "pcall":
+                        bytes.Add(0x6C);
+                        break;
+                    case "push_-1":
+                        bytes.Add(0x6D);
+                        break;
+                    case "push_0":
+                        bytes.Add(0x6E);
+                        break;
+                    case "push_1":
+                        bytes.Add(0x6F);
+                        break;
+                    case "push_2":
+                        bytes.Add(0x70);
+                        break;
+                    case "push_3":
+                        bytes.Add(0x71);
+                        break;
+                    case "push_4":
+                        bytes.Add(0x72);
+                        break;
+                    case "push_5":
+                        bytes.Add(0x73);
+                        break;
+                    case "push_6":
+                        bytes.Add(0x74);
+                        break;
+                    case "push_7":
+                        bytes.Add(0x75);
+                        break;
+                    case "fpush_-1":
+                        bytes.Add(0x76);
+                        break;
+                    case "fpush_0":
+                        bytes.Add(0x77);
+                        break;
+                    case "fpush_1":
+                        bytes.Add(0x78);
+                        break;
+                    case "fpush_2":
+                        bytes.Add(0x79);
+                        break;
+                    case "fpush_3":
+                        bytes.Add(0x7A);
+                        break;
+                    case "fpush_4":
+                        bytes.Add(0x7B);
+                        break;
+                    case "fpush_5":
+                        bytes.Add(0x7C);
+                        break;
+                    case "fpush_6":
+                        bytes.Add(0x7D);
+                        break;
+                    case "fpush_7":
+                        bytes.Add(0x7E);
+                        break;
+                    default:
+                        throw new Exception($"Unknown opcode {opcode}");
                 }
             }
-
-
             return null;
         }
     }

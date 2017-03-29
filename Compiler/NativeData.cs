@@ -10,6 +10,5 @@ namespace RAGE.Compiler
     {
         internal string Native { get; set; }
         internal int NativeLocation { get; set; }
-
     }
 }

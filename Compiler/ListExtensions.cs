@@ -12,5 +12,14 @@ namespace RAGE.Compiler
         {
             return data.Where(a => a.Native == native).FirstOrDefault();
         }
+
+        internal static StringData GetStringSection(this List<StringData> data, string s)
+        {
+            return data.Where(a => a.StringLiteral == s).FirstOrDefault();
+        }
+        internal static StringData GetStringSection(this List<StringData> data, byte[] storage)
+        {
+            return data.Where(a => a.StringStorage == storage).FirstOrDefault();
+        }
     }
 }

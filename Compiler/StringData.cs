@@ -8,8 +8,8 @@ namespace RAGE.Compiler
 {
     internal class StringData
     {
-        internal byte[] StringSection { get; set; }
         internal byte[] StringStorage { get; set; }
-        internal int StringOffsetStorage { get; set; }
+        internal string StringLiteral { get; set; }
+        internal int StringOffset { get; set; }
     }
 }
