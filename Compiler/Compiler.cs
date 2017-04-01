@@ -4,12 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using RAGE.Compiler;
+
 namespace RAGE.Compiler
 {
     public class Compiler
     {
         internal List<string> AssemblyCode { get; set; }
+
         public Compiler(string filepath)
         {
             AssemblyCode = File.ReadAllLines(filepath).ToList();
@@ -644,8 +645,7 @@ namespace RAGE.Compiler
                             bytes[offset] = 0xFF;
                             bytes[offset + 1] = 0xFF;
                         }
-
-                        throw new Exception("REMOVE ME!!!! (undefined label dec)");
+                        Logger.Logger.Warn($"Found label {key} without a definition");
                     }
                     else
                     {
@@ -679,7 +679,6 @@ namespace RAGE.Compiler
             {
                 CodeSection.Add(0x00);
             }
-
 
             //Generate string section
             //Add all string bytes to the section list
@@ -837,9 +836,11 @@ namespace RAGE.Compiler
             result.AddRange(NativeSection);
             result.AddRange(EndingSection);
 
-            RSC7Header rsc7 = new RSC7Header();
-            rsc7.Magic = 0x52534337;
-            rsc7.Version = 9;
+            RSC7Header rsc7 = new RSC7Header()
+            {
+                Magic = 0x52534337,
+                Version = 9
+            };
 
             int hexLength = result.Count;
             int fileBaseSize = 4096; //@TODO: DONT HARDCODE
