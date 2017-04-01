@@ -74,7 +74,7 @@ namespace RAGE.Compiler
                     LabelData.Add(new LabelData()
                     {
                         Label = label,
-                        LabelOffset = bytes.Count + 1
+                        LabelOffset = bytes.Count
                     });
                     continue;
                 }
@@ -450,37 +450,37 @@ namespace RAGE.Compiler
                         break;
                     case "jumpeq"://2 special
                         bytes.Add(0x58);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumple"://2 special
                         bytes.Add(0x59);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumplt"://2 special
                         bytes.Add(0x5A);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpge"://2 special
                         bytes.Add(0x5B);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpgt"://2 special
                         bytes.Add(0x5C);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "call"://3 special
                         bytes.Add(0x5D);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
@@ -652,7 +652,7 @@ namespace RAGE.Compiler
                         if (oneUp == 0x00 && twoUp == 0x00)
                         {
                             //Call
-                            byte[] i24 = Utilities.I24ToHex(labelInfo.LabelOffset | (labelInfo.LabelOffset << 8) | (labelInfo.LabelOffset << 16));
+                            byte[] i24 = Utilities.I24ToHex(labelInfo.LabelOffset);
                             bytes[offset] = i24[0];
                             bytes[offset + 1] = i24[1];
                             bytes[offset + 2] = i24[2];
@@ -660,7 +660,7 @@ namespace RAGE.Compiler
                         else if (oneUp == 0x00 && twoUp != 0x00)
                         {
                             //Jump
-                            int newOffset = labelInfo.LabelOffset - (offset + 2);
+                            short newOffset = (short)(labelInfo.LabelOffset - (offset + 2));
                             var data = Utilities.StringHexToBytes(newOffset.ToString("X4"));
                             bytes[offset] = data[0];
                             bytes[offset + 1] = data[1];
