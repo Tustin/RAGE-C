@@ -12,11 +12,20 @@ namespace RAGE
             Console.WriteLine($"[{timer.Elapsed.ToString("mm\\:ss\\.ff")}] {message}");
         }
 
-        public static void LogError(string message)
+        public static void Error(string message)
         {
             Console.Write($"[{timer.Elapsed.TotalSeconds}] ");
             Console.ForegroundColor = ConsoleColor.Red;
             Console.Write("ERROR: ");
+            Console.ResetColor();
+            Console.Write(message);
+        }
+
+        public static void Warning(string message)
+        {
+            Console.Write($"[{timer.Elapsed.TotalSeconds}] ");
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.Write("WARN: ");
             Console.ResetColor();
             Console.Write(message);
         }

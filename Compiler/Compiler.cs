@@ -26,12 +26,6 @@ namespace RAGE.Compiler
             {
                 throw new Exception("Assembly code contents is empty or null");
             }
-            byte[] statics = new byte[60];
-
-            for (int i = 0; i < statics.Length; i++)
-            {
-                statics[i] = 0x00;
-            }
 
             //replace carriage returns, empty lines and comment lines
             AssemblyCode = AssemblyCode.Select(a => a.Replace("\r\n", "\n")).ToList();
@@ -42,26 +36,45 @@ namespace RAGE.Compiler
 
             return result;
         }
-        internal byte[] Parse()
+        public byte[] Parse()
         {
-
+            var Header = new ScriptHeader();
             var bytes = new List<byte>();
             var StringData = new List<StringData>();
             var NativeData = new List<NativeData>();
             var LabelData = new List<LabelData>();
+            var LabelsToReplace = new Dictionary<string, List<int>>();
+            var StaticsData = new List<byte>();
+
+            //Sections
+            var CodeSection = new List<byte>();
+            var StringSection = new List<byte>();
+            var NativeSection = new List<byte>();
+            var StaticSection = new List<byte>();
+            var HeaderSection = new List<byte>();
+            var EndingSection = new List<byte>();
+
+            var result = new List<byte>();
+
+            //Fill static data 
+            while (StaticsData.Count < 60)
+            {
+                StaticsData.Add(0x00);
+            }
 
             foreach (string line in AssemblyCode)
             {
-                if (Regex.IsMatch(line, "/^\\:(.+?)$/"))
+                if (Regex.IsMatch(line, "^\\:(.+?)$"))
                 {
                     string label = line.Replace(":", "");
-                    label = line.Replace("@", "");
-                    label = Regex.Replace(label, "/\\s+/", "");
+                    label = label.Replace("@", "");
+                    label = Regex.Replace(label, "\\s+", "");
 
-                    LabelData.Add(new RAGE.LabelData()
+                    //Add the label and the offset to it here
+                    LabelData.Add(new LabelData()
                     {
-                        Label = line,
-                        LabelOffset = 0 //TODO figure this out
+                        Label = label,
+                        LabelOffset = bytes.Count + 1
                     });
                     continue;
                 }
@@ -70,7 +83,7 @@ namespace RAGE.Compiler
                 if (line.Contains("\xa0") && line.Contains(" "))
                 {
                     string temp = line.Replace(" ", "");
-                    temp = Regex.Replace(temp, "/\\s+/", "");
+                    temp = Regex.Replace(temp, "\\s+", "");
                     lineParts.Add(temp);
                 }
                 else
@@ -237,22 +250,24 @@ namespace RAGE.Compiler
                         }
                         else
                         {
-                            joaat = Utilities.Joaat(lineParts[1]).ToString();
+                            joaat = Utilities.Joaat(lineParts[1]).ToString("X8");
                         }
 
                         var data = NativeData.GetNativeSection(joaat);
                         //Didnt find it so add it
                         if (data == null)
                         {
-                            data = new RAGE.Compiler.NativeData()
+                            data = new NativeData()
                             {
                                 Native = joaat,
-                                NativeLocation = NativeData.Count
+                                NativeLocation = NativeData.Count,
+                                NativeBytes = Utilities.StringHexToBytes(joaat).ToList()
                             };
                             NativeData.Add(data);
                         }
                         int args = int.Parse(lineParts[2]);
                         int ret = int.Parse(lineParts[3]);
+                        //Dont know what the purpose of this is
                         byte aa = (byte)((args << 2) | ret);
                         bytes.Add(aa);
                         var loc = data.NativeLocation.ToString("X4");
@@ -417,47 +432,56 @@ namespace RAGE.Compiler
                         break;
                     case "jump"://2 special
                         bytes.Add(0x55);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpfalse"://2 special
                         bytes.Add(0x56);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpne"://2 special
                         bytes.Add(0x57);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpeq"://2 special
                         bytes.Add(0x58);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumple"://2 special
                         bytes.Add(0x59);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumplt"://2 special
                         bytes.Add(0x5A);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpge"://2 special
                         bytes.Add(0x5B);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpgt"://2 special
                         bytes.Add(0x5C);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "call"://3 special
                         bytes.Add(0x5D);
-                        bytes.AddRange(Utilities.StringToBytes(lineParts[1]));
+                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count - 1);
+                        bytes.Add(0x00);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
@@ -481,22 +505,26 @@ namespace RAGE.Compiler
                         bytes.Add(0x62);
                         throw new NotImplementedException();
                     case "pushstring": //1 (special)
-                        byte[] stringData = Encoding.ASCII.GetBytes(lineParts[1]);
+                        string pushString = lineParts[1].Replace("\"", "");
+                        List<byte> stringData = Encoding.ASCII.GetBytes(pushString).ToList();
+                        //Null terminate it
+                        stringData.Add(0x00);
                         var sdata = StringData.GetStringSection(stringData);
                         if (sdata == null)
                         {
                             //Doesn't exist so add the string to the table
-                            sdata = new RAGE.Compiler.StringData()
+                            sdata = new StringData()
                             {
-                                StringLiteral = lineParts[1],
+                                StringLiteral = pushString,
                                 StringStorage = stringData,
                                 StringOffset = StringData.Count,
                             };
                             StringData.Add(sdata);
                         }
                         var toPush = Utilities.CreatePushBeforePushString(sdata.StringOffset);
-                        bytes.Add((byte)toPush.opcode);
-                        bytes.AddRange(toPush.data);
+                        bytes.Add((byte)toPush.Opcode);
+                        if (toPush.Data.Count > 0)
+                            bytes.AddRange(toPush.Data);
                         bytes.Add(0x63);
                         break;
                     case "gethash":
@@ -588,7 +616,247 @@ namespace RAGE.Compiler
                         throw new Exception($"Unknown opcode {opcode}");
                 }
             }
-            return null;
+
+            //Go through each time a label is used and replace it with the offset for the label
+            foreach (var item in LabelsToReplace)
+            {
+                string key = item.Key.Replace("@", "");
+
+                var labelInfo = LabelData.GetLabelSection(key);
+
+                foreach (int offset in item.Value)
+                {
+                    byte oneUp = bytes[offset + 1];
+                    byte twoUp = bytes[offset + 2];
+                    //Doesnt exist, so fill it with FF and throw a warning
+                    if (labelInfo == null)
+                    {
+                        if (oneUp == 0x00 && twoUp == 0x00)
+                        {
+                            //Call
+                            bytes[offset] = 0xFF;
+                            bytes[offset + 1] = 0xFF;
+                            bytes[offset + 2] = 0xFF;
+                        }
+                        else if (oneUp == 0x00 && twoUp != 0x00)
+                        {
+                            //Jump
+                            bytes[offset] = 0xFF;
+                            bytes[offset + 1] = 0xFF;
+                        }
+
+                        throw new Exception("REMOVE ME!!!! (undefined label dec)");
+                    }
+                    else
+                    {
+                        if (oneUp == 0x00 && twoUp == 0x00)
+                        {
+                            //Call
+                            byte[] i24 = Utilities.I24ToHex(labelInfo.LabelOffset | (labelInfo.LabelOffset << 8) | (labelInfo.LabelOffset << 16));
+                            bytes[offset] = i24[0];
+                            bytes[offset + 1] = i24[1];
+                            bytes[offset + 2] = i24[2];
+                        }
+                        else if (oneUp == 0x00 && twoUp != 0x00)
+                        {
+                            //Jump
+                            int newOffset = labelInfo.LabelOffset - (offset + 2);
+                            var data = Utilities.StringHexToBytes(newOffset.ToString("X4"));
+                            bytes[offset] = data[0];
+                            bytes[offset + 1] = data[1];
+                        }
+                    }
+                }
+            }
+
+
+            //Generate code section
+            CodeSection.AddRange(bytes);
+
+            int codeSectionSize = CodeSection.Count;
+            //Need to make sure the pages are at least 16 bytes each
+            while (CodeSection.Count % 16 != 0)
+            {
+                CodeSection.Add(0x00);
+            }
+
+
+            //Generate string section
+            //Add all string bytes to the section list
+            foreach (var sd in StringData)
+            {
+                StringSection.AddRange(sd.StringStorage);
+            }
+            int stringSectionSize = StringSection.Count;
+
+            //Need to make sure the pages are at least 16 bytes each
+            while (StringSection.Count % 16 != 0)
+            {
+                StringSection.Add(0x00);
+            }
+
+
+            //Generate native section
+            //Add all natives bytes to the section list
+            foreach (var nd in NativeData)
+            {
+                NativeSection.AddRange(nd.NativeBytes);
+            }
+
+            //Need to make sure the pages are at least 16 bytes each
+            while (NativeSection.Count % 16 != 0)
+            {
+                NativeSection.Add(0x00);
+            }
+
+
+            //Generate statics section
+            StaticSection.AddRange(StaticsData);
+
+            int staticsSectionSize = StaticSection.Count;
+
+            while (StaticSection.Count % 16 != 0)
+            {
+                StaticSection.Add(0x00);
+            }
+
+
+            //Make header
+            Header.Magic = 0xB43A4500;
+            Header.GlobalsVersion = 0xFF448AC7;
+            Header.CodeLength = codeSectionSize;
+            Header.ParameterCount = 0;
+            Header.StaticsCount = staticsSectionSize / 4;
+            Header.GlobalsCount = 0;
+            Header.NativesCount = NativeData.Count;
+            Header.GlobalsOffset = 0;
+            Header.Unk2 = 0;
+            Header.Unk3 = 0;
+            Header.NameHash = Utilities.Joaat("test"); //@TODO: DONT HARDCODE!!!
+            Header.Unk4 = 1;
+            Header.StringsSize = stringSectionSize;
+            Header.Unk5 = 0;
+
+            int fileLength = CodeSection.Count + StringSection.Count + NativeSection.Count + 80;
+            int nativeSectionOffset = CodeSection.Count + StringSection.Count + 80;
+
+            //Pad ending
+            for (int i = 0; i < 16; i++)
+            {
+                EndingSection.Add(0x00);
+            }
+
+            EndingSection.AddRange(StaticSection);
+            int staticSectionOffset = fileLength + 16;
+            fileLength = fileLength + StaticSection.Count;
+
+            int fileNamePointerLoc = fileLength + 16;
+
+            List<byte> fileName = Utilities.StringToBytes("test").ToList(); //@TODO: ALSO DONT HARDCODE!!!
+
+            //Make sure filename has 4 null bytes affer it
+            if (fileName.Count > 12)
+            {
+                while (fileName.Count < 32)
+                {
+                    fileName.Add(0x00);
+                }
+            }
+            else
+            {
+                while (fileName.Count < 16)
+                {
+                    fileName.Add(0x00);
+                }
+            }
+
+            EndingSection.AddRange(fileName);
+
+            int codeBlockPointerLoc = fileLength + 32;
+
+            List<byte> CodeBlocks = new List<byte>()
+            {
+                0x50,
+                0x00,
+                0x00,
+                0x50
+            };
+
+            while (CodeBlocks.Count < 16)
+            {
+                CodeBlocks.Add(0x00);
+            }
+
+            EndingSection.AddRange(CodeBlocks);
+
+            int stringBlocksPointerLoc = fileLength + 48;
+
+            List<byte> StringBlocks = new List<byte>();
+            //No strings so theres no need for a pointer
+            if (StringData.Count == 0)
+            {
+                StringBlocks.Add(0x00);
+                StringBlocks.Add(0x00);
+                StringBlocks.Add(0x00);
+                StringBlocks.Add(0x00);
+            }
+            else
+            {
+                var thing = Utilities.DecimalToHex(CodeSection.Count + 80);
+                thing[0] = 0x50;
+                StringBlocks.AddRange(thing);
+            }
+
+            while (StringBlocks.Count < 16)
+            {
+                StringBlocks.Add(0x00);
+            }
+
+            EndingSection.AddRange(StringBlocks);
+
+            int stupidOriginalNamePointerLoc = fileLength + 64;
+            var StupidNameBlock = new List<byte>();
+            for (int i = 0; i < 16; i++)
+            {
+                if (i == 4) StupidNameBlock.Add(0x01);
+                else StupidNameBlock.Add(0x00);
+            }
+
+            EndingSection.AddRange(StupidNameBlock);
+            //Fill remaining header values
+            Header.Unk1 = Utilities.CreatePointerFromOffset(stupidOriginalNamePointerLoc);
+            Header.CodeBlocksOffset = Utilities.CreatePointerFromOffset(codeBlockPointerLoc);
+            Header.NativesOffset = Utilities.CreatePointerFromOffset(nativeSectionOffset);
+            Header.StaticsOffset = Utilities.CreatePointerFromOffset(staticSectionOffset);
+            Header.ScriptNameOffset = Utilities.CreatePointerFromOffset(fileNamePointerLoc);
+            Header.StringsOffset = Utilities.CreatePointerFromOffset(stringBlocksPointerLoc);
+
+            result.AddRange(Header.Generate());
+            result.AddRange(CodeSection);
+            result.AddRange(StringSection);
+            result.AddRange(NativeSection);
+            result.AddRange(EndingSection);
+
+            RSC7Header rsc7 = new RSC7Header();
+            rsc7.Magic = 0x52534337;
+            rsc7.Version = 9;
+
+            int hexLength = result.Count;
+            int fileBaseSize = 4096; //@TODO: DONT HARDCODE
+            int roundedLength = (int)Math.Ceiling((decimal)hexLength / fileBaseSize) * fileBaseSize;
+
+            //Add padding to the final script so that it meets the required length
+            while (roundedLength > result.Count)
+            {
+                result.Add(0x00);
+            }
+
+            hexLength = result.Count;
+            rsc7.SystemFlag = Utilities.GetFlagFromSize(hexLength, fileBaseSize);
+            rsc7.GraphicFlag = 0x90000000;
+            result.InsertRange(0, rsc7.Generate());
+
+            return result.ToArray();
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using RAGE.Compiler;
 namespace RAGE
 {
     class Program
@@ -46,6 +47,7 @@ namespace RAGE
             List<string> final = new List<string>();
 
             final.Add($"//Compiled using RAGE-C by Tustin {DateTime.Now.ToShortDateString()}");
+
             foreach (KeyValuePair<string, List<string>> item in Core.AssemblyCode)
             {
                 final.Add($":{item.Key}");
@@ -55,6 +57,13 @@ namespace RAGE
             }
 
             File.WriteAllLines(Core.PROJECT_ROOT + "\\Tests\\test.csa",final.ToArray());
+
+            Compiler.Compiler compiler = new Compiler.Compiler(final);
+
+            var res = compiler.Compile();
+
+            File.WriteAllBytes(Core.PROJECT_ROOT + "\\Tests\\test.csc", res);
+
 
             Logger.Log("Successfully saved assembly!");
         }

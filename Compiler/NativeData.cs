@@ -10,5 +10,6 @@ namespace RAGE.Compiler
     {
         internal string Native { get; set; }
         internal int NativeLocation { get; set; }
+        internal List<byte> NativeBytes { get; set; }
     }
 }

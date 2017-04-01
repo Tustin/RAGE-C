@@ -17,9 +17,25 @@ namespace RAGE.Compiler
         {
             return data.Where(a => a.StringLiteral == s).FirstOrDefault();
         }
-        internal static StringData GetStringSection(this List<StringData> data, byte[] storage)
+
+        internal static StringData GetStringSection(this List<StringData> data, List<byte> storage)
         {
             return data.Where(a => a.StringStorage == storage).FirstOrDefault();
+        }
+
+        internal static LabelData GetLabelSection(this List<LabelData> data, string label)
+        {
+            return data.Where(a => a.Label == label).FirstOrDefault();
+        }
+
+        internal static void AddOrUpdate(this Dictionary<string, List<int>> data, string key, int val)
+        {
+            if (!data.TryGetValue(key, out List<int> offsets))
+            {
+                offsets = new List<int>();
+            }
+            offsets.Add(val);
+            data[key] = offsets;
         }
     }
 }
