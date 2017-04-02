@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿#define DEBUG
+
+using System.Collections.Generic;
 using System.IO;
 
 namespace RAGE.Parser

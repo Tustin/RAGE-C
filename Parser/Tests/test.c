@@ -9,3 +9,7 @@ void main() {
         WAIT(0);
     }
 }
+
+double testing() {
+
+}

@@ -3,17 +3,42 @@ using System.Collections.Generic;
 using System.IO;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using NDesk.Options;
+using static RAGE.Logger.Logger;
 namespace RAGE.Parser
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Logger.Logger.Log("Populating native table...");
+            Logo();
+            string filePath = null;
+            bool showingHelp = false;
+            new OptionSet() {
+                { "s=|script=", a => filePath = a },
+                { "v|verbose", a => Verbose = true},
+                { "h|help", a => showingHelp = true }
+            }.Parse(args);
+#if DEBUG
+            filePath = Core.PROJECT_ROOT + "\\Tests\\test.c";         
+#endif
+            if (showingHelp)
+            {
+                Help();
+                return;
+            }
+
+            if (filePath == null)
+            {
+                Error("No script file path set. Please use -h for help");
+                return;
+            }
+
+            LogVerbose("Populating native table...");
 
             Native.PopulateNativeTable();
 
-            Logger.Logger.Log($"Added {Core.Natives.Native.Count} natives to native table");
+            LogVerbose($"Added {Core.Natives.Native.Count} natives to native table");
 
             AntlrFileStream fs = new AntlrFileStream(Core.PROJECT_ROOT + "\\Tests\\test.c");
 
@@ -21,13 +46,13 @@ namespace RAGE.Parser
 
             Core.Functions = new List<Function>();
 
-            Logger.Logger.Log("Loaded script file");
+            LogVerbose("Loaded script file");
 
             CLexer lexer = new CLexer(fs);
 
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
-            Logger.Logger.Log($"Successfully lexed tokens");
+            LogVerbose($"Successfully lexed tokens");
 
             CParser parser = new CParser(tokens);
 
@@ -35,13 +60,13 @@ namespace RAGE.Parser
 
             RAGEListener listener = new RAGEListener();
 
-            Logger.Logger.Log("Starting to walk parse tree...");
-
+            LogVerbose("Starting to walk parse tree...");
+            parser.RemoveErrorListeners();
             ParseTreeWalker.Default.Walk(listener, parser.compilationUnit());
 
-            Logger.Logger.Log("Finished walking parse tree");
+            LogVerbose("Finished walking parse tree");
 
-            Logger.Logger.Log("Writing assembly to output file...");
+            LogVerbose("Writing assembly to output file...");
 
             List<string> final = new List<string>
             {
@@ -59,13 +84,39 @@ namespace RAGE.Parser
 
             Compiler.Compiler compiler = new Compiler.Compiler(final);
 
-            Logger.Logger.Log("Compiling script file...");
+            LogVerbose("Compiling script file...");
 
             var res = compiler.Compile();
 
             File.WriteAllBytes(Core.PROJECT_ROOT + "\\Tests\\test.csc", res);
 
-            Logger.Logger.Log("Successfully saved assembly!");
+            Log("Successfully saved assembly!");
+        }
+
+        static void Help()
+        {
+            Console.Clear();
+            Logo();
+            Console.WriteLine("-s|-script   --   C script to be compiled");
+            Console.WriteLine("-v|-verbose  --   Output additional compilation info");
+            Console.WriteLine("-h|-help     --   You're already here ya dingus");
+            Console.ReadKey();
+        }
+        static void Logo()
+        {
+            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+            Console.WriteLine(@"  _____            _____ ______       _____ ");
+            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+            Console.WriteLine(@" |  __ \     /\   / ____|  ____|     / ____|");
+            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+            Console.WriteLine(@" | |__) |   /  \ | |  __| |__ ______| |     ");
+            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+            Console.WriteLine(@" |  _  /   / /\ \| | |_ |  __|______| |     ");
+            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+            Console.WriteLine(@" | | \ \  / ____ \ |__| | |____     | |____ ");
+            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+            Console.WriteLine(@" |_|  \_\/_/    \_\_____|______|     \_____|");
+            Console.WriteLine();
         }
     }
 }

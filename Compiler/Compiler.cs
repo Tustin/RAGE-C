@@ -645,6 +645,7 @@ namespace RAGE.Compiler
                             bytes[offset] = 0xFF;
                             bytes[offset + 1] = 0xFF;
                         }
+
                         Logger.Logger.Warn($"Found label {key} without a definition");
                     }
                     else

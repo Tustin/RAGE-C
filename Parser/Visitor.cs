@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Antlr4.Runtime.Misc;
 using System.Text.RegularExpressions;
+
 using static CParser;
+using static RAGE.Logger.Logger;
 
 namespace RAGE.Parser
 {
@@ -140,12 +142,13 @@ namespace RAGE.Parser
 
             if (variable == null)
             {
-                throw new Exception($"Failed to find variable {left.Data.ToString()}");
+                Error($"Unable to find variable {left.Data.ToString()} | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                return null;
             }
 
             List<string> code = new List<string>();
-
-            switch (context.GetChild(1).GetText())
+            string op = context.GetChild(1).GetText();
+            switch (op)
             {
                 case "+=":
                     //This will always be a variable
@@ -165,7 +168,8 @@ namespace RAGE.Parser
                     code.Add(FrameVar.Set(variable));
                     return new Value(DataType.Int, null, code);
             }
-            throw new Exception("Invalid operator");
+            Error($"Unsupported operator {op} | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            return null;
         }
 
         public override Value VisitConditionalExpression(ConditionalExpressionContext context)
@@ -187,7 +191,8 @@ namespace RAGE.Parser
 
             if (left.Type != DataType.Bool || right.Type != DataType.Bool)
             {
-                throw new Exception("Invalid types");
+                Error($"Invalid types for logical OR | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                return null;
             }
             if (left.Data != null && right.Data != null)
                 return new Value(DataType.Bool, (bool)left.Data | (bool)right.Data, new List<string>());
@@ -220,7 +225,8 @@ namespace RAGE.Parser
 
             if (left.Type != DataType.Bool || right.Type != DataType.Bool)
             {
-                throw new Exception("Invalid types");
+                Error($"Invalid types for logical AND | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                return null;
             }
             if (left.Data != null && right.Data != null)
                 return new Value(DataType.Bool, (bool)left.Data & (bool)right.Data, new List<string>());
@@ -250,8 +256,8 @@ namespace RAGE.Parser
             Value right = VisitRelationalExpression(context.relationalExpression());
 
             List<string> code = new List<string>();
-
-            switch (context.GetChild(1).ToString())
+            string op = context.GetChild(1).ToString();
+            switch (op)
             {
                 case "==":
                     if (left.Data != null && right.Data != null) return new Value(DataType.Bool, left.Data.Equals(right.Data), new List<string>());
@@ -296,7 +302,8 @@ namespace RAGE.Parser
                     code.Add(Jump.Generate(JumpType.Equal, CurrentContext.Label));
                     return new Value(DataType.Bool, null, code);
             }
-            throw new Exception("Unsupported operator");
+            Error($"Unsupported operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            return null;
         }
 
         public override Value VisitRelationalExpression(RelationalExpressionContext context)
@@ -316,15 +323,15 @@ namespace RAGE.Parser
             if (left.Type != DataType.Int || right.Type != DataType.Int
             && (left.Type != DataType.Variable || right.Type != DataType.Variable))
             {
-                throw new Exception("Cannot use relational operators on non-integer values");
+                Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
+                return null;
             }
-
-
+    
             //Lets just output the variables here because fuck optimization
             //Saves some headache with the compiler parsing logic on variables that might be changed
             bool isIterator = (CurrentContext.Context is IterationStatementContext) | (CurrentContext.Context is SelectionStatementContext);
-
-            switch (context.GetChild(1).ToString())
+            string op = context.GetChild(1).ToString();
+            switch (op)
             {
                 case "<":
                     //If it's not an iterator context, then it's free to return the two values (if possible)
@@ -332,7 +339,6 @@ namespace RAGE.Parser
                     {
                         if (left.Data != null && right.Data != null)
                         {
-
                             return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
                         }
                     }
@@ -341,7 +347,6 @@ namespace RAGE.Parser
                         if (left.OriginalVariable != null)
                         {
                             code.Add(FrameVar.Get(left.OriginalVariable));
-
                         }
                         else
                         {
@@ -353,7 +358,6 @@ namespace RAGE.Parser
                         if (right.OriginalVariable != null)
                         {
                             code.Add(FrameVar.Get(right.OriginalVariable));
-
                         }
                         else
                         {
@@ -405,7 +409,8 @@ namespace RAGE.Parser
                     code.Add(Compare.Generate(CompareType.GreaterThan));
                     return new Value(DataType.Bool, null, code);
             }
-            throw new Exception("Unsupported operator");
+            Error($"Unsupported operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            return null;
         }
 
         public override Value VisitAdditiveExpression(AdditiveExpressionContext context)
@@ -419,8 +424,8 @@ namespace RAGE.Parser
             Value right = VisitMultiplicativeExpression(context.multiplicativeExpression());
 
             List<string> code = new List<string>();
-
-            switch (context.GetChild(1).ToString())
+            string op = context.GetChild(1).ToString();
+            switch (op)
             {
                 case "+":
                     if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '+' on two different types.");
@@ -471,7 +476,8 @@ namespace RAGE.Parser
                     return new Value(DataType.Int, null, code);
 
             }
-            throw new Exception("Unsupported operator");
+            Error($"Unsupported operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            return null;
         }
 
         public override Value VisitMultiplicativeExpression(MultiplicativeExpressionContext context)
@@ -485,8 +491,8 @@ namespace RAGE.Parser
             Value right = VisitCastExpression(context.castExpression());
 
             List<string> code = new List<string>();
-
-            switch (context.GetChild(1).ToString())
+            string op = context.GetChild(1).ToString();
+            switch (op)
             {
                 case "*":
                     if (left.Type != right.Type)
@@ -495,14 +501,16 @@ namespace RAGE.Parser
                         {
                             if (RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString()).Type != right.Type)
                             {
-                                throw new Exception("Left operand variable type is not equal to the right operand type");
+                                Error($"Left operand variable type is not equal to the right operand type | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                                return null;
                             }
                         }
                         else if (right.Type == DataType.Variable)
                         {
                             if (RAGEListener.currentFunction.Variables.GetVariable(right.Data.ToString()).Type != left.Type)
                             {
-                                throw new Exception("Right operand variable type is not equal to the left operand type");
+                                Error($"Right operand variable type is not equal to the left operand type | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                                return null;
                             }
                         }
                     }
@@ -558,14 +566,16 @@ namespace RAGE.Parser
 
                     //@Incomplete: Add modulus
             }
-            throw new Exception("Unsupported operator");
+            Error($"Unsupported operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            return null;
         }
 
         public override Value VisitCastExpression(CastExpressionContext context)
         {
             if (context.castExpression() != null)
             {
-                throw new Exception("Casts are not supported");
+                Error($"Casting is not supported | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                return null;
             }
 
             return VisitUnaryExpression(context.unaryExpression());
@@ -583,7 +593,8 @@ namespace RAGE.Parser
 
                     if (!RAGEListener.currentFunction.Variables.ContainVariable(var) && op.Type == DataType.Address)
                     {
-                        throw new Exception($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible");
+                        Error($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return null;
                     }
                     Variable v = RAGEListener.currentFunction.Variables.GetVariable(var);
                     List<string> code = new List<string>();
@@ -621,7 +632,8 @@ namespace RAGE.Parser
                 case "!":
                     return new Value(DataType.Not, null, null);
                 default:
-                    throw new Exception($"Invalid unary operator {op}");
+                    Error($"Unsupported unary operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    return null;
             }
         }
 
@@ -642,7 +654,8 @@ namespace RAGE.Parser
                 case "++":
                     if (!RAGEListener.currentFunction.Variables.ContainVariable(expression))
                     {
-                        throw new Exception($"Postfix operators ({symbol}) can only be used on variables");
+                        Error($"Postfix operators ({symbol}) can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return null;
                     }
                     code.Add(FrameVar.Get(variable));
                     code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
@@ -651,7 +664,8 @@ namespace RAGE.Parser
                 case "--":
                     if (!RAGEListener.currentFunction.Variables.ContainVariable(expression))
                     {
-                        throw new Exception($"Postfix operators ({symbol}) can only be used on variables");
+                        Error($"Postfix operators ({symbol}) can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return null;
                     }
                     code.Add(FrameVar.Get(variable));
                     code.Add(Push.Generate("1", DataType.Int));
@@ -686,7 +700,8 @@ namespace RAGE.Parser
                         }
                         else if (args == null && native.Params.Count != 0)
                         {
-                            throw new Exception($"{expression} takes {native.Params.Count} arguments, none given");
+                            Error($"{expression} takes {native.Params.Count} arguments, none given | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                            return null;
                         }
 
                         List<Value> argsList = (List<Value>)args.Data;
@@ -695,7 +710,8 @@ namespace RAGE.Parser
 
                         if (argsList.Count != native.Params.Count)
                         {
-                            throw new Exception($"{expression} expects {native.Params.Count} arguments, {argsList.Count} given");
+                            Error($"{expression} takes {native.Params.Count} arguments,  {argsList.Count} given | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                            return null;
                         }
                         //Generate the code
                         foreach (Value v in argsList)
@@ -717,11 +733,11 @@ namespace RAGE.Parser
                         }
                         return new Value(DataType.NativeCall, null, code);
                     }
-                    throw new Exception("Found open parens, but expression is not a function");
-
+                    Error($"Found open parens, but expression is not a function | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    return null;
                 default:
-                    throw new Exception("Unknown postfix type");
-
+                    Error($"Unknown postfix type '{symbol}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    return null;
             }
         }
 
@@ -793,8 +809,8 @@ namespace RAGE.Parser
                 case DataType.LocalCall:
                     return new Value(DataType.LocalCall, value, new List<string>(), var);
                 default:
-                    throw new Exception("Not implemented yet");
-
+                    Error($"Type {type} is unsupported | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    return null;
             }
         }
 
@@ -810,7 +826,7 @@ namespace RAGE.Parser
             }
             while (var.Type == DataType.Variable);
 
-            Logger.Logger.Log($"Parsed variable '{variable}' and got value {tempValue}");
+            LogVerbose($"Parsed variable '{variable}' and got value {tempValue}");
             return tempValue;
         }
 

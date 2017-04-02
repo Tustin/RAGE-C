@@ -1,4 +1,4 @@
-//Compiled using RAGE-C by Tustin 4/1/2017
+//Compiled using RAGE-C by Tustin 4/2/2017
 :__script_entry__
 Function 0 2 0
 Call @main
@@ -33,5 +33,9 @@ CallNative SET_VEHICLE_NUMBER_PLATE_TEXT 2 0
 push_0
 CallNative WAIT 1 0
 Jump @loop_0
+Return 0 0
+
+:testing
+Function 0 3 0
 Return 0 0
 

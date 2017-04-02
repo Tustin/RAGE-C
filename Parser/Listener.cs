@@ -4,7 +4,9 @@ using System.Text.RegularExpressions;
 using Antlr4.Runtime.Misc;
 using System.Linq;
 using Antlr4.Runtime;
+
 using static CParser;
+using static RAGE.Logger.Logger;
 
 namespace RAGE.Parser
 {
@@ -13,6 +15,8 @@ namespace RAGE.Parser
         //Stuff that gets populated as the walker goes through the tree
         public static Function currentFunction;
         public static Variable currentVariable;
+        public static int lineNumber = 0;
+        public static int linePosition = 0;
 
         public static List<StoredContext> storedContexts;
 
@@ -24,6 +28,15 @@ namespace RAGE.Parser
         {
             visitor = new RAGEVisitor();
             storedContexts = new List<StoredContext>();
+        }
+        
+        //Set line number and position for error logging
+        public override void EnterEveryRule([NotNull] ParserRuleContext context)
+        {
+            var token = context.Start;
+            lineNumber = token.Line;
+            linePosition = token.Column;
+            base.EnterEveryRule(context);
         }
 
         //New functions
@@ -52,7 +65,7 @@ namespace RAGE.Parser
             {
                 //Won't get thrown because GetTypeFromDeclaration will throw an exception on error
                 //We'll keep it here for the future (possibly)
-                throw new Exception($"Type of function {name} is not valid");
+                Error($"Type of function {name} is not valid");
             }
 
             //Add the default function entry instruction
@@ -64,7 +77,7 @@ namespace RAGE.Parser
 
             currentFunction = new Function(name, vType);
             Core.Functions.Add(currentFunction);
-            Logger.Logger.Log($"Entering function '{name}'...");
+            LogVerbose($"Entering function '{name}'...");
         }
 
         public override void EnterDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
@@ -82,7 +95,7 @@ namespace RAGE.Parser
             funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {currentFunction.FrameVars + 1} 0");
             function.Value[0] = funcEntry;
             Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Return.Generate());
-            Logger.Logger.Log($"Leaving function '{currentFunction.Name}'");
+            LogVerbose($"Leaving function '{currentFunction.Name}'");
             currentFunction = null;
         }
         public override void EnterPostfixExpression([NotNull] PostfixExpressionContext context)
@@ -99,7 +112,8 @@ namespace RAGE.Parser
 
             if (res.Data == null)
             {
-                throw new Exception("Found variable declaration but got null");
+                Error($"Found variable declaration but got null | line {lineNumber}, {linePosition}");
+                return;
             }
 
             currentVariable = (Variable)res.Data;
@@ -225,7 +239,8 @@ namespace RAGE.Parser
                 var variable = visitor.VisitDeclaration(context.declaration());
                 if (!(variable.Data is Variable v))
                 {
-                    throw new Exception("Expected a Variable object from VisitDeclaration");
+                    Error($"Expected a Variable object from VisitDeclaration, got {variable.Data.GetType()} | line {lineNumber},{linePosition}");
+                    return;
                 }
                 currentFunction.Variables.Add(v);
                 currentVariable = v;

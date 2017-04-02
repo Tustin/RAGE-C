@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
+using static RAGE.Logger.Logger;
+
 namespace RAGE.Parser
 {
     public static class Utilities
@@ -69,7 +71,7 @@ namespace RAGE.Parser
                 {
                     if (Core.Functions.GetFunction(stripped).Type == DataType.Void)
                     {
-                        throw new Exception($"Function {stripped} is void and does not return a value");
+                        Error($"Function {stripped} is void and does not return a value | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     }
                     return DataType.LocalCall;
                 }
@@ -84,7 +86,8 @@ namespace RAGE.Parser
                     return DataType.Variable;
                 }
             }
-            throw new Exception($"Unable to parse value '{value}'");
+            Error($"Unable to parse value '{value}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            return DataType.Void;
         }
 
         public static DataType GetTypeFromDeclaration(string type)
@@ -98,6 +101,7 @@ namespace RAGE.Parser
                 case "char*":
                     return DataType.String;
                 case "float":
+                case "double":
                     return DataType.Float;
                 case "int":
                 case "Entity":
@@ -129,9 +133,9 @@ namespace RAGE.Parser
                 case "void":
                 case "Void":
                     return DataType.Void;
-                //@TODO: Add GTA related types (Ped, Entity, Hash, etc) (would just be ints)
                 default:
-                    throw new Exception("Unsupported variable type");
+                    Error($"Unsupported type '{type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    return DataType.Void;
             }
         }
 
@@ -148,7 +152,8 @@ namespace RAGE.Parser
                 case DataType.Bool:
                     return "false";
                 default:
-                    throw new Exception($"No default value is defined for type {type}");
+                    Error($"No default value is defined for type '{type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    return null;
             }
         }
         public static List<string> GetRegexGroups(this MatchCollection collection)
