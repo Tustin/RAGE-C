@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Argument.cs" />
+    <Compile Include="Case.cs" />
     <Compile Include="ContextProperty.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="Native.cs" />

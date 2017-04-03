@@ -14,8 +14,10 @@ float testing() {
     int something = 0;
     switch (something) {
         case 0:
+        something = 0;
         break;
         case 1:
+        something = 1;
         break;
     }
 }

@@ -223,6 +223,15 @@ namespace RAGE.Parser
             {
                 var cases = context.statement()[0].compoundStatement().blockItemList();
 
+                var conditionVariable = context.expression().GetText();
+
+                if (!CurrentFunction.Variables.ContainVariable(conditionVariable))
+                {
+                    Error($"Undeclared variable '{conditionVariable}' used in switch expression | line {lineNumber},{linePosition}");
+                }
+
+                var actualConditionVariable = CurrentFunction.Variables.GetVariable(conditionVariable);
+
                 if (cases == null)
                 {
                     Error($"Unable to parse switch statement | line {lineNumber},{linePosition}");
@@ -244,18 +253,27 @@ namespace RAGE.Parser
                 //loop through each case
                 while (cases != null)
                 {
-                    var currentCase = visitor.VisitLabeledStatement(cases.blockItem().statement().labeledStatement());
-                    KeyValuePair<int, string> caseData = (KeyValuePair<int, string>)currentCase.Data;
-                    currentSwitch.Labels.Add(caseData.Key, caseData.Value);
+                    var shit = cases.blockItem().statement().labeledStatement();
+                    if (shit == null)
+                    {
+                        cases = cases.blockItemList();
+                        continue;
+                    }
+                    var currentCase = visitor.VisitLabeledStatement(shit);
+                    Case caseData = (Case)currentCase.Data;
+                    currentSwitch.Cases.Add(caseData);
                     cases = cases.blockItemList();
                 }
                 var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
                 switches.Add(sc, currentSwitch);
+                //Get the switch's condition variable
+                cf.Add(FrameVar.Get(actualConditionVariable));
                 StringBuilder sb = new StringBuilder();
                 sb.Append("Switch ");
-                foreach (var @case in currentSwitch.Labels.Reverse())
+                //currentSwitch.Cases.Reverse();
+                foreach (var @case in currentSwitch.Cases)
                 {
-                    sb.Append($"[{@case.Key}=@{@case.Value}]");
+                    sb.Append($"[{@case.Condition}=@{@case.Label}]");
                 }
                 cf.Add(sb.ToString());
             }
@@ -264,27 +282,25 @@ namespace RAGE.Parser
         //Switch cases
         public override void EnterLabeledStatement([NotNull] LabeledStatementContext context)
         {
-            string aa = context.GetText();
-            //var aa = context.GetText();
-            //var label = context.GetChild(0).GetText();
-            //if (label == "case")
-            //{
-            //    var condition = context.GetChild(1).GetText();
+            if (context.GetChild(0).GetText() == "case")
+            {
+                if (CurrentSwitch == null)
+                {
+                    Error($"Found case label, but no switch was found | line {lineNumber},{linePosition}");
+                }
 
-            //    if (!int.TryParse(condition, out int value))
-            //    {
-            //        Error($"Switch cases can only contain integers | line {lineNumber},{linePosition}");
-            //    }
-            //    var currentSwitch = switches.LastOrDefault();
+                Case nextCase = CurrentSwitch.Cases.Where(a => a.Generated == false).FirstOrDefault();
 
-            //    if (currentSwitch.Value.Labels.ContainsKey(value))
-            //    {
-            //        Error($"Switch already contains case for '{value}' | line {lineNumber},{linePosition}");
-            //    }
+                if (nextCase == null)
+                {
+                    Error($"Found case that wasn't defined | line {lineNumber},{linePosition}");
+                }
 
-            //    string label = $":selection_{currentSwitch.Key.Id}_case_{value}";
+                Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{nextCase.Label}");
+                nextCase.Generated = true;
 
-            //}
+            }
+            string gg = context.GetText();
             base.EnterLabeledStatement(context);
         }
 

@@ -10,11 +10,11 @@ namespace RAGE
     {
         // public List<string> Labels { get; set; }
         //Contains the case condition (int) and the label to jump to (string)
-        public Dictionary<int, string> Labels { get; set; }
+        public List<Case> Cases { get; set; }
 
         public Switch()
         {
-            Labels = new Dictionary<int, string>();
+            Cases = new List<Case>();
         }
     }
 }

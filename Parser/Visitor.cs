@@ -81,13 +81,13 @@ namespace RAGE.Parser
                 }
 
 
-                if (RAGEListener.CurrentSwitch.Labels.ContainsKey(value))
+                if (RAGEListener.CurrentSwitch.Cases.Any(a => a.Condition == value))
                 {
                     Error($"Switch already contains case for '{value}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
                 }
 
                 string caseLabel = $"selection_{CurrentContext.Id}_case_{value}";
-                ret.Data = new KeyValuePair<int, string>(value, caseLabel);
+                ret.Data = new Case(value, caseLabel);
 
                 return ret;
             }

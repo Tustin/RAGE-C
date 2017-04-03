@@ -39,7 +39,14 @@ Return 0 0
 Function 0 4 0
 push_0
 setF1 3 //something
-Switch [0=@selection_1_case_0][1=@selection_1_case_1]
+getF1 3 //something
+Switch [1=@selection_1_case_1][0=@selection_1_case_0]
+:selection_1_case_1
+push_0
+setF1 3 //something
+:selection_1_case_0
+push_1
+setF1 3 //something
 :selection_end_1
 Return 0 0
 
