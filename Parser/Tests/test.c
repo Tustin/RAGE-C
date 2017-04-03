@@ -1,4 +1,5 @@
 int items = 50;
+int id = PLAYER_PED_ID();
 
 void main() {
     while (true) {

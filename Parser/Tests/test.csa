@@ -3,6 +3,8 @@
 Function 0 2 0
 push1 50
 setStatic1 1 //items
+CallNative PLAYER_PED_ID 0 1
+setStatic1 2 //id
 Call @main
 Return 0 0
 

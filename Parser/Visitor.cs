@@ -690,7 +690,15 @@ namespace RAGE.Parser
             string symbol = context.GetChild(1).GetText();
 
             List<string> code = new List<string>();
-            Variable variable = RAGEListener.CurrentFunction.Variables.GetVariable(expression);
+            Variable variable;
+            if (RAGEListener.CurrentFunction == null)
+            {
+                variable = RAGEListener.StaticVariables.GetVariable(expression);
+            }
+            else
+            {
+                variable = RAGEListener.CurrentFunction.Variables.GetVariable(expression);
+            }
 
             switch (symbol)
             {
