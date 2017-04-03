@@ -44,7 +44,9 @@ Return 0 0
 Function 0 4 0
 push_0
 setF1 3 //something
-getF1 3 //something
+push_2
+push1 204
+CallNative IS_CONTROL_JUST_PRESSED 2 1
 Switch [1=@selection_1_case_1][0=@selection_1_case_0]
 :selection_1_case_1
 push_0

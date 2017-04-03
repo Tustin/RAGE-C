@@ -232,13 +232,15 @@ namespace RAGE.Parser
                 var cases = context.statement()[0].compoundStatement().blockItemList();
 
                 var conditionVariable = context.expression().GetText();
+                DataType conditionType = Utilities.GetTypeFromDeclaration(conditionVariable);
 
-                if (!CurrentFunction.Variables.ContainVariable(conditionVariable))
+                if (conditionType != DataType.NativeCall && conditionType != DataType.LocalCall && conditionType != DataType.Variable)
                 {
-                    Error($"Undeclared variable '{conditionVariable}' used in switch expression | line {lineNumber},{linePosition}");
+                    Error($"Undefined type '{conditionType}' used in switch expression | line {lineNumber},{linePosition}");
                 }
 
-                var actualConditionVariable = CurrentFunction.Variables.GetVariable(conditionVariable);
+                //var actualConditionVariable = 
+
 
                 if (cases == null)
                 {
@@ -274,11 +276,17 @@ namespace RAGE.Parser
                 }
                 var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
                 switches.Add(sc, currentSwitch);
-                //Get the switch's condition variable
-                cf.Add(FrameVar.Get(actualConditionVariable));
+                if (conditionType == DataType.NativeCall || conditionType == DataType.LocalCall)
+                {
+                    var output = visitor.VisitExpression(context.expression());
+                    cf.AddRange(output.Assembly);
+                }
+                else if (conditionType == DataType.Variable)
+                {
+                    cf.Add(FrameVar.Get(CurrentFunction.Variables.GetVariable(conditionVariable)));
+                }
                 StringBuilder sb = new StringBuilder();
                 sb.Append("Switch ");
-                //currentSwitch.Cases.Reverse();
                 foreach (var @case in currentSwitch.Cases)
                 {
                     sb.Append($"[{@case.Condition}=@{@case.Label}]");

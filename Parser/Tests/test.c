@@ -15,7 +15,7 @@ void main() {
 
 float testing() {
     int something = 0;
-    switch (something) {
+    switch (IS_CONTROL_JUST_PRESSED(2, 0xcc)) {
         case 0:
         something = 0;
         break;

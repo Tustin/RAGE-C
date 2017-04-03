@@ -158,11 +158,14 @@ namespace RAGE.Parser
             //If the if expression doesnt have ==, then the result will come back as a type other than bool
             if (output.Type != DataType.Bool && CurrentContext != null)
             {
-                switch (output.Type)
+                if (!RAGEListener.switches.ContainsKey(CurrentContext))
                 {
-                    case DataType.NativeCall:
-                        output.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
-                        break;
+                    switch (output.Type)
+                    {
+                        case DataType.NativeCall:
+                            output.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
+                            break;
+                    }
                 }
             }
             val.Assembly.AddRange(output.Assembly);

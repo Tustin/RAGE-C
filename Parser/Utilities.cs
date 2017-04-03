@@ -134,6 +134,26 @@ namespace RAGE.Parser
                 case "Void":
                     return DataType.Void;
                 default:
+                    if (Regex.IsMatch(type, "^\\w+\\("))
+                    {
+                        string stripped = Regex.Replace(type, "\\(.*\\)", "");
+                        if (Native.IsFunctionANative(stripped))
+                        {
+                            return DataType.NativeCall;
+                        }
+                        else if (Core.Functions.ContainFunction(stripped))
+                        {
+                            if (Core.Functions.GetFunction(stripped).Type == DataType.Void)
+                            {
+                                Error($"Function {stripped} is void and does not return a value | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                            }
+                            return DataType.LocalCall;
+                        }
+                    }
+                    else if (Regex.IsMatch(type, "^\\w+"))
+                    {
+                        return DataType.Variable;
+                    }
                     Error($"Unsupported type '{type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     return DataType.Void;
             }
