@@ -34,9 +34,9 @@ namespace RAGE.Parser
                 varType = context.GetChild(0).GetText();
             }
 
-            Variable variable = new Variable(varName, RAGEListener.currentFunction.FrameVars + 1, varType);
+            Variable variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, varType);
 
-            RAGEListener.currentFunction.Variables.Add(variable);
+            RAGEListener.CurrentFunction.Variables.Add(variable);
 
             //See if this variable is being initialized
             //If not, then we'll give it a default value
@@ -63,7 +63,38 @@ namespace RAGE.Parser
             value.Data = variable;
             return value;
         }
+        public override Value VisitSelectionStatement([NotNull] SelectionStatementContext context)
+        {
+            return base.VisitSelectionStatement(context);
+        }
+        public override Value VisitLabeledStatement(LabeledStatementContext context)
+        {
+            var label = context.GetChild(0).GetText();
+            var ret = new Value();
+            if (label == "case")
+            {
+                var condition = context.GetChild(1).GetText();
 
+                if (!int.TryParse(condition, out int value))
+                {
+                    Error($"Switch cases can only contain integers | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                }
+
+
+                if (RAGEListener.CurrentSwitch.Labels.ContainsKey(value))
+                {
+                    Error($"Switch already contains case for '{value}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                }
+
+                string caseLabel = $"selection_{CurrentContext.Id}_case_{value}";
+                ret.Data = new KeyValuePair<int, string>(value, caseLabel);
+
+                return ret;
+            }
+
+            Error($"Unsupported label '{label}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+            return null;
+        }
         public override Value VisitInitDeclarator(InitDeclaratorContext context)
         {
             Value value = new Value();
@@ -138,7 +169,7 @@ namespace RAGE.Parser
             Value left = VisitUnaryExpression(context.unaryExpression());
             Value right = VisitAssignmentExpression(context.assignmentExpression());
 
-            Variable variable = left.OriginalVariable ?? RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
+            Variable variable = left.OriginalVariable ?? RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
 
             if (variable == null)
             {
@@ -168,6 +199,7 @@ namespace RAGE.Parser
                     code.Add(FrameVar.Set(variable));
                     return new Value(DataType.Int, null, code);
             }
+
             Error($"Unsupported operator {op} | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
             return null;
         }
@@ -202,11 +234,11 @@ namespace RAGE.Parser
 
             if (left.Data != null)
             {
-                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
             }
             if (right.Data != null)
             {
-                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
             }
             code.Add(Compare.Generate(CompareType.Equal));
             return new Value(DataType.Bool, null, code);
@@ -235,11 +267,11 @@ namespace RAGE.Parser
 
             if (left.Data != null)
             {
-                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
             }
             if (right.Data != null)
             {
-                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
             }
             code.Add(Jump.Generate(JumpType.Equal, "nnfnfn"));
             return new Value(DataType.Bool, null, code);
@@ -264,7 +296,7 @@ namespace RAGE.Parser
 
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
                     }
                     else
                     {
@@ -272,7 +304,7 @@ namespace RAGE.Parser
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                     }
                     else
                     {
@@ -285,7 +317,7 @@ namespace RAGE.Parser
 
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
                     }
                     else
                     {
@@ -293,7 +325,7 @@ namespace RAGE.Parser
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                     }
                     else
                     {
@@ -326,7 +358,7 @@ namespace RAGE.Parser
                 Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
                 return null;
             }
-    
+
             //Lets just output the variables here because fuck optimization
             //Saves some headache with the compiler parsing logic on variables that might be changed
             bool isIterator = (CurrentContext.Context is IterationStatementContext) | (CurrentContext.Context is SelectionStatementContext);
@@ -350,7 +382,7 @@ namespace RAGE.Parser
                         }
                         else
                         {
-                            code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                            code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
                         }
                     }
                     if (right.Data != null)
@@ -361,7 +393,7 @@ namespace RAGE.Parser
                         }
                         else
                         {
-                            code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                            code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                         }
                     }
                     code.Add(Jump.Generate(JumpType.LessThan, CurrentContext.Label));
@@ -435,7 +467,7 @@ namespace RAGE.Parser
 
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
                     }
                     else
                     {
@@ -443,7 +475,7 @@ namespace RAGE.Parser
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                     }
                     else
                     {
@@ -458,7 +490,7 @@ namespace RAGE.Parser
                     if (right.Data != null && right.Data.Equals(0)) return new Value(DataType.Int, (int)left.Data, new List<string>());
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
                     }
                     else
                     {
@@ -466,7 +498,7 @@ namespace RAGE.Parser
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                     }
                     else
                     {
@@ -499,7 +531,7 @@ namespace RAGE.Parser
                     {
                         if (left.Type == DataType.Variable)
                         {
-                            if (RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString()).Type != right.Type)
+                            if (RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString()).Type != right.Type)
                             {
                                 Error($"Left operand variable type is not equal to the right operand type | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                                 return null;
@@ -507,7 +539,7 @@ namespace RAGE.Parser
                         }
                         else if (right.Type == DataType.Variable)
                         {
-                            if (RAGEListener.currentFunction.Variables.GetVariable(right.Data.ToString()).Type != left.Type)
+                            if (RAGEListener.CurrentFunction.Variables.GetVariable(right.Data.ToString()).Type != left.Type)
                             {
                                 Error($"Right operand variable type is not equal to the left operand type | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                                 return null;
@@ -520,24 +552,24 @@ namespace RAGE.Parser
                     {
                         if (left.Type == DataType.Variable)
                         {
-                            Variable var = RAGEListener.currentFunction.Variables.GetVariable(left.Data.ToString());
+                            Variable var = RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
                             code.Add(FrameVar.Get(var));
                         }
                         else
                         {
-                            code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                            code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
                         }
                     }
                     if (right.Data != null)
                     {
                         if (right.Type == DataType.Variable)
                         {
-                            Variable var = RAGEListener.currentFunction.Variables.GetVariable(right.Data.ToString());
+                            Variable var = RAGEListener.CurrentFunction.Variables.GetVariable(right.Data.ToString());
                             code.Add(FrameVar.Get(var));
                         }
                         else
                         {
-                            code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                            code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                         }
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Multiplication));
@@ -555,11 +587,11 @@ namespace RAGE.Parser
                     }
                     if (left.Data != null)
                     {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, left.Data.ToString())));
+                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
                     }
                     if (right.Data != null)
                     {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.currentFunction, right.Data.ToString())));
+                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                     }
                     code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
                     return new Value(DataType.Int, null, code);
@@ -591,12 +623,12 @@ namespace RAGE.Parser
 
                     string var = context.GetChild(1).GetText();
 
-                    if (!RAGEListener.currentFunction.Variables.ContainVariable(var) && op.Type == DataType.Address)
+                    if (!RAGEListener.CurrentFunction.Variables.ContainVariable(var) && op.Type == DataType.Address)
                     {
                         Error($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         return null;
                     }
-                    Variable v = RAGEListener.currentFunction.Variables.GetVariable(var);
+                    Variable v = RAGEListener.CurrentFunction.Variables.GetVariable(var);
                     List<string> code = new List<string>();
                     switch (op.Type)
                     {
@@ -647,12 +679,12 @@ namespace RAGE.Parser
             string symbol = context.GetChild(1).GetText();
 
             List<string> code = new List<string>();
-            Variable variable = RAGEListener.currentFunction.Variables.GetVariable(expression);
+            Variable variable = RAGEListener.CurrentFunction.Variables.GetVariable(expression);
 
             switch (symbol)
             {
                 case "++":
-                    if (!RAGEListener.currentFunction.Variables.ContainVariable(expression))
+                    if (!RAGEListener.CurrentFunction.Variables.ContainVariable(expression))
                     {
                         Error($"Postfix operators ({symbol}) can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         return null;
@@ -662,7 +694,7 @@ namespace RAGE.Parser
                     code.Add(FrameVar.Set(variable));
                     return new Value(DataType.Int, null, code);
                 case "--":
-                    if (!RAGEListener.currentFunction.Variables.ContainVariable(expression))
+                    if (!RAGEListener.CurrentFunction.Variables.ContainVariable(expression))
                     {
                         Error($"Postfix operators ({symbol}) can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         return null;
@@ -765,7 +797,7 @@ namespace RAGE.Parser
         {
             string value = context.GetText();
 
-            DataType type = Utilities.GetType(RAGEListener.currentFunction, value);
+            DataType type = Utilities.GetType(RAGEListener.CurrentFunction, value);
             Variable var = null;
             List<string> code = new List<string>();
             //if (type == VariableType.Variable)
@@ -801,7 +833,7 @@ namespace RAGE.Parser
                     code.Add(Push.Generate(value, type));
                     return new Value(DataType.String, value, code, var);
                 case DataType.Variable:
-                    var = RAGEListener.currentFunction.Variables.GetVariable(value);
+                    var = RAGEListener.CurrentFunction.Variables.GetVariable(value);
                     code.Add(FrameVar.Get(var));
                     return new Value(DataType.Variable, value, code, var);
                 case DataType.NativeCall:
@@ -820,7 +852,7 @@ namespace RAGE.Parser
             Variable var = null;
             do
             {
-                var = RAGEListener.currentFunction.Variables.GetVariable(tempValue);
+                var = RAGEListener.CurrentFunction.Variables.GetVariable(tempValue);
                 if (var.Value.Type == DataType.LocalCall || var.Value.Type == DataType.NativeCall) break;
                 tempValue = var.Value.Value;
             }

@@ -86,9 +86,9 @@ namespace RAGE.Parser
 
             LogVerbose("Compiling script file...");
 
-            var res = compiler.Compile();
+            //var res = compiler.Compile();
 
-            File.WriteAllBytes(Core.PROJECT_ROOT + "\\Tests\\test.csc", res);
+            //File.WriteAllBytes(Core.PROJECT_ROOT + "\\Tests\\test.csc", res);
 
             Log("Successfully saved assembly!");
         }

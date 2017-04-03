@@ -10,6 +10,12 @@ void main() {
     }
 }
 
-double testing() {
-
+float testing() {
+    int something = 0;
+    switch (something) {
+        case 0:
+        break;
+        case 1:
+        break;
+    }
 }

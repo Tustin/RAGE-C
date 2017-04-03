@@ -7,18 +7,22 @@ using Antlr4.Runtime;
 
 using static CParser;
 using static RAGE.Logger.Logger;
+using System.Text;
 
 namespace RAGE.Parser
 {
     public class RAGEListener : CBaseListener
     {
         //Stuff that gets populated as the walker goes through the tree
-        public static Function currentFunction;
-        public static Variable currentVariable;
+        public static Function CurrentFunction;
+        public static Variable CurrentVariable;
+        public static Switch CurrentSwitch;
         public static int lineNumber = 0;
         public static int linePosition = 0;
 
         public static List<StoredContext> storedContexts;
+
+        public static Dictionary<StoredContext, Switch> switches;
 
         RAGEVisitor visitor;
 
@@ -28,8 +32,9 @@ namespace RAGE.Parser
         {
             visitor = new RAGEVisitor();
             storedContexts = new List<StoredContext>();
+            switches = new Dictionary<StoredContext, Switch>();
         }
-        
+
         //Set line number and position for error logging
         public override void EnterEveryRule([NotNull] ParserRuleContext context)
         {
@@ -75,8 +80,8 @@ namespace RAGE.Parser
                 "Function 0 2 0"
             });
 
-            currentFunction = new Function(name, vType);
-            Core.Functions.Add(currentFunction);
+            CurrentFunction = new Function(name, vType);
+            Core.Functions.Add(CurrentFunction);
             LogVerbose($"Entering function '{name}'...");
         }
 
@@ -89,14 +94,14 @@ namespace RAGE.Parser
         //End of a function
         public override void ExitFunctionDefinition(FunctionDefinitionContext context)
         {
-            var function = Core.AssemblyCode.FindFunction(currentFunction.Name);
+            var function = Core.AssemblyCode.FindFunction(CurrentFunction.Name);
             string funcEntry = function.Value[0];
             //@TODO: Update first 0 for param count
-            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {currentFunction.FrameVars + 1} 0");
+            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {CurrentFunction.FrameVars + 1} 0");
             function.Value[0] = funcEntry;
-            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add(Return.Generate());
-            LogVerbose($"Leaving function '{currentFunction.Name}'");
-            currentFunction = null;
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Return.Generate());
+            LogVerbose($"Leaving function '{CurrentFunction.Name}'");
+            CurrentFunction = null;
         }
         public override void EnterPostfixExpression([NotNull] PostfixExpressionContext context)
         {
@@ -116,13 +121,13 @@ namespace RAGE.Parser
                 return;
             }
 
-            currentVariable = (Variable)res.Data;
+            CurrentVariable = (Variable)res.Data;
 
-            if (currentVariable.Value != null && !currentVariable.Value.IsDefault)
+            if (CurrentVariable.Value != null && !CurrentVariable.Value.IsDefault)
             {
-                var current = Core.AssemblyCode.FindFunction(currentFunction.Name).Value;
+                var current = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
                 current.AddRange(res.Assembly);
-                current.Add(FrameVar.Set(currentVariable));
+                current.Add(FrameVar.Set(CurrentVariable));
             }
 
             //string type = context.GetChild(0).GetText();
@@ -186,7 +191,7 @@ namespace RAGE.Parser
 
             var res = visitor.VisitExpression(context.expressionStatement().expression());
 
-            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(res.Assembly);
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(res.Assembly);
         }
 
         //Entering if, else, switch
@@ -198,7 +203,7 @@ namespace RAGE.Parser
             {
                 int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
 
-                StoredContext sc = new StoredContext($"if_block_end_{count}", count, context);
+                StoredContext sc = new StoredContext($"selection_end_{count}", count, context);
 
                 storedContexts.Add(sc);
 
@@ -206,7 +211,8 @@ namespace RAGE.Parser
 
                 var output = visitor.VisitExpression(context.expression());
 
-                var code = Core.AssemblyCode.FindFunction(currentFunction.Name).Value;
+                var code = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
+
                 code.AddRange(output.Assembly);
             }
             else if (statement.StartsWith("else"))
@@ -215,8 +221,77 @@ namespace RAGE.Parser
             }
             else if (statement.StartsWith("switch"))
             {
-                throw new Exception("Switches not supported yet");
+                var cases = context.statement()[0].compoundStatement().blockItemList();
+
+                if (cases == null)
+                {
+                    Error($"Unable to parse switch statement | line {lineNumber},{linePosition}");
+                }
+
+                //Create the switch so we can add the items to it
+                int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
+
+                StoredContext sc = new StoredContext($"selection_end_{count}", count, context);
+
+                storedContexts.Add(sc);
+
+                visitor.CurrentContext = sc;
+
+                Switch currentSwitch = new Switch();
+
+                CurrentSwitch = currentSwitch;
+
+                //loop through each case
+                while (cases != null)
+                {
+                    var currentCase = visitor.VisitLabeledStatement(cases.blockItem().statement().labeledStatement());
+                    KeyValuePair<int, string> caseData = (KeyValuePair<int, string>)currentCase.Data;
+                    currentSwitch.Labels.Add(caseData.Key, caseData.Value);
+                    cases = cases.blockItemList();
+                }
+                var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
+                switches.Add(sc, currentSwitch);
+                StringBuilder sb = new StringBuilder();
+                sb.Append("Switch ");
+                foreach (var @case in currentSwitch.Labels.Reverse())
+                {
+                    sb.Append($"[{@case.Key}=@{@case.Value}]");
+                }
+                cf.Add(sb.ToString());
             }
+        }
+
+        //Switch cases
+        public override void EnterLabeledStatement([NotNull] LabeledStatementContext context)
+        {
+            string aa = context.GetText();
+            //var aa = context.GetText();
+            //var label = context.GetChild(0).GetText();
+            //if (label == "case")
+            //{
+            //    var condition = context.GetChild(1).GetText();
+
+            //    if (!int.TryParse(condition, out int value))
+            //    {
+            //        Error($"Switch cases can only contain integers | line {lineNumber},{linePosition}");
+            //    }
+            //    var currentSwitch = switches.LastOrDefault();
+
+            //    if (currentSwitch.Value.Labels.ContainsKey(value))
+            //    {
+            //        Error($"Switch already contains case for '{value}' | line {lineNumber},{linePosition}");
+            //    }
+
+            //    string label = $":selection_{currentSwitch.Key.Id}_case_{value}";
+
+            //}
+            base.EnterLabeledStatement(context);
+        }
+
+        public override void ExitLabeledStatement([NotNull] LabeledStatementContext context)
+        {
+            string gff = context.GetText();
+            base.ExitLabeledStatement(context);
         }
 
         //Exiting if, else, switch
@@ -224,7 +299,7 @@ namespace RAGE.Parser
         {
             //Find the scope with the context (for the end label)
             var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
-            Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":{contextScope.Label}");
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
         }
 
         //Entering for, while
@@ -242,8 +317,8 @@ namespace RAGE.Parser
                     Error($"Expected a Variable object from VisitDeclaration, got {variable.Data.GetType()} | line {lineNumber},{linePosition}");
                     return;
                 }
-                currentFunction.Variables.Add(v);
-                currentVariable = v;
+                CurrentFunction.Variables.Add(v);
+                CurrentVariable = v;
 
                 int count = storedContexts.Count(a => a.Context is IterationStatementContext);
                 StoredContext sc = new StoredContext($"loop_{count}", count, context);
@@ -252,7 +327,7 @@ namespace RAGE.Parser
 
                 //Push the value of the iterator into the variable before the for loop label
                 //Otherwise we would constantly have infinite loops
-                var func = Core.AssemblyCode.FindFunction(currentFunction.Name);
+                var func = Core.AssemblyCode.FindFunction(CurrentFunction.Name);
                 func.Value.Add(Push.Generate(v.Value.Value, v.Value.Type));
                 func.Value.Add(FrameVar.Set(v));
                 //Add label
@@ -265,7 +340,7 @@ namespace RAGE.Parser
                 StoredContext sc = new StoredContext($"loop_{count}", count, context);
                 storedContexts.Add(sc);
                 visitor.CurrentContext = sc;
-                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($":loop_{count}");
+                Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":loop_{count}");
             }
         }
 
@@ -280,7 +355,7 @@ namespace RAGE.Parser
             foreach (ExpressionContext expression in context.expression().Reverse())
             {
                 var test = visitor.VisitExpression(expression);
-                Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(test.Assembly);
+                Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(test.Assembly);
 
             }
             //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($"Jump {storedContext.label}");
