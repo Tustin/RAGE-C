@@ -34,9 +34,20 @@ namespace RAGE.Parser
                 varType = context.GetChild(0).GetText();
             }
 
-            Variable variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, varType);
+            //Currently not in a function, so this is a static var
+            Variable variable;
+            if (RAGEListener.CurrentFunction == null)
+            {
+                variable = new Variable(varName, RAGEListener.StaticVariables.Count + 1, varType);
+                RAGEListener.StaticVariables.Add(variable);
+            }
+            else
+            {
+                variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, varType);
+                RAGEListener.CurrentFunction.Variables.Add(variable);
+            }
 
-            RAGEListener.CurrentFunction.Variables.Add(variable);
+
 
             //See if this variable is being initialized
             //If not, then we'll give it a default value

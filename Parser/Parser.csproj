@@ -66,6 +66,7 @@
     <Compile Include="Opcodes\Jump.cs" />
     <Compile Include="Opcodes\Push.cs" />
     <Compile Include="Opcodes\Return.cs" />
+    <Compile Include="Opcodes\StaticVar.cs" />
     <Compile Include="Parser\CBaseListener.cs" />
     <Compile Include="Parser\CBaseVisitor.cs" />
     <Compile Include="Parser\CLexer.cs" />

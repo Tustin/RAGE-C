@@ -17,6 +17,7 @@ namespace RAGE.Parser
         public static Function CurrentFunction;
         public static Variable CurrentVariable;
         public static Switch CurrentSwitch;
+        public static List<Variable> StaticVariables;
         public static int lineNumber = 0;
         public static int linePosition = 0;
 
@@ -33,6 +34,7 @@ namespace RAGE.Parser
             visitor = new RAGEVisitor();
             storedContexts = new List<StoredContext>();
             switches = new Dictionary<StoredContext, Switch>();
+            StaticVariables = new List<Variable>();
         }
 
         //Set line number and position for error logging
@@ -50,12 +52,16 @@ namespace RAGE.Parser
             //Generate script entry point if it doesn't already exist
             if (Core.AssemblyCode.Count == 0)
             {
-                Core.AssemblyCode.Add("__script_entry__", new List<string>()
+                var entryContents = new List<string>();
+                entryContents.Add("Function 0 2 0");
+                foreach (var variable in StaticVariables)
                 {
-                    "Function 0 2 0",
-                    "Call @main",
-                    "Return 0 0",
-                });
+                    entryContents.AddRange(variable.ValueAssembly);
+                    entryContents.Add(StaticVar.Set(variable));
+                }
+                entryContents.Add("Call @main");
+                entryContents.Add("Return 0 0");
+                Core.AssemblyCode.Add("__script_entry__", entryContents);
             }
 
             string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
@@ -125,19 +131,17 @@ namespace RAGE.Parser
 
             if (CurrentVariable.Value != null && !CurrentVariable.Value.IsDefault)
             {
-                var current = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
-                current.AddRange(res.Assembly);
-                current.Add(FrameVar.Set(CurrentVariable));
+                if (CurrentFunction != null)
+                {
+                    var current = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
+                    current.AddRange(res.Assembly);
+                    current.Add(FrameVar.Set(CurrentVariable));
+                }
+                else
+                {
+                    CurrentVariable.ValueAssembly = res.Assembly;
+                }
             }
-
-            //string type = context.GetChild(0).GetText();
-            //List<string> pieces = context.GetChild(1).GetText().ExplodeAndClean('=');
-            //string varName = pieces[0];
-            //string value = pieces[1];
-            ////Was probably set by the visitor for a loop
-            //if (currentFunction.Variables.ContainVariable(varName)) return;
-            //currentVariable = new Variable(null, currentFunction.FrameVars + 1, type);
-            //currentFunction.Variables.Add(currentVariable);
         }
 
         public override void EnterDesignation([NotNull] DesignationContext context)
@@ -308,6 +312,27 @@ namespace RAGE.Parser
         {
             string gff = context.GetText();
             base.ExitLabeledStatement(context);
+        }
+
+        public override void EnterJumpStatement([NotNull] JumpStatementContext context)
+        {
+            string jumpType = context.GetText().Replace(";", "");
+            switch (jumpType)
+            {
+                case "break":
+                    //Get the last stored context to jump to it
+                    var jumpLoc = storedContexts.LastOrDefault();
+                    if (jumpLoc == null)
+                    {
+                        Error($"Tried to use a jump statement without a context to jump out of | line {lineNumber},{linePosition}");
+                    }
+                    Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+                    break;
+                case "continue":
+                    //@TODO
+                    break;
+            }
+            base.EnterJumpStatement(context);
         }
 
         //Exiting if, else, switch

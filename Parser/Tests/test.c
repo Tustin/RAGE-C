@@ -1,3 +1,5 @@
+int items = 50;
+
 void main() {
     while (true) {
         if (IS_PED_IN_ANY_VEHICLE(PLAYER_PED_ID(), 0)) {

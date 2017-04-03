@@ -328,11 +328,11 @@ namespace RAGE.Compiler
                         bytes.Add(0x3A);
                         bytes.Add(Utilities.ByteToHex(lineParts[1]));
                         break;
-                    case "staticget1"://2
+                    case "getstatic1"://2
                         bytes.Add(0x3B);
                         bytes.Add(Utilities.ByteToHex(lineParts[1]));
                         break;
-                    case "staticset1"://2
+                    case "setstatic1"://2
                         bytes.Add(0x3C);
                         bytes.Add(Utilities.ByteToHex(lineParts[1]));
                         break;
