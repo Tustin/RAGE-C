@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -227,6 +228,30 @@ namespace RAGE.Compiler
             }
 
             throw new Exception("Did you really wait this long?");
+        }
+
+        internal static Dictionary<int, string> ParseSwitch(string @switch)
+        {
+            List<string> parts = @switch.Split(']').ToList();
+            parts.RemoveAll(a => a == "");
+
+            List<string> parts2 = new List<string>();
+
+            foreach (string part in parts)
+            {
+                parts2.Add(part.Replace("[", ""));
+            }
+
+            Dictionary<int, string> cases = new Dictionary<int, string>();
+
+            foreach (string part2 in parts2)
+            {
+                var temp = part2.Split('=');
+                int key = int.Parse(temp[0]);
+                cases.Add(key, temp[1]);
+            }
+
+            return cases;
         }
     }
 }

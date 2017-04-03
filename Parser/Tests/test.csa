@@ -1,6 +1,7 @@
-//Compiled using RAGE-C by Tustin 4/2/2017
+//Compiled using RAGE-C by Tustin 4/3/2017
 :__script_entry__
 Function 0 2 0
+//Auto assigning 2 statics
 push1 50
 setStatic1 1 //items
 CallNative PLAYER_PED_ID 0 1

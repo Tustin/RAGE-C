@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using static RAGE.Logger.Logger;
+
 namespace RAGE.Compiler
 {
     public class Compiler
@@ -44,7 +46,8 @@ namespace RAGE.Compiler
             var StringData = new List<StringData>();
             var NativeData = new List<NativeData>();
             var LabelData = new List<LabelData>();
-            var LabelsToReplace = new Dictionary<string, List<int>>();
+            //var LabelsToReplace = new Dictionary<string, List<int>>();
+            var LabelsToReplace = new List<LabelMap>();
             var StaticsData = new List<byte>();
 
             //Sections
@@ -433,55 +436,54 @@ namespace RAGE.Compiler
                         break;
                     case "jump"://2 special
                         bytes.Add(0x55);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Jump));
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpfalse"://2 special
                         bytes.Add(0x56);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Jump));
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpne"://2 special
                         bytes.Add(0x57);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Jump));
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpeq"://2 special
                         bytes.Add(0x58);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Jump));
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumple"://2 special
                         bytes.Add(0x59);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Jump));
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumplt"://2 special
                         bytes.Add(0x5A);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Jump));
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpge"://2 special
                         bytes.Add(0x5B);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
-                        bytes.Add(0x00);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Jump)); bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "jumpgt"://2 special
                         bytes.Add(0x5C);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Jump));
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         break;
                     case "call"://3 special
                         bytes.Add(0x5D);
-                        LabelsToReplace.AddOrUpdate(lineParts[1], bytes.Count);
+                        LabelsToReplace.Add(new LabelMap(lineParts[1], bytes.Count, LabelType.Call));
                         bytes.Add(0x00);
                         bytes.Add(0x00);
                         bytes.Add(0x00);
@@ -504,7 +506,23 @@ namespace RAGE.Compiler
                         break;
                     case "switch"://special
                         bytes.Add(0x62);
-                        throw new NotImplementedException();
+                        int openBrackets = lineParts[1].Count(a => a == '[');
+                        int closeBrackets = lineParts[1].Count(a => a == ']');
+                        if (openBrackets != closeBrackets)
+                        {
+                            Error($"[COMPILER] Switch opcode doesn't contain equal brackets (open: {openBrackets}, close: {closeBrackets})");
+                        }
+                        var cases = Utilities.ParseSwitch(lineParts[1]);
+                        bytes.Add((byte)cases.Count);
+                        foreach (var @case in cases)
+                        {
+                            bytes.AddRange(BitConverter.GetBytes(@case.Key).Reverse());
+                            LabelsToReplace.Add(new LabelMap(@case.Value, bytes.Count, LabelType.Jump));
+                            bytes.Add(0x00);
+                            bytes.Add(0x00);
+                        }
+                        break;
+                    //throw new NotImplementedException();
                     case "pushstring": //1 (special)
                         string pushString = lineParts[1].Replace("\"", "");
                         List<byte> stringData = Encoding.ASCII.GetBytes(pushString).ToList();
@@ -621,51 +639,48 @@ namespace RAGE.Compiler
             //Go through each time a label is used and replace it with the offset for the label
             foreach (var item in LabelsToReplace)
             {
-                string key = item.Key.Replace("@", "");
+                string key = item.Label.Replace("@", "");
 
                 var labelInfo = LabelData.GetLabelSection(key);
-
-                foreach (int offset in item.Value)
+                int offset = item.ByteLocation;
+                byte oneUp = bytes[offset + 1];
+                byte twoUp = bytes[offset + 2];
+                //Doesnt exist, so fill it with FF and throw a warning
+                if (labelInfo == null)
                 {
-                    byte oneUp = bytes[offset + 1];
-                    byte twoUp = bytes[offset + 2];
-                    //Doesnt exist, so fill it with FF and throw a warning
-                    if (labelInfo == null)
+                    if (item.Type == LabelType.Call)
                     {
-                        if (oneUp == 0x00 && twoUp == 0x00)
-                        {
-                            //Call
-                            bytes[offset] = 0xFF;
-                            bytes[offset + 1] = 0xFF;
-                            bytes[offset + 2] = 0xFF;
-                        }
-                        else if (oneUp == 0x00 && twoUp != 0x00)
-                        {
-                            //Jump
-                            bytes[offset] = 0xFF;
-                            bytes[offset + 1] = 0xFF;
-                        }
-
-                        Logger.Logger.Warn($"Found label {key} without a definition");
+                        //Call
+                        bytes[offset] = 0xFF;
+                        bytes[offset + 1] = 0xFF;
+                        bytes[offset + 2] = 0xFF;
                     }
-                    else
+                    else if (item.Type == LabelType.Jump)
                     {
-                        if (oneUp == 0x00 && twoUp == 0x00)
-                        {
-                            //Call
-                            byte[] i24 = Utilities.I24ToHex(labelInfo.LabelOffset);
-                            bytes[offset] = i24[0];
-                            bytes[offset + 1] = i24[1];
-                            bytes[offset + 2] = i24[2];
-                        }
-                        else if (oneUp == 0x00 && twoUp != 0x00)
-                        {
-                            //Jump
-                            short newOffset = (short)(labelInfo.LabelOffset - (offset + 2));
-                            var data = Utilities.StringHexToBytes(newOffset.ToString("X4"));
-                            bytes[offset] = data[0];
-                            bytes[offset + 1] = data[1];
-                        }
+                        //Jump
+                        bytes[offset] = 0xFF;
+                        bytes[offset + 1] = 0xFF;
+                    }
+
+                    Warn($"Found label {key} without a definition");
+                }
+                else
+                {
+                    if (item.Type == LabelType.Call)
+                    {
+                        //Call
+                        byte[] i24 = Utilities.I24ToHex(labelInfo.LabelOffset);
+                        bytes[offset] = i24[0];
+                        bytes[offset + 1] = i24[1];
+                        bytes[offset + 2] = i24[2];
+                    }
+                    else if (item.Type == LabelType.Jump)
+                    {
+                        //Jump
+                        short newOffset = (short)(labelInfo.LabelOffset - (offset + 2));
+                        var data = Utilities.StringHexToBytes(newOffset.ToString("X4"));
+                        bytes[offset] = data[0];
+                        bytes[offset + 1] = data[1];
                     }
                 }
             }

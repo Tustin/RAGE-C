@@ -45,6 +45,8 @@
   <ItemGroup>
     <Compile Include="Compiler.cs" />
     <Compile Include="LabelData.cs" />
+    <Compile Include="LabelMap.cs" />
+    <Compile Include="LabelType.cs" />
     <Compile Include="ListExtensions.cs" />
     <Compile Include="NativeData.cs" />
     <Compile Include="Opcodes.cs" />

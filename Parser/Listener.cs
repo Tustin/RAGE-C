@@ -54,10 +54,14 @@ namespace RAGE.Parser
             {
                 var entryContents = new List<string>();
                 entryContents.Add("Function 0 2 0");
-                foreach (var variable in StaticVariables)
+                if (StaticVariables.Count > 0)
                 {
-                    entryContents.AddRange(variable.ValueAssembly);
-                    entryContents.Add(StaticVar.Set(variable));
+                    entryContents.Add($"//Auto assigning {StaticVariables.Count} statics");
+                    foreach (var variable in StaticVariables)
+                    {
+                        entryContents.AddRange(variable.ValueAssembly);
+                        entryContents.Add(StaticVar.Set(variable));
+                    }
                 }
                 entryContents.Add("Call @main");
                 entryContents.Add("Return 0 0");
