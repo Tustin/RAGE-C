@@ -1,4 +1,4 @@
-//Compiled using RAGE-C by Tustin 4/3/2017
+//Compiled using RAGE-C by Tustin 4/5/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 2 statics
@@ -10,7 +10,7 @@ Call @main
 Return 0 0
 
 :main
-Function 0 4 0
+Function 0 3 0
 :loop_0
 CallNative PLAYER_PED_ID 0 1
 push_0
@@ -41,9 +41,30 @@ Jump @loop_0
 Return 0 0
 
 :testing
-Function 0 4 0
+Function 0 12 0
 push_0
 setF1 3 //something
+push1 105
+pFrame1 5 //&someArray
+push_5
+GetImmP
+pSet
+push_0
+setF1 10 //i
+:loop_1
+push_0
+setF1 12 //i
+getF1 10 //i
+pFrame1 5 //&someArray
+getF1 10 //i
+GetImmP
+pSet
+getF1 10 //i
+Add1 1
+setF1 10 //i
+getF1 10 //i
+push_5
+JumpLT @loop_1
 push_2
 push1 204
 CallNative IS_CONTROL_JUST_PRESSED 2 1

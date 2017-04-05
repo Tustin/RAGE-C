@@ -4,16 +4,10 @@ namespace RAGE.Parser
 {
     public static class Script
     {
-        public static Dictionary<string, Variable> GlobalVariables { get; set; }
+        public static List<Variable> StaticVariables = new List<Variable>();
 
+        public static List<Function> Functions { get;  set; }
 
-        public static bool AddGlobalVariable(Variable var)
-        {
-            if (GlobalVariables.ContainsKey(var.Name)) return false;
-
-            GlobalVariables.Add(var.Name, var);
-            return true;
-        }
-
+        public static List<Array> StaticArrays = new List<Array>();
     }
 }

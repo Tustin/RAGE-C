@@ -44,7 +44,7 @@ namespace RAGE.Parser
 
             Core.AssemblyCode = new Dictionary<string, List<string>>();
 
-            Core.Functions = new List<Function>();
+            Script.Functions = new List<Function>();
 
             LogVerbose("Loaded script file");
 

@@ -34,45 +34,78 @@ namespace RAGE.Parser
                 varType = context.GetChild(0).GetText();
             }
 
-            //Currently not in a function, so this is a static var
-            Variable variable;
-            if (RAGEListener.CurrentFunction == null)
-            {
-                variable = new Variable(varName, RAGEListener.StaticVariables.Count + 1, varType);
-                RAGEListener.StaticVariables.Add(variable);
-            }
-            else
-            {
-                variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, varType);
-                RAGEListener.CurrentFunction.Variables.Add(variable);
-            }
+            string stripped = Regex.Replace(varName, "\\(.*\\)", "");
 
-
-
-            //See if this variable is being initialized
-            //If not, then we'll give it a default value
-            if (context.initDeclaratorList() != null)
+            //Array
+            if (varName.Contains("["))
             {
-                var resp = VisitInitDeclarator(context.initDeclaratorList().initDeclarator());
-                value.Assembly = resp.Assembly;
-                if (resp.Data != null)
+                //Get the count
+                int openBracket = varName.IndexOf('[');
+                int closeBracket = varName.IndexOf(']');
+                string arrName = varName.Split('[')[0];
+                if (!int.TryParse(varName.Substring(openBracket + 1, closeBracket - openBracket - 1), out int arrayIndexCount))
                 {
-                    variable.Value.Value = resp.Data.ToString();
+                    Error($"Failed parsing length for array {arrName} | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                 }
-                variable.Value.Type = resp.Type;
-                variable.Value.IsDefault = false;
-            }
-            else
-            {
+                Array arr = new Array(arrName, RAGEListener.CurrentFunction.FrameVars, arrayIndexCount);
+                RAGEListener.CurrentFunction.Arrays.Add(arr);
+                //Add the array as a single variable
+                Variable variable = new Variable(arrName, RAGEListener.CurrentFunction.FrameVars + 1, varType);
                 variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
                 variable.Value.Type = variable.Type;
                 variable.Value.IsDefault = true;
+                RAGEListener.CurrentFunction.Variables.Add(variable);
+                arrayIndexCount--;
+                for (int i = 0; i < arrayIndexCount; i++)
+                {
+                    variable = new Variable($"{arrName}_{i + 1}", RAGEListener.CurrentFunction.FrameVars + 1, varType);
+                    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+                    variable.Value.Type = variable.Type;
+                    variable.Value.IsDefault = true;
+                    RAGEListener.CurrentFunction.Variables.Add(variable);
+                }
+                value.Data = arr;
+                return value;
+            }
+            else
+            {
+                Variable variable;
+                //Currently not in a function, so this is a static var
+                if (RAGEListener.CurrentFunction == null)
+                {
+                    variable = new Variable(varName, Script.StaticVariables.Count + 1, varType);
+                    Script.StaticVariables.Add(variable);
+                }
+                else
+                {
+                    variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, varType);
+                    RAGEListener.CurrentFunction.Variables.Add(variable);
+                }
+                //See if this variable is being initialized
+                //If not, then we'll give it a default value
+                if (context.initDeclaratorList() != null)
+                {
+                    var resp = VisitInitDeclarator(context.initDeclaratorList().initDeclarator());
+                    value.Assembly = resp.Assembly;
+                    if (resp.Data != null)
+                    {
+                        variable.Value.Value = resp.Data.ToString();
+                    }
+                    variable.Value.Type = resp.Type;
+                    variable.Value.IsDefault = false;
+                }
+                else
+                {
+                    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+                    variable.Value.Type = variable.Type;
+                    variable.Value.IsDefault = true;
+                }
+
+
+                value.Data = variable;
+                return value;
             }
 
-            string stripped = Regex.Replace(varName, "\\(.*\\)", "");
-
-            value.Data = variable;
-            return value;
         }
         public override Value VisitSelectionStatement([NotNull] SelectionStatementContext context)
         {
@@ -183,12 +216,15 @@ namespace RAGE.Parser
             Value left = VisitUnaryExpression(context.unaryExpression());
             Value right = VisitAssignmentExpression(context.assignmentExpression());
 
-            Variable variable = left.OriginalVariable ?? RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
-
-            if (variable == null)
+            Variable variable = null;
+            if (left.Type != DataType.Array)
             {
-                Error($"Unable to find variable {left.Data.ToString()} | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                return null;
+                variable = left.OriginalVariable ?? RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
+                if (variable == null)
+                {
+                    Error($"Unable to find variable {left.Data.ToString()} | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    return null;
+                }
             }
 
             List<string> code = new List<string>();
@@ -202,14 +238,35 @@ namespace RAGE.Parser
                     code.Add(FrameVar.Set(variable));
                     return new Value(DataType.Int, null, code);
                 case "=":
+                    //Since its an array, we need to push the value before the array indexing
+                    if (left.Type == DataType.Array)
+                    {
+                        if (right.Type == DataType.Variable)
+                        {
+                            var rightVar = RAGEListener.CurrentFunction.Variables.GetVariable(right.Data.ToString());
+                            code.Add(FrameVar.Get(rightVar));
+                        }
+                        else if (right.Type == DataType.Int)
+                        {
+                            code.Add(Push.Int(right.Data.ToString()));
+                        }
+                        else
+                        {
+                            throw new Exception("Non int types not done for arrays");
+                        }
+                        code.AddRange(left.Assembly);
+                        return new Value(DataType.Int, null, code);
+                    }
+
                     if (right.Data == null)
                     {
                         code.AddRange(right.Assembly);
                     }
                     else
-                    {
+                    {                 
                         code.Add(Push.Generate(right.Data.ToString(), variable.Type));
                     }
+
                     code.Add(FrameVar.Set(variable));
                     return new Value(DataType.Int, null, code);
             }
@@ -364,14 +421,19 @@ namespace RAGE.Parser
 
             List<string> code = new List<string>();
 
-            //Right now, values being compared by relational operators must be integers
-            //They can also be variables which are integer values
-            if (left.Type != DataType.Int || right.Type != DataType.Int
-            && (left.Type != DataType.Variable || right.Type != DataType.Variable))
+            //@TODO Clean this
+            if (left.Type != DataType.Int && left.Type != DataType.Variable)
             {
                 Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
                 return null;
             }
+
+            if (right.Type != DataType.Int && right.Type != DataType.Variable)
+            {
+                Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
+                return null;
+            }
+
 
             //Lets just output the variables here because fuck optimization
             //Saves some headache with the compiler parsing logic on variables that might be changed
@@ -696,7 +758,7 @@ namespace RAGE.Parser
             Variable variable;
             if (RAGEListener.CurrentFunction == null)
             {
-                variable = RAGEListener.StaticVariables.GetVariable(expression);
+                variable = Script.StaticVariables.GetVariable(expression);
             }
             else
             {
@@ -727,7 +789,7 @@ namespace RAGE.Parser
                     code.Add(FrameVar.Set(variable));
                     return new Value(DataType.Int, null, code);
                 case "(":
-                    if (Core.Functions.ContainFunction(expression))
+                    if (Script.Functions.ContainFunction(expression))
                     {
                         var args = VisitArgumentExpressionList(context.argumentExpressionList());
                         //No args
@@ -789,6 +851,55 @@ namespace RAGE.Parser
                     }
                     Error($"Found open parens, but expression is not a function | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     return null;
+
+                //Array
+                case "[":
+                    string arrayName = context.GetText().Split('[')[0];
+                    //Find array
+                    Array array = RAGEListener.CurrentFunction.Arrays.GetArray(arrayName);
+                    Variable arrayVar = RAGEListener.CurrentFunction.Variables.GetVariable(array.Name);
+                    if (array == null)
+                    {
+                        Error($"No array '{arrayName}' exists  | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return null;
+                    }
+                    string index = context.expression().GetText();
+                    //Make sure this is a variable or an int
+                    var indexType = Utilities.GetType(RAGEListener.CurrentFunction, index);
+                    if (indexType != DataType.Int && indexType != DataType.Variable)
+                    {
+                        Error($"Index used for array is not a valid indexer | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return null;
+                    }
+                    //If it's a static int, make sure it's inside the bounds of the array
+                    if (indexType == DataType.Int)
+                    {
+                        int val = int.Parse(index);
+                        if (val > array.Length)
+                        {
+                            Error($"Index '{val}' exceeds the length of array '{arrayName}' (size={array.Length}) | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        }
+
+                        //Build stack
+                        code.Add(FrameVar.GetPointer(arrayVar));
+                        code.Add(Push.Int(index));
+                        code.Add(Pointer.GetImmediateP());
+                        code.Add(Pointer.PSet());
+                    }
+                    else if (indexType == DataType.Variable)
+                    {
+                        Variable vVar = RAGEListener.CurrentFunction.Variables.GetVariable(index);
+                        if (vVar == null)
+                        {
+                            Error($"Assumed variable '{index}' used for indexer, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        }
+                        //Since its a var, just generate the code and hope the dev knows what theyre doing
+                        code.Add(FrameVar.GetPointer(arrayVar));
+                        code.Add(FrameVar.Get(vVar));
+                        code.Add(Pointer.GetImmediateP());
+                        code.Add(Pointer.PSet());
+                    }
+                    return new Value(DataType.Array, null, code);
                 default:
                     Error($"Unknown postfix type '{symbol}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     return null;

@@ -303,15 +303,15 @@ namespace RAGE.Compiler
                     case "fromstack"://1
                         bytes.Add(0x33);
                         break;
-                    case "arraygetp1"://2
+                    case "getarrayp1"://2
                         bytes.Add(0x34);
                         bytes.Add(Utilities.ByteToHex(lineParts[1]));
                         break;
-                    case "arrayget1"://2
+                    case "getarray1"://2
                         bytes.Add(0x35);
                         bytes.Add(Utilities.ByteToHex(lineParts[1]));
                         break;
-                    case "arrayset1"://2
+                    case "setarray1"://2
                         bytes.Add(0x36);
                         bytes.Add(Utilities.ByteToHex(lineParts[1]));
                         break;
@@ -347,7 +347,7 @@ namespace RAGE.Compiler
                         bytes.Add(0x3E);
                         bytes.Add(Utilities.ByteToHex(lineParts[1]));
                         break;
-                    case "getstackimmediatep"://2
+                    case "getimmp"://2
                         bytes.Add(0x3F);
                         break;
                     case "getimmediatep1"://2
@@ -386,15 +386,15 @@ namespace RAGE.Compiler
                         bytes.Add(0x48);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
-                    case "arraygetp2"://3
+                    case "getarrayp2"://3
                         bytes.Add(0x49);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
-                    case "arrayget2"://3
+                    case "getarray2"://3
                         bytes.Add(0x4A);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
-                    case "arrayset2"://3
+                    case "setarray2"://3
                         bytes.Add(0x4B);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
@@ -414,11 +414,11 @@ namespace RAGE.Compiler
                         bytes.Add(0x4F);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
-                    case "staticget2"://3
+                    case "getstatic2"://3
                         bytes.Add(0x50);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
-                    case "staticset2"://3
+                    case "setstatic2"://3
                         bytes.Add(0x51);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
@@ -426,11 +426,11 @@ namespace RAGE.Compiler
                         bytes.Add(0x52);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
-                    case "globalget2"://3
+                    case "getglobal2"://3
                         bytes.Add(0x53);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
-                    case "globalset2"://3
+                    case "setglobal2"://3
                         bytes.Add(0x54);
                         bytes.AddRange(Utilities.ShortToHex(lineParts[1]));
                         break;
@@ -492,11 +492,11 @@ namespace RAGE.Compiler
                         bytes.Add(0x5E);
                         bytes.AddRange(Utilities.I24ToHex(lineParts[1]));
                         break;
-                    case "globalget3"://4
+                    case "getglobal3"://4
                         bytes.Add(0x5F);
                         bytes.AddRange(Utilities.I24ToHex(lineParts[1]));
                         break;
-                    case "globalset3"://4
+                    case "setglobal3"://4
                         bytes.Add(0x60);
                         bytes.AddRange(Utilities.I24ToHex(lineParts[1]));
                         break;

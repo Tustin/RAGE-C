@@ -15,6 +15,12 @@ void main() {
 
 float testing() {
     int something = 0;
+    int nothing;
+    int someArray[5];
+    someArray[5] = 69;
+    for (int i = 0; i < 5; i++) {
+        someArray[i] = i;
+    }
     switch (IS_CONTROL_JUST_PRESSED(2, 0xcc)) {
         case 0:
         something = 0;

@@ -17,7 +17,7 @@ namespace RAGE.Parser
         public static Function CurrentFunction;
         public static Variable CurrentVariable;
         public static Switch CurrentSwitch;
-        public static List<Variable> StaticVariables;
+
         public static int lineNumber = 0;
         public static int linePosition = 0;
 
@@ -34,7 +34,6 @@ namespace RAGE.Parser
             visitor = new RAGEVisitor();
             storedContexts = new List<StoredContext>();
             switches = new Dictionary<StoredContext, Switch>();
-            StaticVariables = new List<Variable>();
         }
 
         //Set line number and position for error logging
@@ -54,10 +53,10 @@ namespace RAGE.Parser
             {
                 var entryContents = new List<string>();
                 entryContents.Add("Function 0 2 0");
-                if (StaticVariables.Count > 0)
+                if (Script.StaticVariables.Count > 0)
                 {
-                    entryContents.Add($"//Auto assigning {StaticVariables.Count} statics");
-                    foreach (var variable in StaticVariables)
+                    entryContents.Add($"//Auto assigning {Script.StaticVariables.Count} statics");
+                    foreach (var variable in Script.StaticVariables)
                     {
                         entryContents.AddRange(variable.ValueAssembly);
                         entryContents.Add(StaticVar.Set(variable));
@@ -91,7 +90,7 @@ namespace RAGE.Parser
             });
 
             CurrentFunction = new Function(name, vType);
-            Core.Functions.Add(CurrentFunction);
+            Script.Functions.Add(CurrentFunction);
             LogVerbose($"Entering function '{name}'...");
         }
 
@@ -107,7 +106,7 @@ namespace RAGE.Parser
             var function = Core.AssemblyCode.FindFunction(CurrentFunction.Name);
             string funcEntry = function.Value[0];
             //@TODO: Update first 0 for param count
-            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {CurrentFunction.FrameVars + 1} 0");
+            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {CurrentFunction.FrameVars} 0");
             function.Value[0] = funcEntry;
             Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Return.Generate());
             LogVerbose($"Leaving function '{CurrentFunction.Name}'");
@@ -117,6 +116,11 @@ namespace RAGE.Parser
         {
             string aa = context.GetText();
             base.EnterPostfixExpression(context);
+        }
+        public override void EnterDeclarator([NotNull] DeclaratorContext context)
+        {
+            string ff = context.GetText();
+            base.EnterDeclarator(context);
         }
         //New variables
         public override void EnterDeclaration(DeclarationContext context)
@@ -130,20 +134,20 @@ namespace RAGE.Parser
                 Error($"Found variable declaration but got null | line {lineNumber}, {linePosition}");
                 return;
             }
-
-            CurrentVariable = (Variable)res.Data;
-
-            if (CurrentVariable.Value != null && !CurrentVariable.Value.IsDefault)
+            if (res.Data is Variable CurrentVariable)
             {
-                if (CurrentFunction != null)
+                if (CurrentVariable.Value != null && !CurrentVariable.Value.IsDefault)
                 {
-                    var current = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
-                    current.AddRange(res.Assembly);
-                    current.Add(FrameVar.Set(CurrentVariable));
-                }
-                else
-                {
-                    CurrentVariable.ValueAssembly = res.Assembly;
+                    if (CurrentFunction != null)
+                    {
+                        var current = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
+                        current.AddRange(res.Assembly);
+                        current.Add(FrameVar.Set(CurrentVariable));
+                    }
+                    else
+                    {
+                        CurrentVariable.ValueAssembly = res.Assembly;
+                    }
                 }
             }
         }

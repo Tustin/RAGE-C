@@ -36,6 +36,10 @@ namespace RAGE.Parser
             return variables.Where(a => a.Name == name).FirstOrDefault();
         }
 
+        public static Array GetArray(this List<Array> arrays, string name)
+        {
+            return arrays.Where(a => a.Name == name).FirstOrDefault();
+        }
         public static KeyValuePair<string, List<string>> FindFunction(this Dictionary<string, List<string>> dictionary, string name)
         {
             return dictionary.Where(a => a.Key == name).FirstOrDefault();
@@ -67,9 +71,9 @@ namespace RAGE.Parser
                 {
                     return DataType.NativeCall;
                 }
-                else if (Core.Functions.ContainFunction(stripped))
+                else if (Script.Functions.ContainFunction(stripped))
                 {
-                    if (Core.Functions.GetFunction(stripped).Type == DataType.Void)
+                    if (Script.Functions.GetFunction(stripped).Type == DataType.Void)
                     {
                         Error($"Function {stripped} is void and does not return a value | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     }
@@ -141,9 +145,9 @@ namespace RAGE.Parser
                         {
                             return DataType.NativeCall;
                         }
-                        else if (Core.Functions.ContainFunction(stripped))
+                        else if (Script.Functions.ContainFunction(stripped))
                         {
-                            if (Core.Functions.GetFunction(stripped).Type == DataType.Void)
+                            if (Script.Functions.GetFunction(stripped).Type == DataType.Void)
                             {
                                 Error($"Function {stripped} is void and does not return a value | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                             }
