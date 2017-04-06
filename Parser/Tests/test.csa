@@ -1,4 +1,4 @@
-//Compiled using RAGE-C by Tustin 4/5/2017
+//Compiled using RAGE-C by Tustin 4/6/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 2 statics
@@ -44,39 +44,24 @@ Return 0 0
 Function 0 12 0
 push_0
 setF1 3 //something
-push1 105
+pushS 261
+push_4
 pFrame1 5 //&someArray
-push_5
-GetImmP
-pSet
+SetArray1 1
 push_0
 setF1 10 //i
 :loop_1
 push_0
 setF1 12 //i
 getF1 10 //i
-pFrame1 5 //&someArray
 getF1 10 //i
-GetImmP
-pSet
+pFrame1 5 //&someArray
+SetArray1 1
 getF1 10 //i
 Add1 1
 setF1 10 //i
 getF1 10 //i
 push_5
 JumpLT @loop_1
-push_2
-push1 204
-CallNative IS_CONTROL_JUST_PRESSED 2 1
-Switch [1=@selection_1_case_1][0=@selection_1_case_0]
-:selection_1_case_1
-push_0
-setF1 3 //something
-Jump @selection_end_1
-:selection_1_case_0
-push_1
-setF1 3 //something
-Jump @selection_end_1
-:selection_end_1
 Return 0 0
 

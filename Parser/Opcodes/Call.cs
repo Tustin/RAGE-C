@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RAGE.Parser
+namespace RAGE.Parser.Opcodes
 {
     public static class Call
     {

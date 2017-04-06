@@ -242,7 +242,7 @@ namespace RAGE.Compiler
                     case "dup"://1
                         bytes.Add(0x2A);
                         break;
-                    case "drop"://1
+                    case "pop"://1
                         bytes.Add(0x2B);
                         break;
                     case "callnative":
@@ -522,7 +522,6 @@ namespace RAGE.Compiler
                             bytes.Add(0x00);
                         }
                         break;
-                    //throw new NotImplementedException();
                     case "pushstring": //1 (special)
                         string pushString = lineParts[1].Replace("\"", "");
                         List<byte> stringData = Encoding.ASCII.GetBytes(pushString).ToList();
@@ -568,10 +567,10 @@ namespace RAGE.Compiler
                     case "memcpy":
                         bytes.Add(0x69); //giggity
                         break;
-                    case "catch":
+                    case "catch": //not used
                         bytes.Add(0x6A);
                         break;
-                    case "throw":
+                    case "throw": //not used
                         bytes.Add(0x6B);
                         break;
                     case "pcall":

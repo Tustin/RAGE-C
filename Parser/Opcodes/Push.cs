@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace RAGE.Parser
+namespace RAGE.Parser.Opcodes
 {
     public static class Push
     {

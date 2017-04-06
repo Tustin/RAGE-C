@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 
 using static CParser;
 using static RAGE.Logger.Logger;
+using RAGE.Parser.Opcodes;
 
 namespace RAGE.Parser
 {
@@ -167,7 +168,7 @@ namespace RAGE.Parser
             {
                 if (CurrentContext.Context is IterationStatementContext)
                 {
-                    val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
+                    val.Assembly.Add(Opcodes.Jump.Generate(Opcodes.JumpType.Unconditional, CurrentContext.Label));
                     return val;
                 }
             }
@@ -875,16 +876,15 @@ namespace RAGE.Parser
                     if (indexType == DataType.Int)
                     {
                         int val = int.Parse(index);
-                        if (val > array.Length)
+                        if (val >= array.Length)
                         {
                             Error($"Index '{val}' exceeds the length of array '{arrayName}' (size={array.Length}) | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         }
 
                         //Build stack
-                        code.Add(FrameVar.GetPointer(arrayVar));
                         code.Add(Push.Int(index));
-                        code.Add(Pointer.GetImmediateP());
-                        code.Add(Pointer.PSet());
+                        code.Add(FrameVar.GetPointer(arrayVar));
+                        code.Add(Opcodes.Array.Set());
                     }
                     else if (indexType == DataType.Variable)
                     {
@@ -894,10 +894,9 @@ namespace RAGE.Parser
                             Error($"Assumed variable '{index}' used for indexer, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         }
                         //Since its a var, just generate the code and hope the dev knows what theyre doing
-                        code.Add(FrameVar.GetPointer(arrayVar));
                         code.Add(FrameVar.Get(vVar));
-                        code.Add(Pointer.GetImmediateP());
-                        code.Add(Pointer.PSet());
+                        code.Add(FrameVar.GetPointer(arrayVar));
+                        code.Add(Opcodes.Array.Set());
                     }
                     return new Value(DataType.Array, null, code);
                 default:

@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Antlr4.Runtime.Misc;
 using System.Linq;
 using Antlr4.Runtime;
+using RAGE.Parser.Opcodes;
 
 using static CParser;
 using static RAGE.Logger.Logger;
@@ -108,7 +109,7 @@ namespace RAGE.Parser
             //@TODO: Update first 0 for param count
             funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {CurrentFunction.FrameVars} 0");
             function.Value[0] = funcEntry;
-            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Return.Generate());
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Opcodes.Return.Generate());
             LogVerbose($"Leaving function '{CurrentFunction.Name}'");
             CurrentFunction = null;
         }

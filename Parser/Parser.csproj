@@ -60,6 +60,7 @@
     <Compile Include="NativeJson.cs" />
     <Compile Include="NativeParameter.cs" />
     <Compile Include="Opcodes\Arithmetic.cs" />
+    <Compile Include="Opcodes\Array.cs" />
     <Compile Include="Opcodes\Bitwise.cs" />
     <Compile Include="Opcodes\Call.cs" />
     <Compile Include="Opcodes\Compare.cs" />
