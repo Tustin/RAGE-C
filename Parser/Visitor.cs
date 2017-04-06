@@ -893,8 +893,9 @@ namespace RAGE.Parser
                         {
                             Error($"Assumed variable '{index}' used for indexer, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         }
+                        var expr = VisitExpression(context.expression());
                         //Since its a var, just generate the code and hope the dev knows what theyre doing
-                        code.Add(FrameVar.Get(vVar));
+                        code.AddRange(expr.Assembly);
                         code.Add(FrameVar.GetPointer(arrayVar));
                         code.Add(Opcodes.Array.Set());
                     }
