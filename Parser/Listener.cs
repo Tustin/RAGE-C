@@ -113,11 +113,13 @@ namespace RAGE.Parser
             LogVerbose($"Leaving function '{CurrentFunction.Name}'");
             CurrentFunction = null;
         }
+
         public override void EnterPostfixExpression([NotNull] PostfixExpressionContext context)
         {
             string aa = context.GetText();
             base.EnterPostfixExpression(context);
         }
+
         public override void EnterDeclarator([NotNull] DeclaratorContext context)
         {
             string ff = context.GetText();
@@ -125,8 +127,10 @@ namespace RAGE.Parser
         }
         //New variables
         public override void EnterDeclaration(DeclarationContext context)
-        {
+        {         
             string gg = context.GetText();
+
+            var specifiers = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
 
             Value res = visitor.VisitDeclaration(context);
 
@@ -163,6 +167,12 @@ namespace RAGE.Parser
         {
             string aa = context.GetText();
             base.EnterDesignator(context);
+        }
+
+        public override void EnterStorageClassSpecifier([NotNull] StorageClassSpecifierContext context)
+        {
+            string ff = context.GetText();
+            base.EnterStorageClassSpecifier(context);
         }
 
         public override void EnterInitializer([NotNull] InitializerContext context)
@@ -337,17 +347,17 @@ namespace RAGE.Parser
             switch (jumpType)
             {
                 case "break":
-                    //Get the last stored context to jump to it
-                    var jumpLoc = storedContexts.LastOrDefault();
-                    if (jumpLoc == null)
-                    {
-                        Error($"Tried to use a jump statement without a context to jump out of | line {lineNumber},{linePosition}");
-                    }
-                    Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
-                    break;
+                //Get the last stored context to jump to it
+                var jumpLoc = storedContexts.LastOrDefault();
+                if (jumpLoc == null)
+                {
+                    Error($"Tried to use a jump statement without a context to jump out of | line {lineNumber},{linePosition}");
+                }
+                Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+                break;
                 case "continue":
-                    //@TODO
-                    break;
+                //@TODO
+                break;
             }
             base.EnterJumpStatement(context);
         }

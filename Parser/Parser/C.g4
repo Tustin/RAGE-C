@@ -206,12 +206,9 @@ initDeclarator
     ;
 
 storageClassSpecifier
-    :   'typedef'
-    |   'extern'
-    |   'static'
-    |   '_Thread_local'
+    :   'static'
     |   'auto'
-    |   'register'
+    |   'global'
     ;
 
 typeSpecifier

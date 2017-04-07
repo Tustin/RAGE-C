@@ -15,6 +15,16 @@ namespace RAGE.Parser
         //The current context of the visitor (will be null if this isn't an expression)
         public StoredContext CurrentContext;
 
+        public override Value VisitDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
+        {
+            var specifier = context.declarationSpecifier();
+
+            for (int i = 0; i < specifier.Length; i++)
+            {
+                var test = specifier[i].GetType();
+            }
+            return base.VisitDeclarationSpecifiers(context);
+        }
         public override Value VisitDeclaration(DeclarationContext context)
         {
             Value value = new Value();
