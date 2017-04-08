@@ -65,6 +65,7 @@
     <Compile Include="Opcodes\Call.cs" />
     <Compile Include="Opcodes\Compare.cs" />
     <Compile Include="Opcodes\FrameVar.cs" />
+    <Compile Include="Opcodes\Global.cs" />
     <Compile Include="Opcodes\Jump.cs" />
     <Compile Include="Opcodes\Pointer.cs" />
     <Compile Include="Opcodes\Push.cs" />

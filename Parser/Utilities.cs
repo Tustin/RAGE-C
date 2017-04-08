@@ -89,6 +89,10 @@ namespace RAGE.Parser
                 {
                     return DataType.Variable;
                 }
+                else if (value.StartsWith("Global_"))
+                {
+                    return DataType.Global;
+                }
             }
             Error($"Unable to parse value '{value}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
             return DataType.Void;
@@ -100,13 +104,13 @@ namespace RAGE.Parser
             {
                 case "bool":
                 case "BOOL":
-                    return DataType.Bool;
+                return DataType.Bool;
                 case "string":
                 case "char*":
-                    return DataType.String;
+                return DataType.String;
                 case "float":
                 case "double":
-                    return DataType.Float;
+                return DataType.Float;
                 case "int":
                 case "Entity":
                 case "Player":
@@ -133,33 +137,33 @@ namespace RAGE.Parser
                 case "Any":
                 case "uint":
                 case "Hash":
-                    return DataType.Int;
+                return DataType.Int;
                 case "void":
                 case "Void":
-                    return DataType.Void;
+                return DataType.Void;
                 default:
-                    if (Regex.IsMatch(type, "^\\w+\\("))
+                if (Regex.IsMatch(type, "^\\w+\\("))
+                {
+                    string stripped = Regex.Replace(type, "\\(.*\\)", "");
+                    if (Native.IsFunctionANative(stripped))
                     {
-                        string stripped = Regex.Replace(type, "\\(.*\\)", "");
-                        if (Native.IsFunctionANative(stripped))
-                        {
-                            return DataType.NativeCall;
-                        }
-                        else if (Script.Functions.ContainFunction(stripped))
-                        {
-                            if (Script.Functions.GetFunction(stripped).Type == DataType.Void)
-                            {
-                                Error($"Function {stripped} is void and does not return a value | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                            }
-                            return DataType.LocalCall;
-                        }
+                        return DataType.NativeCall;
                     }
-                    else if (Regex.IsMatch(type, "^\\w+"))
+                    else if (Script.Functions.ContainFunction(stripped))
                     {
-                        return DataType.Variable;
+                        if (Script.Functions.GetFunction(stripped).Type == DataType.Void)
+                        {
+                            Error($"Function {stripped} is void and does not return a value | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        }
+                        return DataType.LocalCall;
                     }
-                    Error($"Unsupported type '{type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                    return DataType.Void;
+                }
+                else if (Regex.IsMatch(type, "^\\w+"))
+                {
+                    return DataType.Variable;
+                }
+                Error($"Unsupported type '{type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                return DataType.Void;
             }
         }
 
@@ -184,16 +188,16 @@ namespace RAGE.Parser
             switch (type)
             {
                 case DataType.Int:
-                    return "0";
+                return "0";
                 case DataType.Float:
-                    return "0.0";
+                return "0.0";
                 case DataType.String:
-                    return "";
+                return "";
                 case DataType.Bool:
-                    return "false";
+                return "false";
                 default:
-                    Error($"No default value is defined for type '{type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                    return null;
+                Error($"No default value is defined for type '{type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                return null;
             }
         }
         public static List<string> GetRegexGroups(this MatchCollection collection)

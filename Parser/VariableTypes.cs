@@ -15,6 +15,6 @@
         Not,
         Argument,
         Array,
-
+        Global,
     }
 }

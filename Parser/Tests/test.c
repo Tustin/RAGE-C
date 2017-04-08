@@ -1,6 +1,8 @@
 static int id = PLAYER_PED_ID();
 
 void main() {
+    //disable phone
+    Global_10589 = 0;
     while (true) {
         if (IS_PED_IN_ANY_VEHICLE(PLAYER_PED_ID(), 0)) {
             int vehicle = GET_VEHICLE_PED_IS_IN(PLAYER_PED_ID(), 0);

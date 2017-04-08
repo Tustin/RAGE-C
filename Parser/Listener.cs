@@ -142,84 +142,73 @@ namespace RAGE.Parser
             //Will be null if no value is being set
             var initializer = declarator.initializer();
 
-            //Handle the global by generating the code instead of making a variable
-            if (declSpec == Specifier.Global)
-            {
-                if (initializer == null)
-                {
-                    Error($"Global value must be assigned | line {lineNumber}, {linePosition}");
-                }
-                //@TODO: Code gen for globals
-            }
             //Handle statics and frame vars the same minus a few differences
-            else
+            //Array
+            if (varName.Contains("["))
             {
-                //Array
-                if (varName.Contains("["))
+                //Get the count
+                int openBracket = varName.IndexOf('[');
+                int closeBracket = varName.IndexOf(']');
+                string arrName = varName.Split('[')[0];
+                if (!int.TryParse(varName.Substring(openBracket + 1, closeBracket - openBracket - 1), out int arrayIndexCount))
                 {
-                    //Get the count
-                    int openBracket = varName.IndexOf('[');
-                    int closeBracket = varName.IndexOf(']');
-                    string arrName = varName.Split('[')[0];
-                    if (!int.TryParse(varName.Substring(openBracket + 1, closeBracket - openBracket - 1), out int arrayIndexCount))
-                    {
-                        Error($"Failed parsing length for array {arrName} | line {lineNumber}, {linePosition}");
-                    }
-                    Array arr = new Array(arrName, CurrentFunction.FrameVars, arrayIndexCount);
-                    CurrentFunction.Arrays.Add(arr);
-                    //Add the array as a single variable
-                    Variable variable = new Variable(arrName, CurrentFunction.FrameVars + 1, declType);
-                    variable.Specifier = declSpec;
+                    Error($"Failed parsing length for array {arrName} | line {lineNumber}, {linePosition}");
+                }
+                Array arr = new Array(arrName, CurrentFunction.FrameVars, arrayIndexCount);
+                CurrentFunction.Arrays.Add(arr);
+                //Add the array as a single variable
+                Variable variable = new Variable(arrName, CurrentFunction.FrameVars + 1, declType);
+                variable.Specifier = declSpec;
+                variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+                variable.Value.Type = variable.Type;
+                variable.Value.IsDefault = true;
+                CurrentFunction.Variables.Add(variable);
+                arrayIndexCount--;
+                for (int i = 0; i < arrayIndexCount; i++)
+                {
+                    variable = new Variable($"{arrName}_{i + 1}", CurrentFunction.FrameVars + 1, declType);
                     variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
                     variable.Value.Type = variable.Type;
                     variable.Value.IsDefault = true;
                     CurrentFunction.Variables.Add(variable);
-                    arrayIndexCount--;
-                    for (int i = 0; i < arrayIndexCount; i++)
-                    {
-                        variable = new Variable($"{arrName}_{i + 1}", CurrentFunction.FrameVars + 1, declType);
-                        variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-                        variable.Value.Type = variable.Type;
-                        variable.Value.IsDefault = true;
-                        CurrentFunction.Variables.Add(variable);
-                    }
+                }
+            }
+            else
+            {
+                Variable variable;
+                //Specified as static
+                if (declSpec == Specifier.Static)
+                {
+                    variable = new Variable(varName, Script.StaticVariables.Count + 1, declType);
+                    Script.StaticVariables.Add(variable);
                 }
                 else
                 {
-                    Variable variable;
-                    //Specified as static
-                    if (declSpec == Specifier.Static)
+                    if (CurrentFunction == null)
                     {
-                        variable = new Variable(varName, Script.StaticVariables.Count + 1, declType);
-                        Script.StaticVariables.Add(variable);
+                        Error($"Non-static variable used outside of function scope | line {lineNumber},{linePosition}");
                     }
-                    else
+                    variable = new Variable(varName, CurrentFunction.FrameVars + 1, declType);
+                    CurrentFunction.Variables.Add(variable);
+                }
+                //See if this variable is being initialized
+                //If not, then we'll give it a default value
+                if (initializer != null)
+                {
+                    var resp = visitor.VisitInitDeclarator(declarator);
+                    if (resp.Data != null)
                     {
-                        if (CurrentFunction == null)
-                        {
-                            Error($"Non-static variable used outside of function scope | line {lineNumber},{linePosition}");
-                        }
-                        variable = new Variable(varName, CurrentFunction.FrameVars + 1, declType);
-                        CurrentFunction.Variables.Add(variable);
+                        variable.Value.Value = resp.Data.ToString();
                     }
-                    //See if this variable is being initialized
-                    //If not, then we'll give it a default value
-                    if (initializer != null)
-                    {
-                        var resp = visitor.VisitInitDeclarator(declarator);
-                        if (resp.Data != null)
-                        {
-                            variable.Value.Value = resp.Data.ToString();
-                        }
-                        variable.Value.Type = resp.Type;
-                        variable.Value.IsDefault = false;
-                    }
-                    else
-                    {
-                        variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-                        variable.Value.Type = variable.Type;
-                        variable.Value.IsDefault = true;
-                    }
+                    variable.ValueAssembly = resp.Assembly;
+                    variable.Value.Type = resp.Type;
+                    variable.Value.IsDefault = false;
+                }
+                else
+                {
+                    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+                    variable.Value.Type = variable.Type;
+                    variable.Value.IsDefault = true;
                 }
             }
 

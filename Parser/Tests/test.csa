@@ -2,12 +2,15 @@
 :__script_entry__
 Function 0 2 0
 //Auto assigning 1 statics
+CallNative PLAYER_PED_ID 0 1
 setStatic1 1 //id
 Call @main
 Return 0 0
 
 :main
 Function 0 3 0
+push_0
+setGlobal2 10589 //Global_10589
 :loop_0
 CallNative PLAYER_PED_ID 0 1
 push_0
