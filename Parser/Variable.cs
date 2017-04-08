@@ -16,11 +16,22 @@ namespace RAGE.Parser
 
         public List<string> ValueAssembly { get; set; }
 
+        public Specifier Specifier { get; set; }
+
         public Variable(string name, int id, string type)
         {
             Name = name;
             FrameId = id;
             Type = Utilities.GetTypeFromDeclaration(type);
+            Value = new VariableValue();
+            ValueAssembly = new List<string>();
+        }
+
+        public Variable(string name, int id, DataType type)
+        {
+            Name = name;
+            FrameId = id;
+            Type = type;
             Value = new VariableValue();
             ValueAssembly = new List<string>();
         }

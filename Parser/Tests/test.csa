@@ -1,11 +1,8 @@
-//Compiled using RAGE-C by Tustin 4/6/2017
+//Compiled using RAGE-C by Tustin 4/7/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 2 statics
-push1 50
-setStatic1 1 //items
-CallNative PLAYER_PED_ID 0 1
-setStatic1 2 //id
+//Auto assigning 1 statics
+setStatic1 1 //id
 Call @main
 Return 0 0
 
@@ -16,10 +13,6 @@ CallNative PLAYER_PED_ID 0 1
 push_0
 CallNative IS_PED_IN_ANY_VEHICLE 2 1
 JumpFalse @selection_end_0
-CallNative PLAYER_PED_ID 0 1
-push_0
-CallNative GET_VEHICLE_PED_IS_IN 2 1
-setF1 3 //vehicle
 getF1 3 //vehicle
 push_0
 CallNative SET_VEHICLE_MOD_KIT 2 0
@@ -42,8 +35,6 @@ Return 0 0
 
 :testing
 Function 0 12 0
-push_0
-setF1 3 //something
 pushS 261
 push_4
 pFrame1 5 //&someArray
@@ -51,8 +42,6 @@ SetArray1 1
 push_0
 setF1 10 //i
 :loop_1
-push_0
-setF1 12 //i
 getF1 10 //i
 getF1 10 //i
 pFrame1 5 //&someArray

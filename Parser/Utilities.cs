@@ -163,6 +163,22 @@ namespace RAGE.Parser
             }
         }
 
+        public static Specifier GetSpecifierFromDeclaration(string spec)
+        {
+            switch (spec)
+            {
+                case "global":
+                return Specifier.Global;
+                case "static":
+                return Specifier.Static;
+                case "auto":
+                return Specifier.Auto;
+                default:
+                Error($"Invalid specifier '{spec}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                return Specifier.None;
+            }
+        }
+
         public static string GetDefaultValue(DataType type)
         {
             switch (type)

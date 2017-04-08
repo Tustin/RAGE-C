@@ -2,6 +2,25 @@
 
 namespace RAGE.Parser
 {
+
+    public enum ValueTypes
+    {
+        Bool,
+        Int,
+        Float,
+        String,
+        NativeCall,
+        LocalCall,
+        Variable,
+        Void,
+        Address,
+        ArgListing,
+        Not,
+        Argument,
+        Array,
+    }
+
+
     /// <summary>
     /// Wrapper for values returned in the visitor.
     /// </summary>

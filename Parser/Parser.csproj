@@ -82,6 +82,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Script.cs" />
+    <Compile Include="Specifier.cs" />
     <Compile Include="StoredContext.cs" />
     <Compile Include="Switch.cs" />
     <Compile Include="Utilities.cs" />

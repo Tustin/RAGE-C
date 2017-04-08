@@ -1,6 +1,4 @@
-global int items = 50;
-items = 20;
-int id = PLAYER_PED_ID();
+static int id = PLAYER_PED_ID();
 
 void main() {
     while (true) {
@@ -18,7 +16,6 @@ float testing() {
     int something = 0;
     int nothing;
     int someArray[5];
-    auto myThing;
     someArray[4] = 105;
     for (int i = 0; i < 5; i++) {
         someArray[i] = i;

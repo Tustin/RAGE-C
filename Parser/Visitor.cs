@@ -17,13 +17,30 @@ namespace RAGE.Parser
 
         public override Value VisitDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
         {
-            var specifier = context.declarationSpecifier();
-
-            for (int i = 0; i < specifier.Length; i++)
+            var specifiers = context.declarationSpecifier();
+            //At most, there should only be two specifiers, like so:
+            //static int myStatic = 69;
+            //Globals wont be referenced by type, so doing the following is invalid:
+            //global int someGlobal = 69;
+            if (specifiers.Length > 2)
             {
-                var test = specifier[i].GetType();
+                Error($"Too many specifiers | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
             }
-            return base.VisitDeclarationSpecifiers(context);
+            switch (specifiers.Length)
+            {
+                //Assumes theres only a type set, parse it and return
+                case 1:
+                var type = Utilities.GetTypeFromDeclaration(specifiers[0].GetText());
+                return new Value(type, Specifier.None, null);
+                //both a type and a specifier, parse them and return both
+                case 2:
+                var spec = Utilities.GetSpecifierFromDeclaration(specifiers[0].GetText());
+                var type2 = Utilities.GetTypeFromDeclaration(specifiers[1].GetText());
+                return new Value(type2, spec, null);
+                default:
+                Error($"Invalid specifier count | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                return null;
+            }
         }
         public override Value VisitDeclaration(DeclarationContext context)
         {
@@ -111,7 +128,6 @@ namespace RAGE.Parser
                     variable.Value.Type = variable.Type;
                     variable.Value.IsDefault = true;
                 }
-
 
                 value.Data = variable;
                 return value;
