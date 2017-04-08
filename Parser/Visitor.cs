@@ -244,7 +244,7 @@ namespace RAGE.Parser
             Value right = VisitAssignmentExpression(context.assignmentExpression());
 
             Variable variable = null;
-            if (left.Type != DataType.Array && left.Type != DataType.Global)
+            if (left.Type != DataType.Array && left.Type != DataType.Global && left.Type != DataType.GlobalArray)
             {
                 variable = left.OriginalVariable ?? RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
                 if (variable == null)
@@ -295,6 +295,14 @@ namespace RAGE.Parser
                     }
                     code.AddRange(right.Assembly);
                     code.Add(Global.Set(globalIndex));
+                    return new Value(DataType.Int, null, code);
+                }
+
+                //Use global opcodes
+                if (left.Type == DataType.GlobalArray)
+                {
+                    code.AddRange(right.Assembly);
+                    code.AddRange(left.Assembly);
                     return new Value(DataType.Int, null, code);
                 }
 
@@ -895,50 +903,95 @@ namespace RAGE.Parser
                 //Array
                 case "[":
                 string arrayName = context.GetText().Split('[')[0];
-                //Find array
-                Array array = RAGEListener.CurrentFunction.Arrays.GetArray(arrayName);
-                Variable arrayVar = RAGEListener.CurrentFunction.Variables.GetVariable(array.Name);
-                if (array == null)
+                if (arrayName.StartsWith("Global_"))
                 {
-                    Error($"No array '{arrayName}' exists  | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                    return null;
-                }
-                string index = context.expression().GetText();
-                //Make sure this is a variable or an int
-                var indexType = Utilities.GetType(RAGEListener.CurrentFunction, index);
-                if (indexType != DataType.Int && indexType != DataType.Variable)
-                {
-                    Error($"Index used for array is not a valid indexer | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                    return null;
-                }
-                //If it's a static int, make sure it's inside the bounds of the array
-                if (indexType == DataType.Int)
-                {
-                    int val = int.Parse(index);
-                    if (val >= array.Length)
+                    var pieces = arrayName.Split('_');
+                    if (!int.TryParse(pieces[1], out int globalIndex))
                     {
-                        Error($"Index '{val}' exceeds the length of array '{arrayName}' (size={array.Length}) | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        Error($"Global variable '{arrayName}' has an invalid global index | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     }
+                    string index = context.expression().GetText();
+                    //Make sure this is a variable or an int
+                    var indexType = Utilities.GetType(RAGEListener.CurrentFunction, index);
+                    if (indexType != DataType.Int && indexType != DataType.Variable)
+                    {
+                        Error($"Index used for global is not a valid indexer | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return null;
+                    }
+                    //If it's a static int, make sure it's inside the bounds of the array
+                    if (indexType == DataType.Int)
+                    {
+                        int val = int.Parse(index);
 
-                    //Build stack
-                    code.Add(Push.Int(index));
-                    code.Add(FrameVar.GetPointer(arrayVar));
-                    code.Add(Opcodes.Array.Set());
-                }
-                else if (indexType == DataType.Variable)
-                {
-                    Variable vVar = RAGEListener.CurrentFunction.Variables.GetVariable(index);
-                    if (vVar == null)
-                    {
-                        Error($"Assumed variable '{index}' used for indexer, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        //Build stack
+                        code.Add(Global.GetPointer(globalIndex));
+                        code.Add(Immediate.Set(val));
                     }
-                    var expr = VisitExpression(context.expression());
-                    //Since its a var, just generate the code and hope the dev knows what theyre doing
-                    code.AddRange(expr.Assembly);
-                    code.Add(FrameVar.GetPointer(arrayVar));
-                    code.Add(Opcodes.Array.Set());
+                    else if (indexType == DataType.Variable)
+                    {
+                        Variable vVar = RAGEListener.CurrentFunction.Variables.GetVariable(index);
+                        if (vVar == null)
+                        {
+                            Error($"Assumed variable '{index}' used for indexer, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        }
+                        var expr = VisitExpression(context.expression());
+                        //Since its a var, just generate the code and hope the dev knows what theyre doing
+                        code.Add(Global.GetPointer(globalIndex));
+                        code.AddRange(expr.Assembly);
+                        code.Add(Immediate.GetStackPointer());
+                    }
+                    return new Value(DataType.GlobalArray, null, code);
+
                 }
-                return new Value(DataType.Array, null, code);
+                else
+                {
+                    //Find array
+                    Array array = RAGEListener.CurrentFunction.Arrays.GetArray(arrayName);
+                    Variable arrayVar = RAGEListener.CurrentFunction.Variables.GetVariable(array.Name);
+                    if (array == null)
+                    {
+                        Error($"No array '{arrayName}' exists  | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return null;
+                    }
+                    string index = context.expression().GetText();
+                    //Make sure this is a variable or an int
+                    var indexType = Utilities.GetType(RAGEListener.CurrentFunction, index);
+                    if (indexType != DataType.Int && indexType != DataType.Variable)
+                    {
+                        Error($"Index used for array is not a valid indexer | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return null;
+                    }
+                    //If it's a static int, make sure it's inside the bounds of the array
+                    if (indexType == DataType.Int)
+                    {
+                        int val = int.Parse(index);
+                        if (val >= array.Length)
+                        {
+                            Error($"Index '{val}' exceeds the length of array '{arrayName}' (size={array.Length}) | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        }
+
+                        //Build stack
+                        code.Add(Push.Int(index));
+                        code.Add(FrameVar.GetPointer(arrayVar));
+                        code.Add(Opcodes.Array.Set());
+                    }
+                    else if (indexType == DataType.Variable)
+                    {
+                        Variable vVar = RAGEListener.CurrentFunction.Variables.GetVariable(index);
+                        if (vVar == null)
+                        {
+                            Error($"Assumed variable '{index}' used for indexer, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        }
+                        var expr = VisitExpression(context.expression());
+                        //Since its a var, just generate the code and hope the dev knows what theyre doing
+                        code.AddRange(expr.Assembly);
+                        code.Add(FrameVar.GetPointer(arrayVar));
+                        code.Add(Opcodes.Array.Set());
+                    }
+                    return new Value(DataType.Array, null, code);
+                }
+                Error($"Unable to parse array | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                return null;
                 default:
                 Error($"Unknown postfix type '{symbol}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                 return null;

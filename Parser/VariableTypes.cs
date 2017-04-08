@@ -16,5 +16,6 @@
         Argument,
         Array,
         Global,
+        GlobalArray,
     }
 }

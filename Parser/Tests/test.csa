@@ -1,4 +1,4 @@
-//Compiled using RAGE-C by Tustin 4/7/2017
+//Compiled using RAGE-C by Tustin 4/8/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 1 statics
@@ -10,7 +10,8 @@ Return 0 0
 :main
 Function 0 3 0
 push_0
-setGlobal2 10589 //Global_10589
+pGlobal2 10589 //&Global_10589
+setImmediate1 5 //imm 5
 :loop_0
 CallNative PLAYER_PED_ID 0 1
 push_0
