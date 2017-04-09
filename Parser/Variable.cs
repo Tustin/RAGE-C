@@ -26,6 +26,7 @@ namespace RAGE.Parser
             Type = Utilities.GetTypeFromDeclaration(type);
             Value = new VariableValue();
             ValueAssembly = new List<string>();
+            Specifier = Specifier.None;
         }
 
         public Variable(string name, int id, DataType type)
@@ -35,6 +36,8 @@ namespace RAGE.Parser
             Type = type;
             Value = new VariableValue();
             ValueAssembly = new List<string>();
+            Specifier = Specifier.None;
+
         }
     }
 }

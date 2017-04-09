@@ -87,7 +87,7 @@ namespace RAGE.Parser
                     return (ContainsParameterName(var) || ContainsVariable(var));
                 }
 
-                return (GetParameter(var) != null) || (!v.IsIterator);
+                return (GetParameter(var) != null) || (v.IsIterator);
             }
             return (ContainsParameterName(var) || ContainsVariable(var));
         }

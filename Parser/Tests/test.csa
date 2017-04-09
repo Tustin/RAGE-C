@@ -1,4 +1,4 @@
-//Compiled using RAGE-C by Tustin 4/8/2017
+//Compiled using RAGE-C by Tustin 4/9/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 1 statics
@@ -7,12 +7,36 @@ setStatic1 1 //id
 Call @main
 Return 0 0
 
+:testing
+Function 2 6 0
+pushS 261
+push_4
+pFrame1 0 //&someArray
+SetArray1 1
+push_0
+setF1 6 //i
+:loop_0
+getF1 6 //i
+getF1 6 //i
+pFrame1 0 //&someArray
+SetArray1 1
+getF1 6 //i
+Add1 1
+setF1 6 //i
+getF1 6 //i
+push_5
+JumpLT @loop_0
+Return 0 0
+
 :main
 Function 0 3 0
 push_0
 pGlobal2 10589 //&Global_10589
 setImmediate1 5 //imm 5
-:loop_0
+push_1
+PushString "hi"
+Call @testing
+:loop_1
 CallNative PLAYER_PED_ID 0 1
 push_0
 CallNative IS_PED_IN_ANY_VEHICLE 2 1
@@ -34,27 +58,6 @@ CallNative SET_VEHICLE_NUMBER_PLATE_TEXT 2 0
 :selection_end_0
 push_0
 CallNative WAIT 1 0
-Jump @loop_0
-Return 0 0
-
-:testing
-Function 2 12 0
-pushS 261
-push_4
-pFrame1 5 //&someArray
-SetArray1 1
-push_0
-setF1 10 //i
-:loop_1
-getF1 10 //i
-getF1 10 //i
-pFrame1 5 //&someArray
-SetArray1 1
-getF1 10 //i
-Add1 1
-setF1 10 //i
-getF1 10 //i
-push_5
-JumpLT @loop_1
+Jump @loop_1
 Return 0 0
 

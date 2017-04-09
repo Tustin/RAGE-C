@@ -102,6 +102,14 @@ namespace RAGE.Parser
                 {
                     if (RAGEListener.CurrentFunction.AlreadyDeclared(varName, true))
                     {
+                        //Check to see if the already declared variable is an iterator
+                        //This can happen due to the IterationStatement generating the for loop iterator before the
+                        //Declaration does
+                        var iterator = RAGEListener.CurrentFunction.GetVariable(varName) as Variable;
+                        if (iterator.IsIterator)
+                        {
+                            return new Value(DataType.Iterator, null, null);
+                        }
                         Error($"'{varName}' has already been declared in this scope | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     }
                 }
@@ -111,7 +119,7 @@ namespace RAGE.Parser
                 if (declSpec == Specifier.Static)
                 {
                     variable = new Variable(varName, Script.StaticVariables.Count + 1, declType);
-                    Script.StaticVariables.Add(variable);
+                    variable.Specifier = declSpec;
                 }
                 else
                 {
@@ -120,6 +128,7 @@ namespace RAGE.Parser
                         Error($"Non-static variable used outside of function scope | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
                     }
                     variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, declType);
+                    variable.Specifier = declSpec;
                 }
                 //See if this variable is being initialized
                 //If not, then we'll give it a default value
@@ -601,28 +610,30 @@ namespace RAGE.Parser
                         return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
                     }
                 }
-                if (left.Data != null)
-                {
-                    if (left.OriginalVariable != null)
-                    {
-                        code.Add(FrameVar.Get(left.OriginalVariable));
-                    }
-                    else
-                    {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
-                    }
-                }
-                if (right.Data != null)
-                {
-                    if (right.OriginalVariable != null)
-                    {
-                        code.Add(FrameVar.Get(right.OriginalVariable));
-                    }
-                    else
-                    {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
-                    }
-                }
+                code.AddRange(left.Assembly);
+                code.AddRange(right.Assembly);
+                //if (left.Data != null)
+                //{
+                //    if (left.OriginalVariable != null)
+                //    {
+                //        code.Add(FrameVar.Get(left.OriginalVariable));
+                //    }
+                //    else
+                //    {
+                //        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
+                //    }
+                //}
+                //if (right.Data != null)
+                //{
+                //    if (right.OriginalVariable != null)
+                //    {
+                //        code.Add(FrameVar.Get(right.OriginalVariable));
+                //    }
+                //    else
+                //    {
+                //        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
+                //    }
+                //}
                 code.Add(Jump.Generate(JumpType.LessThan, CurrentContext.Label));
                 return new Value(DataType.Bool, null, code);
 
@@ -943,10 +954,38 @@ namespace RAGE.Parser
                 if (Script.Functions.ContainFunction(expression))
                 {
                     var args = VisitArgumentExpressionList(context.argumentExpressionList());
+                    var func = Script.Functions.GetFunction(expression);
                     //No args
                     if (args == null)
                     {
+                        if (func.Parameters.Count > 0)
+                        {
+                            Error($"Function '{expression}' requires {func.Parameters.Count} arguments, none given | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                        }
                         return new Value(DataType.LocalCall, null, null);
+                    }
+                    else
+                    {
+                        var argData = args.Data as List<Value>;
+                        argData.Reverse();
+                        if (argData.Count != func.Parameters.Count)
+                        {
+                            Error($"Function '{expression}' requires {func.Parameters.Count} arguments, {argData.Count} given | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                        }
+                        foreach (var v in argData)
+                        {
+                            if (v.Assembly.Count == 0)
+                            {
+                                code.Add(Push.Generate(v.Data.ToString(), v.Type));
+                            }
+                            else
+                            {
+                                code.AddRange(v.Assembly);
+                            }
+                        }
+                        code.Add(Call.Local(expression));
+                        return new Value(DataType.NativeCall, null, code);
+
                     }
                     //@TODO: Argument checking
                 }
@@ -968,7 +1007,6 @@ namespace RAGE.Parser
                     else if (args == null && native.Params.Count != 0)
                     {
                         Error($"{expression} takes {native.Params.Count} arguments, none given | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                        return null;
                     }
 
                     List<Value> argsList = (List<Value>)args.Data;

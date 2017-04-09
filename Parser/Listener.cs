@@ -145,7 +145,6 @@ namespace RAGE.Parser
         //New variables
         public override void EnterDeclaration(DeclarationContext context)
         {
-
             var variable = visitor.VisitDeclaration(context);
 
             if (variable.Type == DataType.Array)

@@ -9,7 +9,5 @@
         DataType Type { get; set; }
 
         Specifier Specifier { get; set; }
-
-
     }
 }
