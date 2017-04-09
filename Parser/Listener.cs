@@ -50,6 +50,7 @@ namespace RAGE.Parser
         public override void EnterFunctionDefinition(FunctionDefinitionContext context)
         {
             //Generate script entry point if it doesn't already exist
+            //@Cleanup: Make this not so dumb
             if (Core.AssemblyCode.Count == 0)
             {
                 var entryContents = new List<string>();
@@ -59,31 +60,22 @@ namespace RAGE.Parser
                     entryContents.Add($"//Auto assigning {Script.StaticVariables.Count} statics");
                     foreach (var variable in Script.StaticVariables)
                     {
-                        entryContents.AddRange(variable.ValueAssembly);
-                        entryContents.Add(StaticVar.Set(variable));
+                        if (variable is Array)
+                            continue;
+                        Variable var = variable as Variable;
+                        entryContents.AddRange(var.ValueAssembly);
+                        entryContents.Add(StaticVar.Set(var));
                     }
                 }
                 entryContents.Add("Call @main");
                 entryContents.Add("Return 0 0");
                 Core.AssemblyCode.Add("__script_entry__", entryContents);
             }
-            var aa = context.declarationSpecifiers();
-            var ff = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
+            var specifier = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
 
             string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
-            string type = context.GetChild(0).GetText();
 
             var comp = context.declarationSpecifiers();
-            //var ff = comp.declarationSpecifier()[0].alignmentSpecifier();
-
-            DataType vType = Utilities.GetTypeFromDeclaration(type);
-
-            if (!Function.IsValidType(vType))
-            {
-                //Won't get thrown because GetTypeFromDeclaration will throw an exception on error
-                //We'll keep it here for the future (possibly)
-                Error($"Type of function {name} is not valid");
-            }
 
             //Add the default function entry instruction
             //This will get automatically changed in ExitFunctionDefinition to have the right frame variable count
@@ -92,15 +84,32 @@ namespace RAGE.Parser
                 "Function 0 2 0"
             });
 
-            CurrentFunction = new Function(name, vType);
+            CurrentFunction = new Function(name, specifier.Type);
             Script.Functions.Add(CurrentFunction);
             LogVerbose($"Entering function '{name}'...");
         }
 
         public override void EnterParameterList([NotNull] ParameterListContext context)
         {
-            var gg = context.GetText();
-            base.EnterParameterList(context);
+            //For some reason, this context gets entered twice
+            //Might be doing it seperately for each arg?
+            if (CurrentFunction.Parameters.Count > 0)
+            {
+                return;
+            }
+            //Loop through each param
+            while (context != null)
+            {
+                var decl = context.parameterDeclaration();
+                var paramName = decl.declarator().GetText();
+                if (CurrentFunction.ContainsParameterName(paramName))
+                {
+                    Error($"Function '{CurrentFunction.Name}' already contains a parameter named '{paramName}' | line {lineNumber}, {linePosition}");
+                }
+                var specifier = visitor.VisitDeclarationSpecifiers(decl.declarationSpecifiers());
+                CurrentFunction.Parameters.Add(new Parameter(specifier.Type, paramName));
+                context = context.parameterList();
+            }
         }
         public override void EnterDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
         {
@@ -114,7 +123,7 @@ namespace RAGE.Parser
             var function = Core.AssemblyCode.FindFunction(CurrentFunction.Name);
             string funcEntry = function.Value[0];
             //@TODO: Update first 0 for param count
-            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function 0 {CurrentFunction.FrameVars} 0");
+            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function {CurrentFunction.Parameters.Count} {CurrentFunction.FrameVars} 0");
             function.Value[0] = funcEntry;
             Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Opcodes.Return.Generate());
             LogVerbose($"Leaving function '{CurrentFunction.Name}'");
@@ -136,153 +145,164 @@ namespace RAGE.Parser
         //New variables
         public override void EnterDeclaration(DeclarationContext context)
         {
-            string gg = context.GetText();
 
-            var specifiers = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
+            var variable = visitor.VisitDeclaration(context);
 
-            DataType declType = specifiers.Type; //Should always have a type
-            Specifier declSpec = (Specifier)specifiers.Data; //Will be None if there is no specifier
-
-            var declarator = context.initDeclaratorList().initDeclarator();
-            var varName = declarator.declarator().GetText();
-
-            //Will be null if no value is being set
-            var initializer = declarator.initializer();
-
-            //Handle statics and frame vars the same minus a few differences
-            //Array
-            if (varName.Contains("["))
+            if (variable.Type == DataType.Array)
             {
-                //Get the count
-                int openBracket = varName.IndexOf('[');
-                int closeBracket = varName.IndexOf(']');
-                string arrName = varName.Split('[')[0];
-                if (!int.TryParse(varName.Substring(openBracket + 1, closeBracket - openBracket - 1), out int arrayIndexCount))
+                Array arr = variable.Data as Array;
+                if (arr.Specifier == Specifier.Static)
                 {
-                    Error($"Failed parsing length for array {arrName} | line {lineNumber}, {linePosition}");
-                }
-                Array arr = new Array(arrName, CurrentFunction.FrameVars, arrayIndexCount);
-                CurrentFunction.Arrays.Add(arr);
-                //Add the array as a single variable
-                Variable variable = new Variable(arrName, CurrentFunction.FrameVars + 1, declType);
-                variable.Specifier = declSpec;
-                variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-                variable.Value.Type = variable.Type;
-                variable.Value.IsDefault = true;
-                CurrentFunction.Variables.Add(variable);
-                arrayIndexCount--;
-                for (int i = 0; i < arrayIndexCount; i++)
-                {
-                    variable = new Variable($"{arrName}_{i + 1}", CurrentFunction.FrameVars + 1, declType);
-                    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-                    variable.Value.Type = variable.Type;
-                    variable.Value.IsDefault = true;
-                    CurrentFunction.Variables.Add(variable);
-                }
-            }
-            else
-            {
-                Variable variable;
-                //Specified as static
-                if (declSpec == Specifier.Static)
-                {
-                    variable = new Variable(varName, Script.StaticVariables.Count + 1, declType);
-                    Script.StaticVariables.Add(variable);
+                    Script.StaticVariables.Add(arr);
                 }
                 else
                 {
-                    if (CurrentFunction == null)
-                    {
-                        Error($"Non-static variable used outside of function scope | line {lineNumber},{linePosition}");
-                    }
-                    variable = new Variable(varName, CurrentFunction.FrameVars + 1, declType);
-                    CurrentFunction.Variables.Add(variable);
+                    CurrentFunction.Variables.Add(arr);
                 }
-                //See if this variable is being initialized
-                //If not, then we'll give it a default value
-                if (initializer != null)
+                ////Add the array as a single variable
+                //Variable variable = new Variable(arrName, RAGEListener.CurrentFunction.FrameVars + 1, declType);
+                //variable.Specifier = declSpec;
+                //variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+                //variable.Value.Type = variable.Type;
+                //variable.Value.IsDefault = true;
+                //RAGEListener.CurrentFunction.Variables.Add(variable);
+                //arrayIndexCount--;
+                //for (int i = 0; i < arrayIndexCount; i++)
+                //{
+                //    variable = new Variable($"{arrName}_{i + 1}", RAGEListener.CurrentFunction.FrameVars + 1, declType);
+                //    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+                //    variable.Value.Type = variable.Type;
+                //    variable.Value.IsDefault = true;
+                //    RAGEListener.CurrentFunction.Variables.Add(variable);
+                //}
+            }
+            else if (variable.Type == DataType.Variable)
+            {
+                Variable var = variable.Data as Variable;
+                if (var.IsIterator)
                 {
-                    var resp = visitor.VisitInitDeclarator(declarator);
-                    if (resp.Data != null)
-                    {
-                        variable.Value.Value = resp.Data.ToString();
-                    }
-                    variable.ValueAssembly = resp.Assembly;
-                    variable.Value.Type = resp.Type;
-                    variable.Value.IsDefault = false;
+                    Error("you got it, dude!");
+                }
+                if (var.Specifier == Specifier.Static)
+                {
+                    Script.StaticVariables.Add(var);
                 }
                 else
                 {
-                    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-                    variable.Value.Type = variable.Type;
-                    variable.Value.IsDefault = true;
+                    CurrentFunction.Variables.Add(var);
                 }
             }
+            //string gg = context.GetText();
 
-            //Value res = visitor.VisitDeclaration(context);
+            //var specifiers = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
 
-            //if (res.Data == null)
+            //DataType declType = specifiers.Type; //Should always have a type
+            //Specifier declSpec = (Specifier)specifiers.Data; //Will be None if there is no specifier
+
+            //var declarator = context.initDeclaratorList().initDeclarator();
+            //var varName = declarator.declarator().GetText();
+
+            ////Will be null if no value is being set
+            //var initializer = declarator.initializer();
+
+            ////Handle statics and frame vars the same minus a few differences
+            ////Array
+            //if (varName.Contains("["))
             //{
-            //    Error($"Found variable declaration but got null | line {lineNumber}, {linePosition}");
-            //    return;
-            //}
-            //if (res.Data is Variable CurrentVariable)
-            //{
-            //    if (CurrentVariable.Value != null && !CurrentVariable.Value.IsDefault)
+            //    //Get the count
+            //    int openBracket = varName.IndexOf('[');
+            //    int closeBracket = varName.IndexOf(']');
+            //    string arrName = varName.Split('[')[0];
+            //    if (CurrentFunction == null)
             //    {
-            //        if (CurrentFunction != null)
+            //        if (Script.StaticVariables.ContainVariable(arrName))
             //        {
-            //            var current = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
-            //            current.AddRange(res.Assembly);
-            //            current.Add(FrameVar.Set(CurrentVariable));
-            //        }
-            //        else
-            //        {
-            //            CurrentVariable.ValueAssembly = res.Assembly;
+            //            Error($"Static variable '{arrName}' has already been declared | line {lineNumber}, {linePosition}");
             //        }
             //    }
+            //    else
+            //    {
+            //        if (CurrentFunction.AlreadyDeclared(arrName))
+            //        {
+            //            Error($"'{arrName}' has already been declared in this scope | line {lineNumber}, {linePosition}");
+            //        }
+            //    }
+            //    if (!int.TryParse(varName.Substring(openBracket + 1, closeBracket - openBracket - 1), out int arrayIndexCount))
+            //    {
+            //        Error($"Failed parsing length for array {arrName} | line {lineNumber}, {linePosition}");
+            //    }
+            //    Array arr = new Array(arrName, CurrentFunction.FrameVars, arrayIndexCount);
+            //    CurrentFunction.Arrays.Add(arr);
+            //    //Add the array as a single variable
+            //    Variable variable = new Variable(arrName, CurrentFunction.FrameVars + 1, declType);
+            //    variable.Specifier = declSpec;
+            //    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+            //    variable.Value.Type = variable.Type;
+            //    variable.Value.IsDefault = true;
+            //    CurrentFunction.Variables.Add(variable);
+            //    arrayIndexCount--;
+            //    for (int i = 0; i < arrayIndexCount; i++)
+            //    {
+            //        variable = new Variable($"{arrName}_{i + 1}", CurrentFunction.FrameVars + 1, declType);
+            //        variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+            //        variable.Value.Type = variable.Type;
+            //        variable.Value.IsDefault = true;
+            //        CurrentFunction.Variables.Add(variable);
+            //    }
             //}
-        }
-
-        public override void EnterDesignation([NotNull] DesignationContext context)
-        {
-            string aa = context.GetText();
-            base.EnterDesignation(context);
-        }
-
-        public override void EnterDesignator([NotNull] DesignatorContext context)
-        {
-            string aa = context.GetText();
-            base.EnterDesignator(context);
-        }
-
-        public override void EnterInitializer([NotNull] InitializerContext context)
-        {
-            string aa = context.GetText();
-            base.EnterInitializer(context);
-        }
-
-        //Set a variable to something
-        public override void EnterExpression(ExpressionContext context)
-        {
-            //string ff = context.GetText();
-            //var poo = visitor.VisitExpression(context);
-            //string aa = context.assignmentExpression().GetText();
-            //List<string> pieces = context.GetText().ExplodeAndClean('=');
-            //if (pieces.Count != 2)
+            //else
             //{
-            //    var test = visitor.VisitExpression(context);
-            //    return;
+            //    if (CurrentFunction == null)
+            //    {
+            //        if (Script.StaticVariables.ContainVariable(varName))
+            //        {
+            //            Error($"Static variable '{varName}' has already been declared | line {lineNumber}, {linePosition}");
+            //        }
+            //    }
+            //    else
+            //    {
+            //        if (CurrentFunction.AlreadyDeclared(varName))
+            //        {
+            //            Error($"'{varName}' has already been declared in this scope | line {lineNumber}, {linePosition}");
+            //        }
+            //    }
+
+            //    Variable variable;
+            //    //Specified as static
+            //    if (declSpec == Specifier.Static)
+            //    {
+            //        variable = new Variable(varName, Script.StaticVariables.Count + 1, declType);
+            //        Script.StaticVariables.Add(variable);
+            //    }
+            //    else
+            //    {
+            //        if (CurrentFunction == null)
+            //        {
+            //            Error($"Non-static variable used outside of function scope | line {lineNumber},{linePosition}");
+            //        }
+            //        variable = new Variable(varName, CurrentFunction.FrameVars + 1, declType);
+            //        CurrentFunction.Variables.Add(variable);
+            //    }
+            //    //See if this variable is being initialized
+            //    //If not, then we'll give it a default value
+            //    if (initializer != null)
+            //    {
+            //        var resp = visitor.VisitInitDeclarator(declarator);
+            //        if (resp.Data != null)
+            //        {
+            //            variable.Value.Value = resp.Data.ToString();
+            //        }
+            //        variable.ValueAssembly = resp.Assembly;
+            //        variable.Value.Type = resp.Type;
+            //        variable.Value.IsDefault = false;
+            //    }
+            //    else
+            //    {
+            //        variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+            //        variable.Value.Type = variable.Type;
+            //        variable.Value.IsDefault = true;
+            //    }
             //}
-            //string variableName = pieces[0];
-            //string variableValue = pieces[1];
-            ////@TODO: At some point this needs to check if the var is in scope
-            //if (!currentFunction.Variables.ContainVariable(variableName))
-            //{
-            //    throw new Exception("Variable does not exist");
-            //}
-            //var data = visitor.VisitAssignmentExpression(context.assignmentExpression());
-            //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.AddRange(data.Assembly);
         }
 
         public override void EnterStatement(StatementContext context)
@@ -461,11 +481,13 @@ namespace RAGE.Parser
             {
                 //Generate the variable for the for loop
                 var variable = visitor.VisitDeclaration(context.declaration());
+
                 if (!(variable.Data is Variable v))
                 {
                     Error($"Expected a Variable object from VisitDeclaration, got {variable.Data.GetType()} | line {lineNumber},{linePosition}");
                     return;
                 }
+                v.IsIterator = true;
                 CurrentFunction.Variables.Add(v);
                 CurrentVariable = v;
 

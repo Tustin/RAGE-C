@@ -2,17 +2,17 @@
 {
     public static class FrameVar
     {
-        public static string Get(Variable var)
+        public static string Get(IVariable var)
         {
             return $"getF1 {var.FrameId} //{var.Name}";
         }
 
-        public static string Set(Variable var)
+        public static string Set(IVariable var)
         {
             return $"setF1 {var.FrameId} //{var.Name}";
         }
 
-        public static string GetPointer(Variable var)
+        public static string GetPointer(IVariable var)
         {
             return $"pFrame1 {var.FrameId} //&{var.Name}";
         }

@@ -1,14 +1,18 @@
-﻿namespace RAGE.Parser
+﻿using System;
+
+namespace RAGE.Parser
 {
     //VariableOffset - The beginning of the first item in the array offset by the amount of frame variables
     //Length - The amount of items in the array
-    public class Array
+    public class Array : IVariable
     {    
         public int VariableOffset { get; set; }
 
         public int Length { get; set; }
-
         public string Name { get; set; }
+        public int FrameId { get; set; }
+        public DataType Type { get; set; }
+        public Specifier Specifier { get; set; }
 
         public Array(string name, int offset, int length)
         {

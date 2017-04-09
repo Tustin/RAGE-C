@@ -26,20 +26,21 @@ namespace RAGE.Parser
             return functions.Where(a => a.Name == name).FirstOrDefault();
         }
 
-        public static bool ContainVariable(this List<Variable> variables, string name)
+        public static bool ContainVariable(this List<IVariable> variables, string name)
         {
             return variables.Any(a => a.Name == name);
         }
 
-        public static Variable GetVariable(this List<Variable> variables, string name)
+        public static IVariable GetVariable(this List<IVariable> variables, string name)
         {
             return variables.Where(a => a.Name == name).FirstOrDefault();
         }
 
-        public static Array GetArray(this List<Array> arrays, string name)
+        public static IVariable GetArray(this List<IVariable> variables, string name)
         {
-            return arrays.Where(a => a.Name == name).FirstOrDefault();
+            return variables.Where(a => a.Name == name && a is Array).FirstOrDefault();
         }
+
         public static KeyValuePair<string, List<string>> FindFunction(this Dictionary<string, List<string>> dictionary, string name)
         {
             return dictionary.Where(a => a.Key == name).FirstOrDefault();

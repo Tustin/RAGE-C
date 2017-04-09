@@ -31,10 +31,10 @@ namespace RAGE.Parser
         internal List<string> Assembly { get; set; }
         //This is if the value inside a variable is a const and can be equated by the compiler
         //Store the original variable here so we can reference if necessary
-        internal Variable OriginalVariable { get; set; }
+        internal IVariable OriginalVariable { get; set; }
 
 
-        public Value(DataType type, object data, List<string> asm, Variable original = null) : base()
+        public Value(DataType type, object data, List<string> asm, IVariable original = null) : base()
         {
             Type = type;
             Data = data;

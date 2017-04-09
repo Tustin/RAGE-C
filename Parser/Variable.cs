@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace RAGE.Parser
 {
-    public class Variable
+    public class Variable : IVariable
     {
         public string Name { get; set; }
 
