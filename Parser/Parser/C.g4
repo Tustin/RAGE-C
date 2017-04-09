@@ -218,6 +218,7 @@ typeSpecifier
     |   'int'
     |   'long'
     |   'float'
+    |   'string'
     |   'double')
     |   structOrUnionSpecifier
     |   enumSpecifier
@@ -536,6 +537,7 @@ Short : 'short';
 Signed : 'signed';
 Sizeof : 'sizeof';
 Static : 'static';
+String : 'string';
 Struct : 'struct';
 Switch : 'switch';
 Typedef : 'typedef';

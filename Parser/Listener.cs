@@ -67,12 +67,14 @@ namespace RAGE.Parser
                 entryContents.Add("Return 0 0");
                 Core.AssemblyCode.Add("__script_entry__", entryContents);
             }
+            var aa = context.declarationSpecifiers();
+            var ff = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
 
             string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
             string type = context.GetChild(0).GetText();
 
             var comp = context.declarationSpecifiers();
-            var ff = comp.declarationSpecifier()[0].alignmentSpecifier();
+            //var ff = comp.declarationSpecifier()[0].alignmentSpecifier();
 
             DataType vType = Utilities.GetTypeFromDeclaration(type);
 
@@ -95,6 +97,11 @@ namespace RAGE.Parser
             LogVerbose($"Entering function '{name}'...");
         }
 
+        public override void EnterParameterList([NotNull] ParameterListContext context)
+        {
+            var gg = context.GetText();
+            base.EnterParameterList(context);
+        }
         public override void EnterDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
         {
             string ff = context.GetText();

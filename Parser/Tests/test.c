@@ -14,7 +14,7 @@ void main() {
     }
 }
 
-float testing() {
+float testing(int something, string bb) {
     int something = 0;
     int nothing;
     int someArray[5];

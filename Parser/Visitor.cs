@@ -990,8 +990,6 @@ namespace RAGE.Parser
                     }
                     return new Value(DataType.Array, null, code);
                 }
-                Error($"Unable to parse array | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                return null;
                 default:
                 Error($"Unknown postfix type '{symbol}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                 return null;
