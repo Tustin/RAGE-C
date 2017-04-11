@@ -178,6 +178,7 @@ typeSpecifier
     |   'long'
     |   'float'
     |   'string'
+    |   'bool'
     |   'double')
     |   structOrUnionSpecifier
     |   enumSpecifier

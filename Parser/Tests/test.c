@@ -6,6 +6,8 @@ enum MainMenu {
 };
 
 static int id = PLAYER_PED_ID();
+static int currentMenu = 0;
+static bool open = false;
 
 float testing(int something2, string theliberator) {
     int something = 0;

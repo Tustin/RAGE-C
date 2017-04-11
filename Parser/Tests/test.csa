@@ -1,7 +1,7 @@
 //Compiled using RAGE-C by Tustin 4/10/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 5 statics
+//Auto assigning 7 statics
 push_0
 setStatic1 1 //MainMenu_WORLD_MENU
 push_1
@@ -12,6 +12,10 @@ push_3
 setStatic1 4 //MainMenu_PLAYER_MENU
 CallNative PLAYER_PED_ID 0 1
 setStatic1 5 //id
+push_0
+setStatic1 6 //currentMenu
+push_0
+setStatic1 7 //open
 Call @main
 Return 0 0
 
