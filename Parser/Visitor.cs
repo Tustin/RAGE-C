@@ -304,19 +304,43 @@ namespace RAGE.Parser
         {
             return base.VisitSelectionStatement(context);
         }
+        public override Value VisitConstantExpression([NotNull] ConstantExpressionContext context)
+        {
+            if (context.conditionalExpression() != null)
+            {
+                return VisitConditionalExpression(context.conditionalExpression());
+            }
+            return base.VisitConstantExpression(context);
+        }
         public override Value VisitLabeledStatement(LabeledStatementContext context)
         {
             var label = context.GetChild(0).GetText();
             var ret = new Value();
             if (label == "case")
             {
-                var condition = context.GetChild(1).GetText();
+                var expr = VisitConstantExpression(context.constantExpression());
 
-                if (!int.TryParse(condition, out int value))
+                //var condition = context.GetChild(1).GetText();
+
+                if (expr == null && expr.Type != DataType.Int && expr.Type != DataType.Enum)
                 {
-                    Error($"Switch cases can only contain integers | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                    Error($"Case could not be evaluted | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
                 }
 
+                int value = 0;
+                if (expr.Data is int i)
+                {
+                    value = i;
+                }
+                else if (expr.Data is Enumerator e)
+                {
+                    var enumVar = e.Variable as Variable;
+                    value = int.Parse(enumVar.Value.Value);
+                }
+                else
+                {
+                    Error($"Unable to determine case type | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                }
 
                 if (RAGEListener.CurrentSwitch.Cases.Any(a => a.Condition == value))
                 {
@@ -577,24 +601,27 @@ namespace RAGE.Parser
             switch (op)
             {
                 case "==":
-                if (left.Data != null && right.Data != null) return new Value(DataType.Bool, left.Data.Equals(right.Data), new List<string>());
+                code.AddRange(left.Assembly);
+                code.AddRange(right.Assembly);
 
-                if (left.Data != null)
-                {
-                    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
-                }
-                else
-                {
-                    code.AddRange(left.Assembly);
-                }
-                if (right.Data != null)
-                {
-                    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
-                }
-                else
-                {
-                    code.AddRange(right.Assembly);
-                }
+                //if (left.Data != null && right.Data != null) return new Value(DataType.Bool, left.Data.Equals(right.Data), new List<string>());
+
+                //if (left.Data != null)
+                //{
+                //    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
+                //}
+                //else
+                //{
+                //    code.AddRange(left.Assembly);
+                //}
+                //if (right.Data != null)
+                //{
+                //    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
+                //}
+                //else
+                //{
+                //    code.AddRange(right.Assembly);
+                //}
                 code.Add(Jump.Generate(JumpType.NotEqual, CurrentContext.Label));
                 return new Value(DataType.Bool, null, code);
                 case "!=":
@@ -972,6 +999,7 @@ namespace RAGE.Parser
 
             List<string> code = new List<string>();
             IVariable variable = null;
+
             if (RAGEListener.CurrentFunction == null)
             {
                 variable = Script.StaticVariables.GetVariable(expression);
@@ -1185,6 +1213,22 @@ namespace RAGE.Parser
                     }
                     return new Value(DataType.Array, null, code);
                 }
+                //Enums (and maybe something else in the future)
+                case ".":
+                string enumName = context.postfixExpression().GetText();
+                if (!Script.Enums.ContainsEnum(enumName))
+                {
+                    Error($"Enum '{enumName}' was used but never declared | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                }
+                var thisEnum = Script.Enums.GetEnum(enumName);
+                string enumeratorName = context.Identifier().GetText();
+                if (!thisEnum.Enumerators.ContainsEnumerator(enumeratorName))
+                {
+                    Error($"Enumerator '{enumeratorName}' does not exist in enum '{enumName}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                }
+                var thisEnumerator = thisEnum.Enumerators.GetEnumerator(enumeratorName);
+                code.Add(StaticVar.Get(thisEnumerator.Variable as Variable));
+                return new Value(DataType.Enum, thisEnumerator, code);
                 default:
                 Error($"Unknown postfix type '{symbol}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                 return null;
@@ -1253,6 +1297,10 @@ namespace RAGE.Parser
                 return new Value(DataType.LocalCall, value, new List<string>());
                 case DataType.Global:
                 return new Value(DataType.Global, value, new List<string>());
+                case DataType.Static:
+                var = Script.StaticVariables.GetVariable(value);
+                code.Add(StaticVar.Get(var));
+                return new Value(DataType.Static, value, code);
                 default:
                 Error($"Type {type} is unsupported | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                 return null;

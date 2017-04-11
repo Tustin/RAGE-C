@@ -1,15 +1,15 @@
-//Compiled using RAGE-C by Tustin 4/10/2017
+//Compiled using RAGE-C by Tustin 4/11/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 7 statics
 push_0
-setStatic1 1 //MainMenu_WORLD_MENU
+setStatic1 1 //MainMenu_PLAYER_MENU
 push_1
-setStatic1 2 //MainMenu_WEAPON_MENU
+setStatic1 2 //MainMenu_VEHICLE_MENU
 push_2
-setStatic1 3 //MainMenu_VEHICLE_MENU
+setStatic1 3 //MainMenu_WEAPON_MENU
 push_3
-setStatic1 4 //MainMenu_PLAYER_MENU
+setStatic1 4 //MainMenu_WORLD_MENU
 CallNative PLAYER_PED_ID 0 1
 setStatic1 5 //id
 push_0
@@ -19,57 +19,18 @@ setStatic1 7 //open
 Call @main
 Return 0 0
 
-:testing
-Function 2 6 0
-pushS 261
-push_4
-pFrame1 0 //&someArray
-SetArray1 1
-push_0
-setF1 6 //i
-:loop_0
-getF1 6 //i
-getF1 6 //i
-pFrame1 0 //&someArray
-SetArray1 1
-getF1 6 //i
-Add1 1
-setF1 6 //i
-getF1 6 //i
-push_5
-JumpLT @loop_0
-Return 0 0
-
 :main
 Function 0 3 0
-push_0
-pGlobal2 10589 //&Global_10589
-setImmediate1 5 //imm 5
+getStatic1 6 //currentMenu
+Switch [0=@selection_0_case_0][1=@selection_0_case_1]
+:selection_0_case_0
 push_1
-PushString "hi"
-Call @testing
-:loop_1
-CallNative PLAYER_PED_ID 0 1
-push_0
-CallNative IS_PED_IN_ANY_VEHICLE 2 1
-JumpFalse @selection_end_0
-getF1 3 //vehicle
-push_0
-CallNative SET_VEHICLE_MOD_KIT 2 0
-getF1 3 //vehicle
-push_0
-push1 255
-CallNative GET_RANDOM_INT_IN_RANGE 2 1
-push_0
-push1 255
-CallNative GET_RANDOM_INT_IN_RANGE 2 1
-CallNative SET_VEHICLE_COLOURS 3 0
-getF1 3 //vehicle
-PushString "RAGE-C"
-CallNative SET_VEHICLE_NUMBER_PLATE_TEXT 2 0
+setF1 3 //someHack
+Jump @selection_end_0
+:selection_0_case_1
+push_2
+setF1 3 //someHack
+Jump @selection_end_0
 :selection_end_0
-push_0
-CallNative WAIT 1 0
-Jump @loop_1
 Return 0 0
 

@@ -62,6 +62,8 @@ namespace RAGE.Parser
                 Error($"Script already contains an enum called '{enumName}' | line {lineNumber}, {linePosition}");
             }
 
+            //Do this hack so the enum is parsed from top down
+            var enumItems = new List<EnumeratorContext>();
             var enumList = context.enumeratorList();
 
             if (enumList == null)
@@ -69,15 +71,25 @@ namespace RAGE.Parser
                 Error($"Enum '{enumName}' contains no enumerators | | line {lineNumber}, {linePosition}");
             }
 
+            while (enumList != null)
+            {
+                enumItems.Insert(0, enumList.enumerator());
+                enumList = enumList.enumeratorList();
+            }
+
             var currentEnum = new Enum(enumName);
 
             Script.Enums.Add(currentEnum);
 
-            while (enumList != null)
+            foreach (var enumContext in enumItems)
             {
-                var enumVal = visitor.VisitEnumerator(enumList.enumerator());
-                enumList = enumList.enumeratorList();
+                visitor.VisitEnumerator(enumContext);
             }
+            //while (enumList != null)
+            //{
+            //    var enumVal = visitor.VisitEnumerator(enumList.enumerator());
+            //    enumList = enumList.enumeratorList();
+            //}
 
 
             base.EnterEnumDeclarator(context);
@@ -427,10 +439,12 @@ namespace RAGE.Parser
                         continue;
                     }
                     var currentCase = visitor.VisitLabeledStatement(shit);
-                    Case caseData = (Case)currentCase.Data;
+                    Case caseData = currentCase.Data as Case;
                     currentSwitch.Cases.Add(caseData);
                     cases = cases.blockItemList();
                 }
+
+                currentSwitch.Cases.Reverse();
                 var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
                 switches.Add(sc, currentSwitch);
                 if (conditionType == DataType.NativeCall || conditionType == DataType.LocalCall)
@@ -440,7 +454,18 @@ namespace RAGE.Parser
                 }
                 else if (conditionType == DataType.Variable)
                 {
-                    cf.Add(FrameVar.Get(CurrentFunction.Variables.GetVariable(conditionVariable)));
+                    if (CurrentFunction.Variables.ContainVariable(conditionVariable))
+                    {
+                        cf.Add(FrameVar.Get(CurrentFunction.Variables.GetVariable(conditionVariable)));
+                    }
+                    else if (Script.StaticVariables.ContainVariable(conditionVariable))
+                    {
+                        cf.Add(StaticVar.Get(Script.StaticVariables.GetVariable(conditionVariable)));
+                    }
+                    else
+                    {
+                        Error($"Unable to find variable '{conditionVariable}' used in switch expression | line {lineNumber},{linePosition}");
+                    }
                 }
                 StringBuilder sb = new StringBuilder();
                 sb.Append("Switch ");
@@ -473,7 +498,6 @@ namespace RAGE.Parser
                 nextCase.Generated = true;
 
             }
-            string gg = context.GetText();
             base.EnterLabeledStatement(context);
         }
 

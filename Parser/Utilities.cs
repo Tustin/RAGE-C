@@ -94,6 +94,10 @@ namespace RAGE.Parser
                 {
                     return DataType.Global;
                 }
+                else if (Script.StaticVariables.ContainVariable(value))
+                {
+                    return DataType.Static;
+                }
             }
             Error($"Unable to parse value '{value}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
             return DataType.Void;
@@ -219,6 +223,11 @@ namespace RAGE.Parser
         public static bool ContainsEnumerator(this List<Enumerator> enumerators, string name)
         {
             return enumerators.Any(a => a.Name == name);
+        }
+
+        public static Enumerator GetEnumerator(this List<Enumerator> enumerators, string name)
+        {
+            return enumerators.Where(a => a.Name == name).FirstOrDefault();
         }
 
     }

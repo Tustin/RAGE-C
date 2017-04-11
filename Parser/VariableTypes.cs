@@ -18,5 +18,7 @@
         Global,
         GlobalArray,
         Iterator,
+        Static,
+        Enum,
     }
 }
