@@ -246,6 +246,60 @@ namespace RAGE.Parser
         //    }
 
         //}
+
+        public override Value VisitEnumerator([NotNull] EnumeratorContext context)
+        {
+            var currentEnum = Script.Enums.Last();
+            var lastEnumerator = currentEnum.Enumerators.LastOrDefault();
+            var enumName = context.enumerationConstant().GetText();
+            if (currentEnum.Enumerators.ContainsEnumerator(enumName))
+            {
+                Error($"Enum '{currentEnum.Name}' already contains enumerator '{enumName}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+            }
+            Variable enumVar = new Variable($"{currentEnum.Name}_{enumName}", Script.StaticVariables.Count + 1, DataType.Int);
+            enumVar.Specifier = Specifier.Static;
+            //ENUMERATOR    
+            if (context.ChildCount == 1)
+            {
+                //Since it doesn't have a value, get the last enums val and add 1
+                if (lastEnumerator == null)
+                {
+                    enumVar.Value.Value = Utilities.GetDefaultValue(DataType.Int);
+                    enumVar.Value.Type = DataType.Int;
+                    enumVar.Value.IsDefault = true;
+                    enumVar.ValueAssembly.Add(Push.Int(enumVar.Value.Value.ToString()));
+                }
+                else
+                {
+                    var lastEnumVar = lastEnumerator.Variable as Variable;
+                    int newValue = Convert.ToInt32(lastEnumVar.Value.Value) + 1;
+                    enumVar.Value.Value = newValue.ToString();
+                    enumVar.Value.Type = DataType.Int;
+                    enumVar.Value.IsDefault = true;
+                    enumVar.ValueAssembly.Add(Push.Int(newValue.ToString()));
+                }
+                Script.StaticVariables.Add(enumVar);
+                currentEnum.Enumerators.Add(new Enumerator(enumName, enumVar));
+            }
+            //ENUMERATOR = CONSTANT
+            else if (context.ChildCount == 3)
+            {
+                var enumValue = context.constantExpression().GetText();
+                if (!int.TryParse(enumValue, out int val))
+                {
+                    Error($"Unable to parse enumeration '{enumName}' as int | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                }
+                enumVar.Value.Value = enumValue;
+                enumVar.Value.Type = DataType.Int;
+                enumVar.Value.IsDefault = false;
+                enumVar.ValueAssembly.Add(Push.Int(enumValue));
+            }
+            else
+            {
+                Error($"Invalid use of enumeration (child count: {context.ChildCount}) | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+            }
+            return base.VisitEnumerator(context);
+        }
         public override Value VisitSelectionStatement([NotNull] SelectionStatementContext context)
         {
             return base.VisitSelectionStatement(context);

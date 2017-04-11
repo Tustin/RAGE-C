@@ -1,32 +1,4 @@
-/*
- [The "BSD licence"]
- Copyright (c) 2013 Sam Harwell
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- 1. Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
- 2. Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions and the following disclaimer in the
-    documentation and/or other materials provided with the distribution.
- 3. The name of the author may not be used to endorse or promote products
-    derived from this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-/** C 2011 grammar built from the C11 Spec */
+//RAGE-C Grammar
 grammar C;
 
 primaryExpression
@@ -35,9 +7,6 @@ primaryExpression
     |   StringLiteral+
     |   '(' expression ')'
     |   genericSelection
-    |   '__extension__'? '(' compoundStatement ')' // Blocks (GCC extension)
-    |   '__builtin_va_arg' '(' unaryExpression ',' typeName ')'
-    |   '__builtin_offsetof' '(' typeName ',' unaryExpression ')'
     ;
 
 genericSelection
@@ -62,10 +31,6 @@ postfixExpression
     |   postfixExpression '->' Identifier
     |   postfixExpression '++'
     |   postfixExpression '--'
-    |   '(' typeName ')' '{' initializerList '}'
-    |   '(' typeName ')' '{' initializerList ',' '}'
-    |   '__extension__' '(' typeName ')' '{' initializerList '}'
-    |   '__extension__' '(' typeName ')' '{' initializerList ',' '}'
     ;
 
 argumentExpressionList
@@ -78,10 +43,6 @@ unaryExpression
     |   '++' unaryExpression
     |   '--' unaryExpression
     |   unaryOperator castExpression
-    |   'sizeof' unaryExpression
-    |   'sizeof' '(' typeName ')'
-    |   '_Alignof' '(' typeName ')'
-    |   '&&' Identifier // GCC extension address of label
     ;
 
 unaryOperator
@@ -191,8 +152,7 @@ declarationSpecifier
     :   storageClassSpecifier
     |   typeSpecifier
     |   typeQualifier
-    |   functionSpecifier
-    |   alignmentSpecifier
+    |   enumSpecifier
     ;
 
 initDeclaratorList
@@ -208,7 +168,6 @@ initDeclarator
 storageClassSpecifier
     :   'static'
     |   'auto'
-    |   'global'
     ;
 
 typeSpecifier
@@ -259,6 +218,11 @@ structDeclarator
     |   declarator? ':' constantExpression
     ;
 
+enumDeclarator
+    :   'enum' Identifier '{' enumeratorList? '}'
+    |   'enum' Identifier '{' enumeratorList? ',' '}'
+    ;
+
 enumSpecifier
     :   'enum' Identifier? '{' enumeratorList '}'
     |   'enum' Identifier? '{' enumeratorList ',' '}'
@@ -279,33 +243,12 @@ enumerationConstant
     :   Identifier
     ;
 
-atomicTypeSpecifier
-    :   '_Atomic' '(' typeName ')'
-    ;
-
 typeQualifier
     :   'const'
-    |   'restrict'
-    |   'volatile'
-    |   '_Atomic'
-    ;
-
-functionSpecifier
-    :   ('inline'
-    |   '_Noreturn'
-    |   '__inline__' // GCC extension
-    |   '__stdcall')
-    |   gccAttributeSpecifier
-    |   '__declspec' '(' Identifier ')'
-    ;
-
-alignmentSpecifier
-    :   '_Alignas' '(' typeName ')'
-    |   '_Alignas' '(' constantExpression ')'
     ;
 
 declarator
-    :   pointer? directDeclarator gccDeclaratorExtension*
+    :   pointer? directDeclarator
     ;
 
 directDeclarator
@@ -319,25 +262,6 @@ directDeclarator
     |   directDeclarator '(' identifierList? ')'
     ;
 
-gccDeclaratorExtension
-    :   '__asm' '(' StringLiteral+ ')'
-    |   gccAttributeSpecifier
-    ;
-
-gccAttributeSpecifier
-    :   '__attribute__' '(' '(' gccAttributeList ')' ')'
-    ;
-
-gccAttributeList
-    :   gccAttribute (',' gccAttribute)*
-    |   // empty
-    ;
-
-gccAttribute
-    :   ~(',' | '(' | ')') // relaxed def for "identifier or reserved word"
-        ('(' argumentExpressionList? ')')?
-    |   // empty
-    ;
 
 nestedParenthesesBlock
     :   (   ~('(' | ')')
@@ -383,21 +307,6 @@ typeName
 
 abstractDeclarator
     :   pointer
-    |   pointer? directAbstractDeclarator gccDeclaratorExtension*
-    ;
-
-directAbstractDeclarator
-    :   '(' abstractDeclarator ')' gccDeclaratorExtension*
-    |   '[' typeQualifierList? assignmentExpression? ']'
-    |   '[' 'static' typeQualifierList? assignmentExpression ']'
-    |   '[' typeQualifierList 'static' assignmentExpression ']'
-    |   '[' '*' ']'
-    |   '(' parameterTypeList? ')' gccDeclaratorExtension*
-    |   directAbstractDeclarator '[' typeQualifierList? assignmentExpression? ']'
-    |   directAbstractDeclarator '[' 'static' typeQualifierList? assignmentExpression ']'
-    |   directAbstractDeclarator '[' typeQualifierList 'static' assignmentExpression ']'
-    |   directAbstractDeclarator '[' '*' ']'
-    |   directAbstractDeclarator '(' parameterTypeList? ')' gccDeclaratorExtension*
     ;
 
 typedefName
@@ -440,7 +349,8 @@ statement
     |   selectionStatement
     |   iterationStatement
     |   jumpStatement
-    |   ('__asm' | '__asm__') ('volatile' | '__volatile__') '(' (logicalOrExpression (',' logicalOrExpression)*)? (':' (logicalOrExpression (',' logicalOrExpression)*)?)* ')' ';'
+    |   enumSpecifier
+    |   enumDeclarator
     ;
 
 labeledStatement
@@ -484,7 +394,6 @@ jumpStatement
     |   'continue' ';'
     |   'break' ';'
     |   'return' expression? ';'
-    |   'goto' unaryExpression ';' // GCC extension
     ;
 
 compilationUnit
@@ -498,6 +407,7 @@ translationUnit
 
 externalDeclaration
     :   functionDefinition
+    |   enumDeclarator
     |   declaration
     |   ';' // stray ;
     ;
@@ -522,34 +432,23 @@ Do : 'do';
 Double : 'double';
 Else : 'else';
 Enum : 'enum';
-Extern : 'extern';
 Float : 'float';
 For : 'for';
 Goto : 'goto';
 If : 'if';
-Inline : 'inline';
 Int : 'int';
 Long : 'long';
-Register : 'register';
-Restrict : 'restrict';
 Return : 'return';
 Short : 'short';
 Signed : 'signed';
-Sizeof : 'sizeof';
 Static : 'static';
 String : 'string';
 Struct : 'struct';
 Switch : 'switch';
-Typedef : 'typedef';
-Union : 'union';
 Unsigned : 'unsigned';
 Void : 'void';
-Volatile : 'volatile';
 While : 'while';
 
-Alignas : '_Alignas';
-Alignof : '_Alignof';
-Atomic : '_Atomic';
 Bool : '_Bool';
 Complex : '_Complex';
 Generic : '_Generic';

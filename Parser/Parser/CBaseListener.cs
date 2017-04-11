@@ -503,6 +503,18 @@ public partial class CBaseListener : ICListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStructDeclarator([NotNull] CParser.StructDeclaratorContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="CParser.enumDeclarator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterEnumDeclarator([NotNull] CParser.EnumDeclaratorContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CParser.enumDeclarator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitEnumDeclarator([NotNull] CParser.EnumDeclaratorContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.enumSpecifier"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -551,18 +563,6 @@ public partial class CBaseListener : ICListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitEnumerationConstant([NotNull] CParser.EnumerationConstantContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.atomicTypeSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterAtomicTypeSpecifier([NotNull] CParser.AtomicTypeSpecifierContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.atomicTypeSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitAtomicTypeSpecifier([NotNull] CParser.AtomicTypeSpecifierContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.typeQualifier"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -574,30 +574,6 @@ public partial class CBaseListener : ICListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitTypeQualifier([NotNull] CParser.TypeQualifierContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.functionSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterFunctionSpecifier([NotNull] CParser.FunctionSpecifierContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.functionSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitFunctionSpecifier([NotNull] CParser.FunctionSpecifierContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.alignmentSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterAlignmentSpecifier([NotNull] CParser.AlignmentSpecifierContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.alignmentSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitAlignmentSpecifier([NotNull] CParser.AlignmentSpecifierContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.declarator"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -622,54 +598,6 @@ public partial class CBaseListener : ICListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDirectDeclarator([NotNull] CParser.DirectDeclaratorContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.gccDeclaratorExtension"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterGccDeclaratorExtension([NotNull] CParser.GccDeclaratorExtensionContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.gccDeclaratorExtension"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitGccDeclaratorExtension([NotNull] CParser.GccDeclaratorExtensionContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.gccAttributeSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterGccAttributeSpecifier([NotNull] CParser.GccAttributeSpecifierContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.gccAttributeSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitGccAttributeSpecifier([NotNull] CParser.GccAttributeSpecifierContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.gccAttributeList"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterGccAttributeList([NotNull] CParser.GccAttributeListContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.gccAttributeList"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitGccAttributeList([NotNull] CParser.GccAttributeListContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.gccAttribute"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterGccAttribute([NotNull] CParser.GccAttributeContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.gccAttribute"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitGccAttribute([NotNull] CParser.GccAttributeContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.nestedParenthesesBlock"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -778,18 +706,6 @@ public partial class CBaseListener : ICListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAbstractDeclarator([NotNull] CParser.AbstractDeclaratorContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.directAbstractDeclarator"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterDirectAbstractDeclarator([NotNull] CParser.DirectAbstractDeclaratorContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.directAbstractDeclarator"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitDirectAbstractDeclarator([NotNull] CParser.DirectAbstractDeclaratorContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.typedefName"/>.
 	/// <para>The default implementation does nothing.</para>

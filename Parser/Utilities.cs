@@ -206,5 +206,20 @@ namespace RAGE.Parser
             return collection[0].Groups.Cast<Group>().Skip(1).Select(a => a.Value).ToList();
         }
 
+        public static bool ContainsEnum(this List<Enum> enums, string name)
+        {
+            return enums.Any(a => a.Name == name);
+        }
+
+        public static Enum GetEnum(this List<Enum> enums, string name)
+        {
+            return enums.Where(a => a.Name == name).FirstOrDefault();
+        }
+
+        public static bool ContainsEnumerator(this List<Enumerator> enumerators, string name)
+        {
+            return enumerators.Any(a => a.Name == name);
+        }
+
     }
 }

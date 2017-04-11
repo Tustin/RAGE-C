@@ -1,3 +1,10 @@
+enum MainMenu {
+    PLAYER_MENU,
+    VEHICLE_MENU,
+    WEAPON_MENU,
+    WORLD_MENU,
+};
+
 static int id = PLAYER_PED_ID();
 
 float testing(int something2, string theliberator) {

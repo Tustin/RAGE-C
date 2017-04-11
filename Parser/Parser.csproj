@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -55,6 +56,8 @@
     <Compile Include="Array.cs" />
     <Compile Include="Case.cs" />
     <Compile Include="ContextProperty.cs" />
+    <Compile Include="Enum.cs" />
+    <Compile Include="Enumerator.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="IVariable.cs" />
     <Compile Include="Native.cs" />

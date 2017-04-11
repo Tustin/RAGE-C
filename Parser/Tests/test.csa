@@ -1,9 +1,17 @@
-//Compiled using RAGE-C by Tustin 4/9/2017
+//Compiled using RAGE-C by Tustin 4/10/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 1 statics
+//Auto assigning 5 statics
+push_0
+setStatic1 1 //MainMenu_WORLD_MENU
+push_1
+setStatic1 2 //MainMenu_WEAPON_MENU
+push_2
+setStatic1 3 //MainMenu_VEHICLE_MENU
+push_3
+setStatic1 4 //MainMenu_PLAYER_MENU
 CallNative PLAYER_PED_ID 0 1
-setStatic1 1 //id
+setStatic1 5 //id
 Call @main
 Return 0 0
 

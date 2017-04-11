@@ -11,6 +11,7 @@ namespace RAGE.Parser
     {
         static void Main(string[] args)
         {
+
             Logo();
             string filePath = null;
             bool showingHelp = false;

@@ -421,6 +421,16 @@ public interface ICListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStructDeclarator([NotNull] CParser.StructDeclaratorContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="CParser.enumDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterEnumDeclarator([NotNull] CParser.EnumDeclaratorContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CParser.enumDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitEnumDeclarator([NotNull] CParser.EnumDeclaratorContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.enumSpecifier"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -461,16 +471,6 @@ public interface ICListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitEnumerationConstant([NotNull] CParser.EnumerationConstantContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.atomicTypeSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterAtomicTypeSpecifier([NotNull] CParser.AtomicTypeSpecifierContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.atomicTypeSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitAtomicTypeSpecifier([NotNull] CParser.AtomicTypeSpecifierContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.typeQualifier"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -480,26 +480,6 @@ public interface ICListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitTypeQualifier([NotNull] CParser.TypeQualifierContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.functionSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterFunctionSpecifier([NotNull] CParser.FunctionSpecifierContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.functionSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitFunctionSpecifier([NotNull] CParser.FunctionSpecifierContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.alignmentSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterAlignmentSpecifier([NotNull] CParser.AlignmentSpecifierContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.alignmentSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitAlignmentSpecifier([NotNull] CParser.AlignmentSpecifierContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.declarator"/>.
 	/// </summary>
@@ -520,46 +500,6 @@ public interface ICListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitDirectDeclarator([NotNull] CParser.DirectDeclaratorContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.gccDeclaratorExtension"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterGccDeclaratorExtension([NotNull] CParser.GccDeclaratorExtensionContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.gccDeclaratorExtension"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitGccDeclaratorExtension([NotNull] CParser.GccDeclaratorExtensionContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.gccAttributeSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterGccAttributeSpecifier([NotNull] CParser.GccAttributeSpecifierContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.gccAttributeSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitGccAttributeSpecifier([NotNull] CParser.GccAttributeSpecifierContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.gccAttributeList"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterGccAttributeList([NotNull] CParser.GccAttributeListContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.gccAttributeList"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitGccAttributeList([NotNull] CParser.GccAttributeListContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.gccAttribute"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterGccAttribute([NotNull] CParser.GccAttributeContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.gccAttribute"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitGccAttribute([NotNull] CParser.GccAttributeContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.nestedParenthesesBlock"/>.
 	/// </summary>
@@ -650,16 +590,6 @@ public interface ICListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitAbstractDeclarator([NotNull] CParser.AbstractDeclaratorContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.directAbstractDeclarator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterDirectAbstractDeclarator([NotNull] CParser.DirectAbstractDeclaratorContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.directAbstractDeclarator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitDirectAbstractDeclarator([NotNull] CParser.DirectAbstractDeclaratorContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.typedefName"/>.
 	/// </summary>

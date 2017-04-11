@@ -46,6 +46,42 @@ namespace RAGE.Parser
             base.EnterEveryRule(context);
         }
 
+        public override void EnterEnumerator([NotNull] EnumeratorContext context)
+        {
+            var ff = context.GetText();
+            base.EnterEnumerator(context);
+        }
+
+        //Enum
+        public override void EnterEnumDeclarator([NotNull] EnumDeclaratorContext context)
+        {
+            string enumName = context.GetChild(1).GetText();
+
+            if (Script.Enums.ContainsEnum(enumName))
+            {
+                Error($"Script already contains an enum called '{enumName}' | line {lineNumber}, {linePosition}");
+            }
+
+            var enumList = context.enumeratorList();
+
+            if (enumList == null)
+            {
+                Error($"Enum '{enumName}' contains no enumerators | | line {lineNumber}, {linePosition}");
+            }
+
+            var currentEnum = new Enum(enumName);
+
+            Script.Enums.Add(currentEnum);
+
+            while (enumList != null)
+            {
+                var enumVal = visitor.VisitEnumerator(enumList.enumerator());
+                enumList = enumList.enumeratorList();
+            }
+
+
+            base.EnterEnumDeclarator(context);
+        }
         //New functions
         public override void EnterFunctionDefinition(FunctionDefinitionContext context)
         {
@@ -87,6 +123,12 @@ namespace RAGE.Parser
             CurrentFunction = new Function(name, specifier.Type);
             Script.Functions.Add(CurrentFunction);
             LogVerbose($"Entering function '{name}'...");
+        }
+
+        public override void EnterTypeSpecifier([NotNull] TypeSpecifierContext context)
+        {
+            var ggg = context.GetText();
+            base.EnterTypeSpecifier(context);
         }
 
         public override void EnterParameterList([NotNull] ParameterListContext context)

@@ -290,29 +290,11 @@ public interface ICVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitEnumerationConstant([NotNull] CParser.EnumerationConstantContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.atomicTypeSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitAtomicTypeSpecifier([NotNull] CParser.AtomicTypeSpecifierContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="CParser.typeQualifier"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitTypeQualifier([NotNull] CParser.TypeQualifierContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.functionSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFunctionSpecifier([NotNull] CParser.FunctionSpecifierContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.alignmentSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitAlignmentSpecifier([NotNull] CParser.AlignmentSpecifierContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CParser.declarator"/>.
 	/// </summary>
@@ -325,30 +307,6 @@ public interface ICVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitDirectDeclarator([NotNull] CParser.DirectDeclaratorContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.gccDeclaratorExtension"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitGccDeclaratorExtension([NotNull] CParser.GccDeclaratorExtensionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.gccAttributeSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitGccAttributeSpecifier([NotNull] CParser.GccAttributeSpecifierContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.gccAttributeList"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitGccAttributeList([NotNull] CParser.GccAttributeListContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.gccAttribute"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitGccAttribute([NotNull] CParser.GccAttributeContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CParser.nestedParenthesesBlock"/>.
 	/// </summary>
@@ -408,7 +366,6 @@ public interface ICVisitor<Result> : IParseTreeVisitor<Result> {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitDirectAbstractDeclarator([NotNull] CParser.DirectAbstractDeclaratorContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CParser.typedefName"/>.
 	/// </summary>
