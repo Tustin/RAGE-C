@@ -9,7 +9,7 @@ namespace RAGE.Parser.Opcodes
         {
             if (float.TryParse(value, out float val))
             {
-                if (val >= -1.0f && val <= 7.0f)
+                if (val >= -1.0f && val <= 7.0f && val % 1 == 0)
                 {
                     return $"fpush_{val}";
                 }

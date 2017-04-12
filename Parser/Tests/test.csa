@@ -1,7 +1,7 @@
-//Compiled using RAGE-C by Tustin 4/11/2017
+//Compiled using RAGE-C by Tustin 4/12/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 7 statics
+//Auto assigning 9 statics
 push_0
 setStatic1 1 //MainMenu_PLAYER_MENU
 push_1
@@ -10,27 +10,77 @@ push_2
 setStatic1 3 //MainMenu_WEAPON_MENU
 push_3
 setStatic1 4 //MainMenu_WORLD_MENU
-CallNative PLAYER_PED_ID 0 1
-setStatic1 5 //id
 push_0
-setStatic1 6 //currentMenu
+setStatic1 5 //PlayerMenu_GODMODE
+push_1
+setStatic1 6 //PlayerMenu_INFINITE_AMMO
 push_0
-setStatic1 7 //open
+setStatic1 7 //currentMenu
+push_0
+setStatic1 8 //currentOption
+push_0
+setStatic1 9 //open
 Call @main
 Return 0 0
 
-:main
-Function 0 3 0
-getStatic1 6 //currentMenu
-Switch [0=@selection_0_case_0][1=@selection_0_case_1]
-:selection_0_case_0
+:draw_text
+Function 5 7 0
+getF1 1 //font
+CallNative SET_TEXT_FONT 1 0
+getF1 4 //size
+getF1 4 //size
+CallNative SET_TEXT_SCALE 2 0
+push1 255
+push1 255
+push1 255
+push1 255
+CallNative SET_TEXT_COLOUR 4 0
+CallNative SET_TEXT_OUTLINE 0 0
+PushString "STRING"
+CallNative BEGIN_TEXT_COMMAND_DISPLAY_TEXT 1 0
+getF1 0 //text
+CallNative ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME 1 0
+getF1 2 //x
+getF1 3 //y
+CallNative END_TEXT_COMMAND_DISPLAY_TEXT 2 0
+Return 5 0
+
+:draw_background
+Function 0 2 0
+Return 0 0
+
+:draw_menu
+Function 0 4 0
+push_5
+setF1 3 //items
+push1 22
+FtoI
+setF1 4 //height
+PushString "Goy Menu"
 push_1
-setF1 3 //someHack
-Jump @selection_end_0
-:selection_0_case_1
-push_2
-setF1 3 //someHack
-Jump @selection_end_0
+fpush 0.839844
+fpush 0.191832
+fpush 1.05
+Call @draw_text
+getStatic1 7 //currentMenu
+getStatic1 1 //MainMenu_PLAYER_MENU
+JumpNE @selection_end_0
+getStatic1 8 //currentOption
+Switch [0=@selection_1_case_0][1=@selection_1_case_1]
+:selection_1_case_0
+Jump @selection_end_1
+:selection_1_case_1
+Jump @selection_end_1
+:selection_end_1
 :selection_end_0
+Return 0 0
+
+:main
+Function 0 2 0
+:loop_0
+Call @draw_menu
+push_0
+CallNative wait 1 0
+Jump @loop_0
 Return 0 0
 

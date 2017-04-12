@@ -20,5 +20,6 @@
         Iterator,
         Static,
         Enum,
+        Cast,
     }
 }

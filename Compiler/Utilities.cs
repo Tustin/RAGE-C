@@ -143,12 +143,13 @@ namespace RAGE.Compiler
             {
                 throw new Exception("Unable to parse float value");
             }
-            var hex = num.ToString("X8");
+            return BitConverter.GetBytes(num).Reverse().ToArray();
+            //var hex = num.ToString("X8");
 
-            return Enumerable.Range(0, hex.Length)
-                     .Where(x => x % 2 == 0)
-                     .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                     .ToArray();
+            //return Enumerable.Range(0, hex.Length)
+            //         .Where(x => x % 2 == 0)
+            //         .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+            //         .ToArray();
         }
 
         internal static byte ByteToHex(string b)

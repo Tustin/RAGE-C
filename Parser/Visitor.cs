@@ -425,6 +425,10 @@ namespace RAGE.Parser
 
         public override Value VisitAssignmentExpression([NotNull] AssignmentExpressionContext context)
         {
+            var aa = context.assignmentExpression();
+            var bb = context.assignmentOperator();
+            var cc = context.conditionalExpression();
+            var dd = context.unaryExpression();
             if (context.assignmentExpression() == null)
             {
                 return VisitConditionalExpression(context.conditionalExpression());
@@ -515,7 +519,12 @@ namespace RAGE.Parser
 
         public override Value VisitConditionalExpression(ConditionalExpressionContext context)
         {
-            return VisitLogicalOrExpression(context.logicalOrExpression());
+            if (context.conditionalExpression() == null)
+            {
+                return VisitLogicalOrExpression(context.logicalOrExpression());
+            }
+            var ff = context.conditionalExpression();
+            return null;
         }
 
         public override Value VisitLogicalOrExpression(LogicalOrExpressionContext context)
@@ -923,13 +932,36 @@ namespace RAGE.Parser
 
         public override Value VisitCastExpression(CastExpressionContext context)
         {
-            if (context.castExpression() != null)
+            if (context.castExpression() == null)
             {
-                Error($"Casting is not supported | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                return null;
+                return VisitUnaryExpression(context.unaryExpression());
             }
+            var code = new List<string>();
+            var castType = Utilities.GetTypeFromDeclaration(context.typeName().GetText());
+            if (castType != DataType.Int && castType != DataType.Float)
+            {
+                Error($"Casting only supports int to float and vice-versa | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            }
+            var expr = VisitCastExpression(context.castExpression());
+            if (expr.Type != DataType.Int && expr.Type != DataType.Float && expr.Type != DataType.Variable && expr.Type != DataType.Static)
+            {
+                Error($"Casting only supports int to float and vice-versa | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            }
+            code.AddRange(expr.Assembly);
+            if (castType == DataType.Float && expr.Type == DataType.Int)
+            {
+                code.Add(Conversion.FloatToInt());
+            }
+            else if (castType == DataType.Int && expr.Type == DataType.Float)
+            {
+                code.Add(Conversion.IntToFloat());
+            }
+            else
+            {
+                Error("Conversion error!!1");
+            }
+            return new Value(DataType.Cast, null, code);
 
-            return VisitUnaryExpression(context.unaryExpression());
         }
 
         public override Value VisitUnaryExpression(UnaryExpressionContext context)
@@ -1014,7 +1046,7 @@ namespace RAGE.Parser
                 case "++":
                 if (!RAGEListener.CurrentFunction.Variables.ContainVariable(expression))
                 {
-                    Error($"Postfix operators ({symbol}) can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    Error($"Postfix operator '{symbol}' can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     return null;
                 }
                 code.Add(FrameVar.Get(variable));
@@ -1024,7 +1056,7 @@ namespace RAGE.Parser
                 case "--":
                 if (!RAGEListener.CurrentFunction.Variables.ContainVariable(expression))
                 {
-                    Error($"Postfix operators ({symbol}) can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    Error($"Postfix operator '{symbol}' can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     return null;
                 }
                 code.Add(FrameVar.Get(variable));
@@ -1044,7 +1076,8 @@ namespace RAGE.Parser
                         {
                             Error($"Function '{expression}' requires {func.Parameters.Count} arguments, none given | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
                         }
-                        return new Value(DataType.LocalCall, null, null);
+                        code.Add(Call.Local(expression));
+                        return new Value(DataType.LocalCall, null, code);
                     }
                     else
                     {
@@ -1301,6 +1334,10 @@ namespace RAGE.Parser
                 var = Script.StaticVariables.GetVariable(value);
                 code.Add(StaticVar.Get(var));
                 return new Value(DataType.Static, value, code);
+                case DataType.Argument:
+                var = RAGEListener.CurrentFunction.GetParameter(value);
+                code.Add(FrameVar.Get(var));
+                return new Value(DataType.Argument, value, code);
                 default:
                 Error($"Type {type} is unsupported | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                 return null;

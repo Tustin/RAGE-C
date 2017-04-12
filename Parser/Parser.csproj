@@ -68,6 +68,7 @@
     <Compile Include="Opcodes\Bitwise.cs" />
     <Compile Include="Opcodes\Call.cs" />
     <Compile Include="Opcodes\Compare.cs" />
+    <Compile Include="Opcodes\Conversion.cs" />
     <Compile Include="Opcodes\FrameVar.cs" />
     <Compile Include="Opcodes\Global.cs" />
     <Compile Include="Opcodes\Immediate.cs" />

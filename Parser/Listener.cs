@@ -151,7 +151,9 @@ namespace RAGE.Parser
             {
                 return;
             }
-            //Loop through each param
+            var contextsList = new List<ParameterDeclarationContext>();
+
+            //Another hack to reverse the argument list
             while (context != null)
             {
                 var decl = context.parameterDeclaration();
@@ -160,9 +162,19 @@ namespace RAGE.Parser
                 {
                     Error($"Function '{CurrentFunction.Name}' already contains a parameter named '{paramName}' | line {lineNumber}, {linePosition}");
                 }
-                var specifier = visitor.VisitDeclarationSpecifiers(decl.declarationSpecifiers());
-                CurrentFunction.Parameters.Add(new Parameter(specifier.Type, paramName));
+
+                contextsList.Insert(0, decl);
                 context = context.parameterList();
+            }
+            //Loop through each param
+
+            foreach (var declContext in contextsList)
+            {
+                var paramName = declContext.declarator().GetText();
+
+                var specifier = visitor.VisitDeclarationSpecifiers(declContext.declarationSpecifiers());
+
+                CurrentFunction.Parameters.Add(new Parameter(specifier.Type, paramName, CurrentFunction.Parameters.Count));
             }
         }
         public override void EnterDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
@@ -177,9 +189,9 @@ namespace RAGE.Parser
             var function = Core.AssemblyCode.FindFunction(CurrentFunction.Name);
             string funcEntry = function.Value[0];
             //@TODO: Update first 0 for param count
-            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function {CurrentFunction.Parameters.Count} {CurrentFunction.FrameVars} 0");
+            funcEntry = funcEntry.Replace("Function 0 2 0", $"Function {CurrentFunction.Parameters.Count} {CurrentFunction.FrameVars + CurrentFunction.Parameters.Count} 0");
             function.Value[0] = funcEntry;
-            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Opcodes.Return.Generate());
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Opcodes.Return.Generate(CurrentFunction.Parameters.Count));
             LogVerbose($"Leaving function '{CurrentFunction.Name}'");
             CurrentFunction = null;
         }
@@ -232,10 +244,6 @@ namespace RAGE.Parser
             else if (variable.Type == DataType.Variable)
             {
                 Variable var = variable.Data as Variable;
-                if (var.IsIterator)
-                {
-                    Error("you got it, dude!");
-                }
                 if (var.Specifier == Specifier.Static)
                 {
                     Script.StaticVariables.Add(var);
@@ -243,6 +251,10 @@ namespace RAGE.Parser
                 else
                 {
                     CurrentFunction.Variables.Add(var);
+                    var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
+                    cf.AddRange(var.ValueAssembly);
+                    cf.Add(FrameVar.Set(var));
+
                 }
             }
             //string gg = context.GetText();
@@ -357,7 +369,6 @@ namespace RAGE.Parser
             //    }
             //}
         }
-
         public override void EnterStatement(StatementContext context)
         {
             if (context.expressionStatement() == null)

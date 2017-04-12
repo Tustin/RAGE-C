@@ -98,6 +98,10 @@ namespace RAGE.Parser
                 {
                     return DataType.Static;
                 }
+                else if (function.ContainsParameterName(value))
+                {
+                    return DataType.Argument;
+                }
             }
             Error($"Unable to parse value '{value}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
             return DataType.Void;
