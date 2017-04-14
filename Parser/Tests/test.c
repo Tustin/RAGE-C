@@ -57,7 +57,7 @@ void draw_menu() {
 void main() {
     while (true) 
     {
-        if (open == false) {
+        if (!open) {
             open = true;
         } else {
             draw_menu();

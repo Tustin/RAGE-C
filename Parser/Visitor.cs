@@ -418,6 +418,13 @@ namespace RAGE.Parser
                     }
                 }
             }
+            //!someVar
+            if (output.Type == DataType.Not)
+            {
+                val.Assembly.AddRange(output.Assembly);
+                val.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
+                return val;
+            }
             val.Assembly.AddRange(output.Assembly);
             val.Type = output.Type;
             return val;
@@ -980,6 +987,8 @@ namespace RAGE.Parser
                 {
                     Value op = VisitUnaryOperator(context.unaryOperator());
 
+                    var expr = VisitCastExpression(context.castExpression());
+
                     string var = context.GetChild(1).GetText();
 
                     if (!RAGEListener.CurrentFunction.Variables.ContainVariable(var) && op.Type == DataType.Address)
@@ -987,6 +996,7 @@ namespace RAGE.Parser
                         Error($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         return null;
                     }
+
                     var v = RAGEListener.CurrentFunction.Variables.GetVariable(var);
                     List<string> code = new List<string>();
                     switch (op.Type)
@@ -995,7 +1005,8 @@ namespace RAGE.Parser
                         code.Add(FrameVar.GetPointer(v));
                         return new Value(DataType.Address, null, code);
                         case DataType.Not:
-                        CurrentContext.Property = DataType.Not;
+                        code.AddRange(expr.Assembly);
+                        code.Add(Bitwise.Generate(BitwiseType.Not));
                         return new Value(DataType.Not, null, code);
                     }
                 }

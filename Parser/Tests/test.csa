@@ -92,8 +92,8 @@ Return 0 0
 Function 0 2 0
 :loop_0
 getStatic1 9 //open
-push_0
-JumpNE @selection_else_2
+Not
+JumpFalse @selection_else_2
 push_1
 setF1 9 //open
 :selection_else_2
