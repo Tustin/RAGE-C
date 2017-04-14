@@ -222,7 +222,7 @@ namespace RAGE.Parser
 
             Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(res.Assembly);
         }
-   
+
         //Entering if, switch
         public override void EnterSelectionStatement(SelectionStatementContext context)
         {
@@ -326,7 +326,7 @@ namespace RAGE.Parser
                 cf.Add(sb.ToString());
             }
         }
-        
+
         //Entering else statement
         public override void EnterSelectionElseStatement([NotNull] SelectionElseStatementContext context)
         {
@@ -346,7 +346,8 @@ namespace RAGE.Parser
             string selectionType = context.GetText();
 
             var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
-            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");  
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
+            visitor.CurrentContext = null;
         }
 
         //Switch cases
@@ -417,6 +418,7 @@ namespace RAGE.Parser
 
                 int count = storedContexts.Count(a => a.Context is IterationStatementContext);
                 StoredContext sc = new StoredContext($"loop_{count}", count, context);
+                sc.Selection = SelectionTypes.For;
                 storedContexts.Add(sc);
                 visitor.CurrentContext = sc;
 
@@ -433,6 +435,7 @@ namespace RAGE.Parser
             {
                 int count = storedContexts.Count(a => a.Context is IterationStatementContext);
                 StoredContext sc = new StoredContext($"loop_{count}", count, context);
+                sc.Selection = SelectionTypes.While;
                 storedContexts.Add(sc);
                 visitor.CurrentContext = sc;
                 Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":loop_{count}");
@@ -443,7 +446,7 @@ namespace RAGE.Parser
         public override void ExitIterationStatement(IterationStatementContext context)
         {
             var storedContext = storedContexts.Where(a => a.Context == context).First();
-
+            visitor.CurrentContext = storedContext;
             string code = context.GetText();
 
             //Reverse it so it evaluates the incrementing first before doing the comparison

@@ -103,6 +103,6 @@ setF1 9 //open
 :selection_end_2
 push_0
 CallNative wait 1 0
-JumpFalse @selection_else_2
+Jump @loop_0
 Return 0 0
 

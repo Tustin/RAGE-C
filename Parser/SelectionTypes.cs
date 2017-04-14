@@ -8,7 +8,7 @@ namespace RAGE
 {
     public enum SelectionTypes
     {
-        If,
-        Else
+        For,
+        While
     }
 }
