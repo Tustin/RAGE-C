@@ -78,6 +78,13 @@ Call @draw_menu_title
 getStatic1 7 //currentMenu
 getStatic1 1 //MainMenu_PLAYER_MENU
 JumpNE @selection_end_0
+getStatic1 8 //currentOption
+Switch [0=@selection_1_case_0][1=@selection_1_case_1]
+:selection_1_case_0
+Jump @selection_end_1
+:selection_1_case_1
+Jump @selection_end_1
+:selection_end_1
 :selection_end_0
 Return 0 0
 
@@ -86,16 +93,16 @@ Function 0 2 0
 :loop_0
 getStatic1 9 //open
 push_0
-JumpNE @selection_else_1
+JumpNE @selection_else_2
 push_1
 setF1 9 //open
-:selection_else_1
+:selection_else_2
 Call @draw_menu
 push_0
 setF1 9 //open
-:selection_end_1
+:selection_end_2
 push_0
 CallNative wait 1 0
-JumpFalse @selection_else_1
+JumpFalse @selection_else_2
 Return 0 0
 

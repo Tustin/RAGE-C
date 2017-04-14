@@ -42,14 +42,14 @@ void draw_background() {
 void draw_menu() {
     draw_menu_title("Goy Menu");
     if (currentMenu == MainMenu.PLAYER_MENU) {
-        // switch (currentOption) {
-        //     case PlayerMenu.GODMODE:
+        switch (currentOption) {
+            case PlayerMenu.GODMODE:
 
-        //     break;
-        //     case PlayerMenu.INFINITE_AMMO:
+            break;
+            case PlayerMenu.INFINITE_AMMO:
 
-        //     break;
-        // }
+            break;
+        }
     }
 }
 

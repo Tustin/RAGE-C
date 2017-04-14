@@ -18,7 +18,6 @@ namespace RAGE.Parser
         public static Function CurrentFunction;
         public static Variable CurrentVariable;
         public static Switch CurrentSwitch;
-        public static StoredContext CurrentContext;
 
         public static int lineNumber = 0;
         public static int linePosition = 0;
@@ -213,7 +212,7 @@ namespace RAGE.Parser
         //Statements
         public override void EnterStatement(StatementContext context)
         {
-            if (context.expressionStatement() == null /*|| CurrentContext != null */)
+            if (context.expressionStatement() == null)
             {
                 base.EnterStatement(context);
                 return;
@@ -223,15 +222,8 @@ namespace RAGE.Parser
 
             Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(res.Assembly);
         }
-
-        public override void EnterSelectionElseStatement([NotNull] SelectionElseStatementContext context)
-        {
-            var contextScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
-            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
-            base.EnterSelectionElseStatement(context);
-        }
-
-        //Entering if, else, switch
+   
+        //Entering if, switch
         public override void EnterSelectionStatement(SelectionStatementContext context)
         {
             string selectionType = context.GetText();
@@ -250,95 +242,12 @@ namespace RAGE.Parser
                     sc = new StoredContext($"selection_else_{count}", count, context.selectionElseStatement());
                     storedContexts.Add(sc);
                 }
-                CurrentContext = sc;
-
 
                 visitor.CurrentContext = sc;
 
                 var output = visitor.VisitExpression(context.expression());
 
                 code.AddRange(output.Assembly);
-                //int statementCount = context.statement().Count();
-                //if (statementCount == 1)
-                //{
-                //    StoredContext sc = new StoredContext($"selection_end_{count}", count, context);
-
-                //    sc.Selection = SelectionTypes.If;
-                //    CurrentContext = sc;
-
-                //    storedContexts.Add(sc);
-
-                //    visitor.CurrentContext = sc;
-
-                //    var output = visitor.VisitExpression(context.expression());
-
-                //    code.AddRange(output.Assembly);
-                //}
-                //else if (statementCount == 2)
-                //{
-                //    ///Do this twice so theres a label for the else block and for the end
-                //    StoredContext sc = new StoredContext($"selection_else_{count}", count, context);
-                //    sc.Selection = SelectionTypes.Else;
-                //    storedContexts.Add(sc);
-                //    visitor.CurrentContext = sc;
-                //    CurrentContext = sc;
-
-                //    var output = visitor.VisitExpression(context.expression());
-
-                //    code.AddRange(output.Assembly);
-                //    code.Add($":{sc.Label}");
-                //    //var ff = context.statement()[0].GetText();
-
-                //    //var statement = visitor.VisitStatement(context.statement()[0]);
-
-                //    //code.AddRange(statement.Assembly);
-
-                //    //count = storedContexts.Count(a => a.Context is SelectionStatementContext);
-                //    //sc = new StoredContext($"selection_end_{count}", count, context);
-                //    //sc.Selection = SelectionTypes.If;
-                //    //storedContexts.Add(sc);
-                //}
-
-                //This will be two if there is an else statement
-                //int statementCount = 1;
-
-                //if (statementCount == 1)
-                //{
-                //    int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
-
-                //    StoredContext sc = new StoredContext($"selection_end_{count}", count, context);
-
-                //    sc.Selection = SelectionTypes.If;
-                //    CurrentContext = sc;
-
-                //    storedContexts.Add(sc);
-
-                //    visitor.CurrentContext = sc;
-                //}
-                //else if (statementCount == 2)
-                //{
-                //    //Do this twice so theres a label for the else block and for the end
-                //    int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
-
-                //    StoredContext sc = new StoredContext($"selection_else_{count}", count, context);
-                //    sc.Selection = SelectionTypes.Else;
-                //    storedContexts.Add(sc);
-                //    visitor.CurrentContext = sc;
-                //    CurrentContext = sc;
-
-                //   //var ff = context.statement()[0].GetText();
-
-                //    //var statement = visitor.VisitStatement(context.statement()[0]);
-
-                //    //code.AddRange(statement.Assembly);
-
-                //    count = storedContexts.Count(a => a.Context is SelectionStatementContext);
-                //    sc = new StoredContext($"selection_end_{count}", count, context);
-                //    sc.Selection = SelectionTypes.If;
-                //    storedContexts.Add(sc);
-
-                //}
-
             }
             else if (selectionType.StartsWith("switch"))
             {
@@ -417,42 +326,27 @@ namespace RAGE.Parser
                 cf.Add(sb.ToString());
             }
         }
+        
+        //Entering else statement
+        public override void EnterSelectionElseStatement([NotNull] SelectionElseStatementContext context)
+        {
+            var contextScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
+            if (contextScope == null)
+            {
+                Error($"Failed parsing else statement | line {lineNumber},{linePosition}");
+            }
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
+            base.EnterSelectionElseStatement(context);
+        }
 
-        //Exiting if, else, switch
+        //Exiting if, switch
         public override void ExitSelectionStatement(SelectionStatementContext context)
         {
             var code = new List<string>();
             string selectionType = context.GetText();
 
             var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
-            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
-            //CurrentContext = null;
-            //Will be 2 if there is an else statement (like in the EnterSelectionStatement func)
-            //if (statementCount == 1)
-            //{
-            //    //Find the scope with the context (for the end label)
-            //    var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
-            //    var expr = visitor.VisitExpression(context.expression());
-
-            //    code.AddRange(expr.Assembly);
-            //    var ff = context.statement();
-            //    //var statement = visitor.VisitStatement(context.statement()[0]);
-            //    //code.AddRange(statement.Assembly);
-            //    Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
-            //}
-            //else if (statementCount == 2)
-            //{
-            //    var elseScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
-            //    var endScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
-            //    var expr = visitor.VisitExpression(context.expression());
-            //    code.AddRange(expr.Assembly);
-            //    var statement = visitor.VisitStatement(context.statement());
-            //    Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{elseScope.Label}");
-            //    //statement = visitor.VisitExpression(context.statement()[1].expressionStatement().expression());
-            //    //code.AddRange(statement.Assembly);
-            //    Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{endScope.Label}");
-            //}
-            //CurrentContext = null;      
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");  
         }
 
         //Switch cases
@@ -559,7 +453,6 @@ namespace RAGE.Parser
                 Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(test.Assembly);
 
             }
-            //Core.AssemblyCode.FindFunction(currentFunction.Name).Value.Add($"Jump {storedContext.label}");
 
             base.ExitIterationStatement(context);
         }
