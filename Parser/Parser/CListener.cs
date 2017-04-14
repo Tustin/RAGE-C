@@ -661,6 +661,26 @@ public interface ICListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStaticAssertDeclaration([NotNull] CParser.StaticAssertDeclarationContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="CParser.selectionStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSelectionStatement([NotNull] CParser.SelectionStatementContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CParser.selectionStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSelectionStatement([NotNull] CParser.SelectionStatementContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="CParser.selectionElseStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSelectionElseStatement([NotNull] CParser.SelectionElseStatementContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CParser.selectionElseStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSelectionElseStatement([NotNull] CParser.SelectionElseStatementContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -720,16 +740,6 @@ public interface ICListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpressionStatement([NotNull] CParser.ExpressionStatementContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.selectionStatement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterSelectionStatement([NotNull] CParser.SelectionStatementContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.selectionStatement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitSelectionStatement([NotNull] CParser.SelectionStatementContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.iterationStatement"/>.
 	/// </summary>

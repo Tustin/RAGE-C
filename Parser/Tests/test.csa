@@ -1,7 +1,7 @@
-//Compiled using RAGE-C by Tustin 4/12/2017
+//Compiled using RAGE-C by Tustin 4/14/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 9 statics
+//Auto assigning 10 statics
 push_0
 setStatic1 1 //MainMenu_PLAYER_MENU
 push_1
@@ -20,6 +20,7 @@ push_0
 setStatic1 8 //currentOption
 push_0
 setStatic1 9 //open
+setStatic1 10 //currentMenuHeight
 Call @main
 Return 0 0
 
@@ -45,42 +46,56 @@ getF1 3 //y
 CallNative END_TEXT_COMMAND_DISPLAY_TEXT 2 0
 Return 5 0
 
-:draw_background
-Function 0 2 0
-Return 0 0
+:show_notification
+Function 1 3 0
+PushString "STRING"
+CallNative BEGIN_TEXT_COMMAND_PRINT 1 0
+getF1 0 //message
+CallNative ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME 1 0
+pushS 2000
+push_1
+CallNative END_TEXT_COMMAND_PRINT 2 0
+Return 1 0
 
-:draw_menu
-Function 0 4 0
-push_5
-setF1 3 //items
-push1 22
-FtoI
-setF1 4 //height
-PushString "Goy Menu"
+:draw_menu_title
+Function 1 3 0
+getF1 0 //title
 push_1
 fpush 0.839844
 fpush 0.191832
 fpush 1.05
 Call @draw_text
+Return 1 0
+
+:draw_background
+Function 0 2 0
+Return 0 0
+
+:draw_menu
+Function 0 2 0
+PushString "Goy Menu"
+Call @draw_menu_title
 getStatic1 7 //currentMenu
 getStatic1 1 //MainMenu_PLAYER_MENU
 JumpNE @selection_end_0
-getStatic1 8 //currentOption
-Switch [0=@selection_1_case_0][1=@selection_1_case_1]
-:selection_1_case_0
-Jump @selection_end_1
-:selection_1_case_1
-Jump @selection_end_1
-:selection_end_1
 :selection_end_0
 Return 0 0
 
 :main
 Function 0 2 0
 :loop_0
+getStatic1 9 //open
+push_0
+JumpNE @selection_else_1
+push_1
+setF1 9 //open
+:selection_else_1
 Call @draw_menu
 push_0
+setF1 9 //open
+:selection_end_1
+push_0
 CallNative wait 1 0
-Jump @loop_0
+JumpFalse @selection_else_1
 Return 0 0
 

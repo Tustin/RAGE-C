@@ -375,7 +375,7 @@ namespace RAGE.Parser
             string expression = context.GetText();
 
             //Get the context for the selection statement
-            CurrentContext = RAGEListener.storedContexts.Where(a => a.Context == context.Parent).FirstOrDefault();
+            //CurrentContext = RAGEListener.storedContexts.Where(a => a.Context == context.Parent).FirstOrDefault();
 
             //We'll do some optimizations here
             //No need to push 0 or 1 to the stack if the expression is just true or false
@@ -425,10 +425,6 @@ namespace RAGE.Parser
 
         public override Value VisitAssignmentExpression([NotNull] AssignmentExpressionContext context)
         {
-            var aa = context.assignmentExpression();
-            var bb = context.assignmentOperator();
-            var cc = context.conditionalExpression();
-            var dd = context.unaryExpression();
             if (context.assignmentExpression() == null)
             {
                 return VisitConditionalExpression(context.conditionalExpression());
@@ -438,9 +434,17 @@ namespace RAGE.Parser
             Value right = VisitAssignmentExpression(context.assignmentExpression());
 
             IVariable variable = null;
+
             if (left.Type != DataType.Array && left.Type != DataType.Global && left.Type != DataType.GlobalArray)
             {
-                variable = left.OriginalVariable ?? RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
+                if (left.Type == DataType.Static)
+                {
+                    variable = Script.StaticVariables.GetVariable(left.Data.ToString());
+                }
+                else if (left.Type == DataType.Variable)
+                {
+                    variable = RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
+                }
                 if (variable == null)
                 {
                     Error($"Unable to find variable '{left.Data.ToString()}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
@@ -573,25 +577,29 @@ namespace RAGE.Parser
 
             List<string> code = new List<string>();
 
-            if (left.Type != DataType.Bool || right.Type != DataType.Bool)
-            {
-                Error($"Invalid types for logical AND | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                return null;
-            }
-            if (left.Data != null && right.Data != null)
-                return new Value(DataType.Bool, (bool)left.Data & (bool)right.Data, new List<string>());
-            if ((left.Data != null && left.Data.Equals(false)) || (right.Data != null && right.Data.Equals(false)))
-                return new Value(DataType.Bool, false, new List<string>());
+            code.AddRange(left.Assembly);
+            code.AddRange(right.Assembly);
 
-            if (left.Data != null)
-            {
-                code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
-            }
-            if (right.Data != null)
-            {
-                code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
-            }
-            code.Add(Jump.Generate(JumpType.Equal, "nnfnfn"));
+            //if (left.Type != DataType.Bool || right.Type != DataType.Bool)
+            //{
+            //    Error($"Invalid types for logical AND | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+            //    return null;
+            //}
+            //if (left.Data != null && right.Data != null)
+            //    return new Value(DataType.Bool, (bool)left.Data & (bool)right.Data, new List<string>());
+            //if ((left.Data != null && left.Data.Equals(false)) || (right.Data != null && right.Data.Equals(false)))
+            //    return new Value(DataType.Bool, false, new List<string>());
+
+            //if (left.Data != null)
+            //{
+            //    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
+            //}
+            //if (right.Data != null)
+            //{
+            //    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
+            //}
+            code.Add(Bitwise.Generate(BitwiseType.And));
+            code.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
             return new Value(DataType.Bool, null, code);
         }
 

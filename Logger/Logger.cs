@@ -34,10 +34,11 @@ namespace RAGE.Logger
         public static void Warn(string message)
         {
             Console.Write($"[{timer.Elapsed.TotalSeconds}] ");
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Write("WARN: ");
             Console.ResetColor();
             Console.Write(message);
+            Console.Write("\r\n");
         }
     }
 }

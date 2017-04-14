@@ -343,11 +343,18 @@ staticAssertDeclaration
     :   '_Static_assert' '(' constantExpression ',' StringLiteral+ ')' ';'
     ;
 
+selectionStatement
+    :   'if' '(' expression ')' statement selectionElseStatement?
+    |   'switch' '(' expression ')' statement
+    ;
+selectionElseStatement
+    :   'else' statement
+    ;
 statement
     :   labeledStatement
     |   compoundStatement
-    |   expressionStatement
     |   selectionStatement
+    |   expressionStatement
     |   iterationStatement
     |   jumpStatement
     |   enumSpecifier
@@ -378,10 +385,7 @@ expressionStatement
     :   expression? ';'
     ;
 
-selectionStatement
-    :   'if' '(' expression ')' statement ('else' statement)?
-    |   'switch' '(' expression ')' statement
-    ;
+
 
 iterationStatement
     :   'while' '(' expression ')' statement

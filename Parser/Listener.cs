@@ -18,6 +18,7 @@ namespace RAGE.Parser
         public static Function CurrentFunction;
         public static Variable CurrentVariable;
         public static Switch CurrentSwitch;
+        public static StoredContext CurrentContext;
 
         public static int lineNumber = 0;
         public static int linePosition = 0;
@@ -46,13 +47,7 @@ namespace RAGE.Parser
             base.EnterEveryRule(context);
         }
 
-        public override void EnterEnumerator([NotNull] EnumeratorContext context)
-        {
-            var ff = context.GetText();
-            base.EnterEnumerator(context);
-        }
-
-        //Enum
+        //Enums
         public override void EnterEnumDeclarator([NotNull] EnumDeclaratorContext context)
         {
             string enumName = context.GetChild(1).GetText();
@@ -85,15 +80,10 @@ namespace RAGE.Parser
             {
                 visitor.VisitEnumerator(enumContext);
             }
-            //while (enumList != null)
-            //{
-            //    var enumVal = visitor.VisitEnumerator(enumList.enumerator());
-            //    enumList = enumList.enumeratorList();
-            //}
-
 
             base.EnterEnumDeclarator(context);
         }
+
         //New functions
         public override void EnterFunctionDefinition(FunctionDefinitionContext context)
         {
@@ -137,12 +127,7 @@ namespace RAGE.Parser
             LogVerbose($"Entering function '{name}'...");
         }
 
-        public override void EnterTypeSpecifier([NotNull] TypeSpecifierContext context)
-        {
-            var ggg = context.GetText();
-            base.EnterTypeSpecifier(context);
-        }
-
+        //Parse function params
         public override void EnterParameterList([NotNull] ParameterListContext context)
         {
             //For some reason, this context gets entered twice
@@ -177,11 +162,6 @@ namespace RAGE.Parser
                 CurrentFunction.Parameters.Add(new Parameter(specifier.Type, paramName, CurrentFunction.Parameters.Count));
             }
         }
-        public override void EnterDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
-        {
-            string ff = context.GetText();
-            base.EnterDeclarationSpecifiers(context);
-        }
 
         //End of a function
         public override void ExitFunctionDefinition(FunctionDefinitionContext context)
@@ -194,18 +174,6 @@ namespace RAGE.Parser
             Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Opcodes.Return.Generate(CurrentFunction.Parameters.Count));
             LogVerbose($"Leaving function '{CurrentFunction.Name}'");
             CurrentFunction = null;
-        }
-
-        public override void EnterPostfixExpression([NotNull] PostfixExpressionContext context)
-        {
-            string aa = context.GetText();
-            base.EnterPostfixExpression(context);
-        }
-
-        public override void EnterDeclarator([NotNull] DeclaratorContext context)
-        {
-            string ff = context.GetText();
-            base.EnterDeclarator(context);
         }
 
         //New variables
@@ -224,22 +192,6 @@ namespace RAGE.Parser
                 {
                     CurrentFunction.Variables.Add(arr);
                 }
-                ////Add the array as a single variable
-                //Variable variable = new Variable(arrName, RAGEListener.CurrentFunction.FrameVars + 1, declType);
-                //variable.Specifier = declSpec;
-                //variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-                //variable.Value.Type = variable.Type;
-                //variable.Value.IsDefault = true;
-                //RAGEListener.CurrentFunction.Variables.Add(variable);
-                //arrayIndexCount--;
-                //for (int i = 0; i < arrayIndexCount; i++)
-                //{
-                //    variable = new Variable($"{arrName}_{i + 1}", RAGEListener.CurrentFunction.FrameVars + 1, declType);
-                //    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-                //    variable.Value.Type = variable.Type;
-                //    variable.Value.IsDefault = true;
-                //    RAGEListener.CurrentFunction.Variables.Add(variable);
-                //}
             }
             else if (variable.Type == DataType.Variable)
             {
@@ -254,124 +206,14 @@ namespace RAGE.Parser
                     var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
                     cf.AddRange(var.ValueAssembly);
                     cf.Add(FrameVar.Set(var));
-
                 }
             }
-            //string gg = context.GetText();
-
-            //var specifiers = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
-
-            //DataType declType = specifiers.Type; //Should always have a type
-            //Specifier declSpec = (Specifier)specifiers.Data; //Will be None if there is no specifier
-
-            //var declarator = context.initDeclaratorList().initDeclarator();
-            //var varName = declarator.declarator().GetText();
-
-            ////Will be null if no value is being set
-            //var initializer = declarator.initializer();
-
-            ////Handle statics and frame vars the same minus a few differences
-            ////Array
-            //if (varName.Contains("["))
-            //{
-            //    //Get the count
-            //    int openBracket = varName.IndexOf('[');
-            //    int closeBracket = varName.IndexOf(']');
-            //    string arrName = varName.Split('[')[0];
-            //    if (CurrentFunction == null)
-            //    {
-            //        if (Script.StaticVariables.ContainVariable(arrName))
-            //        {
-            //            Error($"Static variable '{arrName}' has already been declared | line {lineNumber}, {linePosition}");
-            //        }
-            //    }
-            //    else
-            //    {
-            //        if (CurrentFunction.AlreadyDeclared(arrName))
-            //        {
-            //            Error($"'{arrName}' has already been declared in this scope | line {lineNumber}, {linePosition}");
-            //        }
-            //    }
-            //    if (!int.TryParse(varName.Substring(openBracket + 1, closeBracket - openBracket - 1), out int arrayIndexCount))
-            //    {
-            //        Error($"Failed parsing length for array {arrName} | line {lineNumber}, {linePosition}");
-            //    }
-            //    Array arr = new Array(arrName, CurrentFunction.FrameVars, arrayIndexCount);
-            //    CurrentFunction.Arrays.Add(arr);
-            //    //Add the array as a single variable
-            //    Variable variable = new Variable(arrName, CurrentFunction.FrameVars + 1, declType);
-            //    variable.Specifier = declSpec;
-            //    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-            //    variable.Value.Type = variable.Type;
-            //    variable.Value.IsDefault = true;
-            //    CurrentFunction.Variables.Add(variable);
-            //    arrayIndexCount--;
-            //    for (int i = 0; i < arrayIndexCount; i++)
-            //    {
-            //        variable = new Variable($"{arrName}_{i + 1}", CurrentFunction.FrameVars + 1, declType);
-            //        variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-            //        variable.Value.Type = variable.Type;
-            //        variable.Value.IsDefault = true;
-            //        CurrentFunction.Variables.Add(variable);
-            //    }
-            //}
-            //else
-            //{
-            //    if (CurrentFunction == null)
-            //    {
-            //        if (Script.StaticVariables.ContainVariable(varName))
-            //        {
-            //            Error($"Static variable '{varName}' has already been declared | line {lineNumber}, {linePosition}");
-            //        }
-            //    }
-            //    else
-            //    {
-            //        if (CurrentFunction.AlreadyDeclared(varName))
-            //        {
-            //            Error($"'{varName}' has already been declared in this scope | line {lineNumber}, {linePosition}");
-            //        }
-            //    }
-
-            //    Variable variable;
-            //    //Specified as static
-            //    if (declSpec == Specifier.Static)
-            //    {
-            //        variable = new Variable(varName, Script.StaticVariables.Count + 1, declType);
-            //        Script.StaticVariables.Add(variable);
-            //    }
-            //    else
-            //    {
-            //        if (CurrentFunction == null)
-            //        {
-            //            Error($"Non-static variable used outside of function scope | line {lineNumber},{linePosition}");
-            //        }
-            //        variable = new Variable(varName, CurrentFunction.FrameVars + 1, declType);
-            //        CurrentFunction.Variables.Add(variable);
-            //    }
-            //    //See if this variable is being initialized
-            //    //If not, then we'll give it a default value
-            //    if (initializer != null)
-            //    {
-            //        var resp = visitor.VisitInitDeclarator(declarator);
-            //        if (resp.Data != null)
-            //        {
-            //            variable.Value.Value = resp.Data.ToString();
-            //        }
-            //        variable.ValueAssembly = resp.Assembly;
-            //        variable.Value.Type = resp.Type;
-            //        variable.Value.IsDefault = false;
-            //    }
-            //    else
-            //    {
-            //        variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-            //        variable.Value.Type = variable.Type;
-            //        variable.Value.IsDefault = true;
-            //    }
-            //}
         }
+
+        //Statements
         public override void EnterStatement(StatementContext context)
         {
-            if (context.expressionStatement() == null)
+            if (context.expressionStatement() == null /*|| CurrentContext != null */)
             {
                 base.EnterStatement(context);
                 return;
@@ -382,34 +224,125 @@ namespace RAGE.Parser
             Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(res.Assembly);
         }
 
+        public override void EnterSelectionElseStatement([NotNull] SelectionElseStatementContext context)
+        {
+            var contextScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
+            base.EnterSelectionElseStatement(context);
+        }
+
         //Entering if, else, switch
         public override void EnterSelectionStatement(SelectionStatementContext context)
         {
-            string statement = context.GetText();
+            string selectionType = context.GetText();
+            var code = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
 
-            if (statement.StartsWith("if"))
+            if (selectionType.StartsWith("if"))
             {
                 int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
-
-                StoredContext sc = new StoredContext($"selection_end_{count}", count, context);
-
+                var hasElse = context.selectionElseStatement() != null;
+                StoredContext sc;
+                //Set specific label if this selection has an else statement
+                sc = new StoredContext($"selection_end_{count}", count, context);
                 storedContexts.Add(sc);
+                if (hasElse)
+                {
+                    sc = new StoredContext($"selection_else_{count}", count, context.selectionElseStatement());
+                    storedContexts.Add(sc);
+                }
+                CurrentContext = sc;
+
 
                 visitor.CurrentContext = sc;
 
                 var output = visitor.VisitExpression(context.expression());
 
-                var code = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
-
                 code.AddRange(output.Assembly);
+                //int statementCount = context.statement().Count();
+                //if (statementCount == 1)
+                //{
+                //    StoredContext sc = new StoredContext($"selection_end_{count}", count, context);
+
+                //    sc.Selection = SelectionTypes.If;
+                //    CurrentContext = sc;
+
+                //    storedContexts.Add(sc);
+
+                //    visitor.CurrentContext = sc;
+
+                //    var output = visitor.VisitExpression(context.expression());
+
+                //    code.AddRange(output.Assembly);
+                //}
+                //else if (statementCount == 2)
+                //{
+                //    ///Do this twice so theres a label for the else block and for the end
+                //    StoredContext sc = new StoredContext($"selection_else_{count}", count, context);
+                //    sc.Selection = SelectionTypes.Else;
+                //    storedContexts.Add(sc);
+                //    visitor.CurrentContext = sc;
+                //    CurrentContext = sc;
+
+                //    var output = visitor.VisitExpression(context.expression());
+
+                //    code.AddRange(output.Assembly);
+                //    code.Add($":{sc.Label}");
+                //    //var ff = context.statement()[0].GetText();
+
+                //    //var statement = visitor.VisitStatement(context.statement()[0]);
+
+                //    //code.AddRange(statement.Assembly);
+
+                //    //count = storedContexts.Count(a => a.Context is SelectionStatementContext);
+                //    //sc = new StoredContext($"selection_end_{count}", count, context);
+                //    //sc.Selection = SelectionTypes.If;
+                //    //storedContexts.Add(sc);
+                //}
+
+                //This will be two if there is an else statement
+                //int statementCount = 1;
+
+                //if (statementCount == 1)
+                //{
+                //    int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
+
+                //    StoredContext sc = new StoredContext($"selection_end_{count}", count, context);
+
+                //    sc.Selection = SelectionTypes.If;
+                //    CurrentContext = sc;
+
+                //    storedContexts.Add(sc);
+
+                //    visitor.CurrentContext = sc;
+                //}
+                //else if (statementCount == 2)
+                //{
+                //    //Do this twice so theres a label for the else block and for the end
+                //    int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
+
+                //    StoredContext sc = new StoredContext($"selection_else_{count}", count, context);
+                //    sc.Selection = SelectionTypes.Else;
+                //    storedContexts.Add(sc);
+                //    visitor.CurrentContext = sc;
+                //    CurrentContext = sc;
+
+                //   //var ff = context.statement()[0].GetText();
+
+                //    //var statement = visitor.VisitStatement(context.statement()[0]);
+
+                //    //code.AddRange(statement.Assembly);
+
+                //    count = storedContexts.Count(a => a.Context is SelectionStatementContext);
+                //    sc = new StoredContext($"selection_end_{count}", count, context);
+                //    sc.Selection = SelectionTypes.If;
+                //    storedContexts.Add(sc);
+
+                //}
+
             }
-            else if (statement.StartsWith("else"))
+            else if (selectionType.StartsWith("switch"))
             {
-                throw new Exception("Else not supported");
-            }
-            else if (statement.StartsWith("switch"))
-            {
-                var cases = context.statement()[0].compoundStatement().blockItemList();
+                var cases = context.statement().compoundStatement().blockItemList();
 
                 var conditionVariable = context.expression().GetText();
                 DataType conditionType = Utilities.GetTypeFromDeclaration(conditionVariable);
@@ -418,9 +351,6 @@ namespace RAGE.Parser
                 {
                     Error($"Undefined type '{conditionType}' used in switch expression | line {lineNumber},{linePosition}");
                 }
-
-                //var actualConditionVariable = 
-
 
                 if (cases == null)
                 {
@@ -488,6 +418,43 @@ namespace RAGE.Parser
             }
         }
 
+        //Exiting if, else, switch
+        public override void ExitSelectionStatement(SelectionStatementContext context)
+        {
+            var code = new List<string>();
+            string selectionType = context.GetText();
+
+            var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
+            //CurrentContext = null;
+            //Will be 2 if there is an else statement (like in the EnterSelectionStatement func)
+            //if (statementCount == 1)
+            //{
+            //    //Find the scope with the context (for the end label)
+            //    var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
+            //    var expr = visitor.VisitExpression(context.expression());
+
+            //    code.AddRange(expr.Assembly);
+            //    var ff = context.statement();
+            //    //var statement = visitor.VisitStatement(context.statement()[0]);
+            //    //code.AddRange(statement.Assembly);
+            //    Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
+            //}
+            //else if (statementCount == 2)
+            //{
+            //    var elseScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
+            //    var endScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
+            //    var expr = visitor.VisitExpression(context.expression());
+            //    code.AddRange(expr.Assembly);
+            //    var statement = visitor.VisitStatement(context.statement());
+            //    Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{elseScope.Label}");
+            //    //statement = visitor.VisitExpression(context.statement()[1].expressionStatement().expression());
+            //    //code.AddRange(statement.Assembly);
+            //    Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{endScope.Label}");
+            //}
+            //CurrentContext = null;      
+        }
+
         //Switch cases
         public override void EnterLabeledStatement([NotNull] LabeledStatementContext context)
         {
@@ -512,12 +479,7 @@ namespace RAGE.Parser
             base.EnterLabeledStatement(context);
         }
 
-        public override void ExitLabeledStatement([NotNull] LabeledStatementContext context)
-        {
-            string gff = context.GetText();
-            base.ExitLabeledStatement(context);
-        }
-
+        //Break, continue, return
         public override void EnterJumpStatement([NotNull] JumpStatementContext context)
         {
             string jumpType = context.GetText().Replace(";", "");
@@ -537,14 +499,6 @@ namespace RAGE.Parser
                 break;
             }
             base.EnterJumpStatement(context);
-        }
-
-        //Exiting if, else, switch
-        public override void ExitSelectionStatement(SelectionStatementContext context)
-        {
-            //Find the scope with the context (for the end label)
-            var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
-            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
         }
 
         //Entering for, while

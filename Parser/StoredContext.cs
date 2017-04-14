@@ -12,6 +12,8 @@ namespace RAGE.Parser
 
         public DataType Property { get; set; }
 
+        public SelectionTypes Selection { get; set; }
+
         public StoredContext(string label, int id, ParserRuleContext context)
         {
             Label = label;

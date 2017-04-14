@@ -791,6 +791,30 @@ public partial class CBaseListener : ICListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStaticAssertDeclaration([NotNull] CParser.StaticAssertDeclarationContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="CParser.selectionStatement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSelectionStatement([NotNull] CParser.SelectionStatementContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CParser.selectionStatement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSelectionStatement([NotNull] CParser.SelectionStatementContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="CParser.selectionElseStatement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSelectionElseStatement([NotNull] CParser.SelectionElseStatementContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CParser.selectionElseStatement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSelectionElseStatement([NotNull] CParser.SelectionElseStatementContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -862,18 +886,6 @@ public partial class CBaseListener : ICListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpressionStatement([NotNull] CParser.ExpressionStatementContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="CParser.selectionStatement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterSelectionStatement([NotNull] CParser.SelectionStatementContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CParser.selectionStatement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitSelectionStatement([NotNull] CParser.SelectionStatementContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CParser.iterationStatement"/>.
 	/// <para>The default implementation does nothing.</para>

@@ -266,6 +266,12 @@ public interface ICVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStructDeclarator([NotNull] CParser.StructDeclaratorContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="CParser.enumDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitEnumDeclarator([NotNull] CParser.EnumDeclaratorContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="CParser.enumSpecifier"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -362,11 +368,6 @@ public interface ICVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAbstractDeclarator([NotNull] CParser.AbstractDeclaratorContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.directAbstractDeclarator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="CParser.typedefName"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -409,6 +410,18 @@ public interface ICVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStaticAssertDeclaration([NotNull] CParser.StaticAssertDeclarationContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="CParser.selectionStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectionStatement([NotNull] CParser.SelectionStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="CParser.selectionElseStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectionElseStatement([NotNull] CParser.SelectionElseStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="CParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -444,12 +457,6 @@ public interface ICVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionStatement([NotNull] CParser.ExpressionStatementContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.selectionStatement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectionStatement([NotNull] CParser.SelectionStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CParser.iterationStatement"/>.
 	/// </summary>
