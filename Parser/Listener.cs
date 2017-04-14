@@ -6,13 +6,13 @@ using System.Linq;
 using Antlr4.Runtime;
 using RAGE.Parser.Opcodes;
 
-using static CParser;
+using static RAGEParser;
 using static RAGE.Logger.Logger;
 using System.Text;
 
 namespace RAGE.Parser
 {
-    public class RAGEListener : CBaseListener
+    public class RAGEListener : RAGEBaseListener
     {
         //Stuff that gets populated as the walker goes through the tree
         public static Function CurrentFunction;
@@ -333,7 +333,7 @@ namespace RAGE.Parser
             var contextScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
             if (contextScope == null)
             {
-                Error($"Failed parsing else statement | line {lineNumber},{linePosition}");
+                Error($"Found else statement, but unable to find context | line {lineNumber},{linePosition}");
             }
             Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
             base.EnterSelectionElseStatement(context);
@@ -456,6 +456,5 @@ namespace RAGE.Parser
 
             base.ExitIterationStatement(context);
         }
-
     }
 }

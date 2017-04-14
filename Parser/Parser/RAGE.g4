@@ -1,26 +1,11 @@
-//RAGE-C Grammar
-grammar C;
+//RAGE-C Grammar by Tustin (fork of C grammar)
+grammar RAGE;
 
 primaryExpression
     :   Identifier
     |   Constant
     |   StringLiteral+
     |   '(' expression ')'
-    |   genericSelection
-    ;
-
-genericSelection
-    :   '_Generic' '(' assignmentExpression ',' genericAssocList ')'
-    ;
-
-genericAssocList
-    :   genericAssociation
-    |   genericAssocList ',' genericAssociation
-    ;
-
-genericAssociation
-    :   typeName ':' assignmentExpression
-    |   'default' ':' assignmentExpression
     ;
 
 postfixExpression
@@ -52,7 +37,6 @@ unaryOperator
 castExpression
     :   unaryExpression
     |   '(' typeName ')' castExpression
-    |   '__extension__' '(' typeName ')' castExpression
     ;
 
 multiplicativeExpression
@@ -137,7 +121,6 @@ constantExpression
 
 declaration
     :   declarationSpecifiers initDeclaratorList? ';'
-    |   staticAssertDeclaration
     ;
 
 declarationSpecifiers
@@ -201,7 +184,6 @@ structDeclarationList
 
 structDeclaration
     :   specifierQualifierList structDeclaratorList? ';'
-    |   staticAssertDeclaration
     ;
 
 specifierQualifierList
@@ -284,7 +266,7 @@ typeQualifierList
 
 parameterTypeList
     :   parameterList
-    |   parameterList ',' '...'
+    |   parameterList ','
     ;
 
 parameterList
@@ -339,9 +321,6 @@ designator
     |   '.' Identifier
     ;
 
-staticAssertDeclaration
-    :   '_Static_assert' '(' constantExpression ',' StringLiteral+ ')' ';'
-    ;
 
 selectionStatement
     :   'if' '(' expression ')' statement selectionElseStatement?
@@ -384,8 +363,6 @@ blockItem
 expressionStatement
     :   expression? ';'
     ;
-
-
 
 iterationStatement
     :   'while' '(' expression ')' statement
@@ -454,14 +431,6 @@ Unsigned : 'unsigned';
 Void : 'void';
 While : 'while';
 
-Bool : '_Bool';
-Complex : '_Complex';
-Generic : '_Generic';
-Imaginary : '_Imaginary';
-Noreturn : '_Noreturn';
-StaticAssert : '_Static_assert';
-ThreadLocal : '_Thread_local';
-
 LeftParen : '(';
 RightParen : ')';
 LeftBracket : '[';
@@ -515,7 +484,6 @@ NotEqual : '!=';
 
 Arrow : '->';
 Dot : '.';
-Ellipsis : '...';
 
 Identifier
     :   IdentifierNondigit

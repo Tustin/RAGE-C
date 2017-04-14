@@ -4,13 +4,13 @@ using System.Linq;
 using Antlr4.Runtime.Misc;
 using System.Text.RegularExpressions;
 
-using static CParser;
+using static RAGEParser;
 using static RAGE.Logger.Logger;
 using RAGE.Parser.Opcodes;
 
 namespace RAGE.Parser
 {
-    public class RAGEVisitor : CBaseVisitor<Value>
+    public class RAGEVisitor : RAGEBaseVisitor<Value>
     {
         //The current context of the visitor (will be null if this isn't an expression)
         public StoredContext CurrentContext;

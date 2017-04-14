@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from C.g4 by ANTLR 4.6
+// Generated from RAGE.g4 by ANTLR 4.6
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -25,16 +25,16 @@ using IToken = Antlr4.Runtime.IToken;
 using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 
 /// <summary>
-/// This class provides an empty implementation of <see cref="ICVisitor{Result}"/>,
+/// This class provides an empty implementation of <see cref="IRAGEVisitor{Result}"/>,
 /// which can be extended to create a visitor which only needs to handle a subset
 /// of the available methods.
 /// </summary>
 /// <typeparam name="Result">The return type of the visit operation.</typeparam>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.6")]
 [System.CLSCompliant(false)]
-public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, ICVisitor<Result> {
+public partial class RAGEBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IRAGEVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.primaryExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.primaryExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -42,9 +42,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitPrimaryExpression([NotNull] CParser.PrimaryExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitPrimaryExpression([NotNull] RAGEParser.PrimaryExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.genericSelection"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.postfixExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -52,9 +52,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitGenericSelection([NotNull] CParser.GenericSelectionContext context) { return VisitChildren(context); }
+	public virtual Result VisitPostfixExpression([NotNull] RAGEParser.PostfixExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.genericAssocList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.argumentExpressionList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -62,9 +62,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitGenericAssocList([NotNull] CParser.GenericAssocListContext context) { return VisitChildren(context); }
+	public virtual Result VisitArgumentExpressionList([NotNull] RAGEParser.ArgumentExpressionListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.genericAssociation"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.unaryExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -72,9 +72,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitGenericAssociation([NotNull] CParser.GenericAssociationContext context) { return VisitChildren(context); }
+	public virtual Result VisitUnaryExpression([NotNull] RAGEParser.UnaryExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.postfixExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.unaryOperator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -82,9 +82,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitPostfixExpression([NotNull] CParser.PostfixExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitUnaryOperator([NotNull] RAGEParser.UnaryOperatorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.argumentExpressionList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.castExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -92,9 +92,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitArgumentExpressionList([NotNull] CParser.ArgumentExpressionListContext context) { return VisitChildren(context); }
+	public virtual Result VisitCastExpression([NotNull] RAGEParser.CastExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.unaryExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.multiplicativeExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -102,9 +102,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitUnaryExpression([NotNull] CParser.UnaryExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitMultiplicativeExpression([NotNull] RAGEParser.MultiplicativeExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.unaryOperator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.additiveExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -112,9 +112,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitUnaryOperator([NotNull] CParser.UnaryOperatorContext context) { return VisitChildren(context); }
+	public virtual Result VisitAdditiveExpression([NotNull] RAGEParser.AdditiveExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.castExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.shiftExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -122,9 +122,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitCastExpression([NotNull] CParser.CastExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitShiftExpression([NotNull] RAGEParser.ShiftExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.multiplicativeExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.relationalExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -132,9 +132,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitMultiplicativeExpression([NotNull] CParser.MultiplicativeExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitRelationalExpression([NotNull] RAGEParser.RelationalExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.additiveExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.equalityExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -142,9 +142,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitAdditiveExpression([NotNull] CParser.AdditiveExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitEqualityExpression([NotNull] RAGEParser.EqualityExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.shiftExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.andExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -152,9 +152,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitShiftExpression([NotNull] CParser.ShiftExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitAndExpression([NotNull] RAGEParser.AndExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.relationalExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.exclusiveOrExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -162,9 +162,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitRelationalExpression([NotNull] CParser.RelationalExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitExclusiveOrExpression([NotNull] RAGEParser.ExclusiveOrExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.equalityExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.inclusiveOrExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -172,9 +172,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitEqualityExpression([NotNull] CParser.EqualityExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitInclusiveOrExpression([NotNull] RAGEParser.InclusiveOrExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.andExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.logicalAndExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -182,9 +182,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitAndExpression([NotNull] CParser.AndExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitLogicalAndExpression([NotNull] RAGEParser.LogicalAndExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.exclusiveOrExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.logicalOrExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -192,9 +192,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitExclusiveOrExpression([NotNull] CParser.ExclusiveOrExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitLogicalOrExpression([NotNull] RAGEParser.LogicalOrExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.inclusiveOrExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.conditionalExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -202,9 +202,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitInclusiveOrExpression([NotNull] CParser.InclusiveOrExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitConditionalExpression([NotNull] RAGEParser.ConditionalExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.logicalAndExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.assignmentExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -212,9 +212,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitLogicalAndExpression([NotNull] CParser.LogicalAndExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitAssignmentExpression([NotNull] RAGEParser.AssignmentExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.logicalOrExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.assignmentOperator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -222,9 +222,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitLogicalOrExpression([NotNull] CParser.LogicalOrExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitAssignmentOperator([NotNull] RAGEParser.AssignmentOperatorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.conditionalExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -232,9 +232,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitConditionalExpression([NotNull] CParser.ConditionalExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitExpression([NotNull] RAGEParser.ExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.assignmentExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.constantExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -242,9 +242,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitAssignmentExpression([NotNull] CParser.AssignmentExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitConstantExpression([NotNull] RAGEParser.ConstantExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.assignmentOperator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.declaration"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -252,9 +252,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitAssignmentOperator([NotNull] CParser.AssignmentOperatorContext context) { return VisitChildren(context); }
+	public virtual Result VisitDeclaration([NotNull] RAGEParser.DeclarationContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.expression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.declarationSpecifiers"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -262,9 +262,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitExpression([NotNull] CParser.ExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitDeclarationSpecifiers([NotNull] RAGEParser.DeclarationSpecifiersContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.constantExpression"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.declarationSpecifiers2"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -272,9 +272,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitConstantExpression([NotNull] CParser.ConstantExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitDeclarationSpecifiers2([NotNull] RAGEParser.DeclarationSpecifiers2Context context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.declaration"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.declarationSpecifier"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -282,9 +282,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDeclaration([NotNull] CParser.DeclarationContext context) { return VisitChildren(context); }
+	public virtual Result VisitDeclarationSpecifier([NotNull] RAGEParser.DeclarationSpecifierContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.declarationSpecifiers"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.initDeclaratorList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -292,9 +292,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDeclarationSpecifiers([NotNull] CParser.DeclarationSpecifiersContext context) { return VisitChildren(context); }
+	public virtual Result VisitInitDeclaratorList([NotNull] RAGEParser.InitDeclaratorListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.declarationSpecifiers2"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.initDeclarator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -302,9 +302,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDeclarationSpecifiers2([NotNull] CParser.DeclarationSpecifiers2Context context) { return VisitChildren(context); }
+	public virtual Result VisitInitDeclarator([NotNull] RAGEParser.InitDeclaratorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.declarationSpecifier"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.storageClassSpecifier"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -312,9 +312,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDeclarationSpecifier([NotNull] CParser.DeclarationSpecifierContext context) { return VisitChildren(context); }
+	public virtual Result VisitStorageClassSpecifier([NotNull] RAGEParser.StorageClassSpecifierContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.initDeclaratorList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.typeSpecifier"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -322,9 +322,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitInitDeclaratorList([NotNull] CParser.InitDeclaratorListContext context) { return VisitChildren(context); }
+	public virtual Result VisitTypeSpecifier([NotNull] RAGEParser.TypeSpecifierContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.initDeclarator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.structOrUnionSpecifier"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -332,9 +332,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitInitDeclarator([NotNull] CParser.InitDeclaratorContext context) { return VisitChildren(context); }
+	public virtual Result VisitStructOrUnionSpecifier([NotNull] RAGEParser.StructOrUnionSpecifierContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.storageClassSpecifier"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.structOrUnion"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -342,9 +342,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStorageClassSpecifier([NotNull] CParser.StorageClassSpecifierContext context) { return VisitChildren(context); }
+	public virtual Result VisitStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.typeSpecifier"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.structDeclarationList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -352,9 +352,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitTypeSpecifier([NotNull] CParser.TypeSpecifierContext context) { return VisitChildren(context); }
+	public virtual Result VisitStructDeclarationList([NotNull] RAGEParser.StructDeclarationListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.structOrUnionSpecifier"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.structDeclaration"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -362,9 +362,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStructOrUnionSpecifier([NotNull] CParser.StructOrUnionSpecifierContext context) { return VisitChildren(context); }
+	public virtual Result VisitStructDeclaration([NotNull] RAGEParser.StructDeclarationContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.structOrUnion"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.specifierQualifierList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -372,9 +372,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStructOrUnion([NotNull] CParser.StructOrUnionContext context) { return VisitChildren(context); }
+	public virtual Result VisitSpecifierQualifierList([NotNull] RAGEParser.SpecifierQualifierListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.structDeclarationList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.structDeclaratorList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -382,9 +382,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStructDeclarationList([NotNull] CParser.StructDeclarationListContext context) { return VisitChildren(context); }
+	public virtual Result VisitStructDeclaratorList([NotNull] RAGEParser.StructDeclaratorListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.structDeclaration"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.structDeclarator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -392,9 +392,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStructDeclaration([NotNull] CParser.StructDeclarationContext context) { return VisitChildren(context); }
+	public virtual Result VisitStructDeclarator([NotNull] RAGEParser.StructDeclaratorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.specifierQualifierList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.enumDeclarator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -402,9 +402,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitSpecifierQualifierList([NotNull] CParser.SpecifierQualifierListContext context) { return VisitChildren(context); }
+	public virtual Result VisitEnumDeclarator([NotNull] RAGEParser.EnumDeclaratorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.structDeclaratorList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.enumSpecifier"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -412,9 +412,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStructDeclaratorList([NotNull] CParser.StructDeclaratorListContext context) { return VisitChildren(context); }
+	public virtual Result VisitEnumSpecifier([NotNull] RAGEParser.EnumSpecifierContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.structDeclarator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.enumeratorList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -422,9 +422,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStructDeclarator([NotNull] CParser.StructDeclaratorContext context) { return VisitChildren(context); }
+	public virtual Result VisitEnumeratorList([NotNull] RAGEParser.EnumeratorListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.enumDeclarator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.enumerator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -432,9 +432,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitEnumDeclarator([NotNull] CParser.EnumDeclaratorContext context) { return VisitChildren(context); }
+	public virtual Result VisitEnumerator([NotNull] RAGEParser.EnumeratorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.enumSpecifier"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.enumerationConstant"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -442,9 +442,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitEnumSpecifier([NotNull] CParser.EnumSpecifierContext context) { return VisitChildren(context); }
+	public virtual Result VisitEnumerationConstant([NotNull] RAGEParser.EnumerationConstantContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.enumeratorList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.typeQualifier"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -452,9 +452,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitEnumeratorList([NotNull] CParser.EnumeratorListContext context) { return VisitChildren(context); }
+	public virtual Result VisitTypeQualifier([NotNull] RAGEParser.TypeQualifierContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.enumerator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.declarator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -462,9 +462,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitEnumerator([NotNull] CParser.EnumeratorContext context) { return VisitChildren(context); }
+	public virtual Result VisitDeclarator([NotNull] RAGEParser.DeclaratorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.enumerationConstant"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.directDeclarator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -472,9 +472,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitEnumerationConstant([NotNull] CParser.EnumerationConstantContext context) { return VisitChildren(context); }
+	public virtual Result VisitDirectDeclarator([NotNull] RAGEParser.DirectDeclaratorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.typeQualifier"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.nestedParenthesesBlock"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -482,9 +482,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitTypeQualifier([NotNull] CParser.TypeQualifierContext context) { return VisitChildren(context); }
+	public virtual Result VisitNestedParenthesesBlock([NotNull] RAGEParser.NestedParenthesesBlockContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.declarator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.pointer"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -492,9 +492,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDeclarator([NotNull] CParser.DeclaratorContext context) { return VisitChildren(context); }
+	public virtual Result VisitPointer([NotNull] RAGEParser.PointerContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.directDeclarator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.typeQualifierList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -502,9 +502,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDirectDeclarator([NotNull] CParser.DirectDeclaratorContext context) { return VisitChildren(context); }
+	public virtual Result VisitTypeQualifierList([NotNull] RAGEParser.TypeQualifierListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.nestedParenthesesBlock"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.parameterTypeList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -512,9 +512,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitNestedParenthesesBlock([NotNull] CParser.NestedParenthesesBlockContext context) { return VisitChildren(context); }
+	public virtual Result VisitParameterTypeList([NotNull] RAGEParser.ParameterTypeListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.pointer"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.parameterList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -522,9 +522,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitPointer([NotNull] CParser.PointerContext context) { return VisitChildren(context); }
+	public virtual Result VisitParameterList([NotNull] RAGEParser.ParameterListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.typeQualifierList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.parameterDeclaration"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -532,9 +532,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitTypeQualifierList([NotNull] CParser.TypeQualifierListContext context) { return VisitChildren(context); }
+	public virtual Result VisitParameterDeclaration([NotNull] RAGEParser.ParameterDeclarationContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.parameterTypeList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.identifierList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -542,9 +542,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitParameterTypeList([NotNull] CParser.ParameterTypeListContext context) { return VisitChildren(context); }
+	public virtual Result VisitIdentifierList([NotNull] RAGEParser.IdentifierListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.parameterList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.typeName"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -552,9 +552,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitParameterList([NotNull] CParser.ParameterListContext context) { return VisitChildren(context); }
+	public virtual Result VisitTypeName([NotNull] RAGEParser.TypeNameContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.parameterDeclaration"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.abstractDeclarator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -562,9 +562,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitParameterDeclaration([NotNull] CParser.ParameterDeclarationContext context) { return VisitChildren(context); }
+	public virtual Result VisitAbstractDeclarator([NotNull] RAGEParser.AbstractDeclaratorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.identifierList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.typedefName"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -572,9 +572,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitIdentifierList([NotNull] CParser.IdentifierListContext context) { return VisitChildren(context); }
+	public virtual Result VisitTypedefName([NotNull] RAGEParser.TypedefNameContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.typeName"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.initializer"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -582,9 +582,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitTypeName([NotNull] CParser.TypeNameContext context) { return VisitChildren(context); }
+	public virtual Result VisitInitializer([NotNull] RAGEParser.InitializerContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.abstractDeclarator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.initializerList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -592,9 +592,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitAbstractDeclarator([NotNull] CParser.AbstractDeclaratorContext context) { return VisitChildren(context); }
+	public virtual Result VisitInitializerList([NotNull] RAGEParser.InitializerListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.typedefName"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.designation"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -602,9 +602,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitTypedefName([NotNull] CParser.TypedefNameContext context) { return VisitChildren(context); }
+	public virtual Result VisitDesignation([NotNull] RAGEParser.DesignationContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.initializer"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.designatorList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -612,9 +612,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitInitializer([NotNull] CParser.InitializerContext context) { return VisitChildren(context); }
+	public virtual Result VisitDesignatorList([NotNull] RAGEParser.DesignatorListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.initializerList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.designator"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -622,9 +622,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitInitializerList([NotNull] CParser.InitializerListContext context) { return VisitChildren(context); }
+	public virtual Result VisitDesignator([NotNull] RAGEParser.DesignatorContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.designation"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.selectionStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -632,9 +632,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDesignation([NotNull] CParser.DesignationContext context) { return VisitChildren(context); }
+	public virtual Result VisitSelectionStatement([NotNull] RAGEParser.SelectionStatementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.designatorList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.selectionElseStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -642,9 +642,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDesignatorList([NotNull] CParser.DesignatorListContext context) { return VisitChildren(context); }
+	public virtual Result VisitSelectionElseStatement([NotNull] RAGEParser.SelectionElseStatementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.designator"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.statement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -652,9 +652,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDesignator([NotNull] CParser.DesignatorContext context) { return VisitChildren(context); }
+	public virtual Result VisitStatement([NotNull] RAGEParser.StatementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.staticAssertDeclaration"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.labeledStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -662,9 +662,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStaticAssertDeclaration([NotNull] CParser.StaticAssertDeclarationContext context) { return VisitChildren(context); }
+	public virtual Result VisitLabeledStatement([NotNull] RAGEParser.LabeledStatementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.selectionStatement"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.compoundStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -672,9 +672,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitSelectionStatement([NotNull] CParser.SelectionStatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitCompoundStatement([NotNull] RAGEParser.CompoundStatementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.selectionElseStatement"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.blockItemList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -682,9 +682,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitSelectionElseStatement([NotNull] CParser.SelectionElseStatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitBlockItemList([NotNull] RAGEParser.BlockItemListContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.statement"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.blockItem"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -692,9 +692,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStatement([NotNull] CParser.StatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitBlockItem([NotNull] RAGEParser.BlockItemContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.labeledStatement"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.expressionStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -702,9 +702,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitLabeledStatement([NotNull] CParser.LabeledStatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitExpressionStatement([NotNull] RAGEParser.ExpressionStatementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.compoundStatement"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.iterationStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -712,9 +712,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitCompoundStatement([NotNull] CParser.CompoundStatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitIterationStatement([NotNull] RAGEParser.IterationStatementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.blockItemList"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.jumpStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -722,9 +722,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitBlockItemList([NotNull] CParser.BlockItemListContext context) { return VisitChildren(context); }
+	public virtual Result VisitJumpStatement([NotNull] RAGEParser.JumpStatementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.blockItem"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.compilationUnit"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -732,9 +732,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitBlockItem([NotNull] CParser.BlockItemContext context) { return VisitChildren(context); }
+	public virtual Result VisitCompilationUnit([NotNull] RAGEParser.CompilationUnitContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.expressionStatement"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.translationUnit"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -742,9 +742,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitExpressionStatement([NotNull] CParser.ExpressionStatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitTranslationUnit([NotNull] RAGEParser.TranslationUnitContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.iterationStatement"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.externalDeclaration"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -752,9 +752,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitIterationStatement([NotNull] CParser.IterationStatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitExternalDeclaration([NotNull] RAGEParser.ExternalDeclarationContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.jumpStatement"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.functionDefinition"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -762,9 +762,9 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitJumpStatement([NotNull] CParser.JumpStatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitFunctionDefinition([NotNull] RAGEParser.FunctionDefinitionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.compilationUnit"/>.
+	/// Visit a parse tree produced by <see cref="RAGEParser.declarationList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -772,45 +772,5 @@ public partial class CBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IC
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitCompilationUnit([NotNull] CParser.CompilationUnitContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.translationUnit"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitTranslationUnit([NotNull] CParser.TranslationUnitContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.externalDeclaration"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitExternalDeclaration([NotNull] CParser.ExternalDeclarationContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.functionDefinition"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitFunctionDefinition([NotNull] CParser.FunctionDefinitionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="CParser.declarationList"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitDeclarationList([NotNull] CParser.DeclarationListContext context) { return VisitChildren(context); }
+	public virtual Result VisitDeclarationList([NotNull] RAGEParser.DeclarationListContext context) { return VisitChildren(context); }
 }

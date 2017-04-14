@@ -49,13 +49,13 @@ namespace RAGE.Parser
 
             LogVerbose("Loaded script file");
 
-            CLexer lexer = new CLexer(fs);
+            RAGELexer lexer = new RAGELexer(fs);
 
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             LogVerbose($"Successfully lexed tokens");
 
-            CParser parser = new CParser(tokens);
+            RAGEParser parser = new RAGEParser(tokens);
 
             ParseTreeWalker walker = new ParseTreeWalker();
 
