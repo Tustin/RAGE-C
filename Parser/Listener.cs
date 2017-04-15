@@ -297,7 +297,7 @@ namespace RAGE.Parser
                     cases = cases.blockItemList();
                 }
 
-                //currentSwitch.Cases.Reverse();
+                currentSwitch.Cases.Reverse();
 
                 //Move the default item to the front (if it exists)
                 var index = currentSwitch.Cases.FindIndex(a => a.IsDefault == true);
@@ -340,14 +340,15 @@ namespace RAGE.Parser
         }
 
         //Entering else statement
-        public override void EnterSelectionElseStatement([NotNull] SelectionElseStatementContext context)
+        public override void EnterSelectionElseStatement(SelectionElseStatementContext context)
         {
             var contextScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
-
+            var parentContextScope = storedContexts.Where(a => a.Context == context.Parent).LastOrDefault();
             if (contextScope == null)
             {
                 Error($"Found else statement, but unable to find context | line {lineNumber},{linePosition}");
             }
+            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Jump.Generate(JumpType.Unconditional, parentContextScope.Label));
             Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
             base.EnterSelectionElseStatement(context);
         }
@@ -360,10 +361,15 @@ namespace RAGE.Parser
             var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
             var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
             visitor.CurrentContext = null;
+
             if (selectionType.StartsWith("switch"))
             {
                 LabelData.ForEach(a => cf.AddRange(a.Code));
                 CurrentSwitch = null;
+            }
+            if (selectionType.StartsWith("if"))
+            {
+                cf.Add(Jump.Generate(JumpType.Unconditional, contextScope.Label));
             }
 
             cf.Add($":{contextScope.Label}");
@@ -392,9 +398,13 @@ namespace RAGE.Parser
                 }
 
                 caseCode.Add($":{nextCase.Label}");
-                var statement = visitor.VisitExpression(context.statement().expressionStatement().expression());
+                var statement = context.statement().expressionStatement();
+                if (statement != null)
+                {
+                    var statementRes = visitor.VisitExpression(statement.expression());
 
-                caseCode.AddRange(statement.Assembly);
+                    caseCode.AddRange(statementRes.Assembly);
+                }
 
 
                 //@TODO: Put this in a visitor

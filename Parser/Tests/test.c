@@ -36,25 +36,27 @@ void draw_menu_title(string title) {
     draw_text(title, 1, 0.839844, 0.191832, 1.05);
 }
 
-void draw_background() {
-    float tmpHeight = currentMenuHeight * 0.5;
-    DRAW_RECT(0.840576, 0.248187 + tmpHeight, 0.249766, currentMenuHeight, 0, 0, 0, 60); //background
+void draw_background(int items) {
+    float tmpHeight = (float)items * 0.026094
+    tmpHeight = tmpHeight * 0.5;
+    DRAW_RECT(0.840576, 0.248187 + tmpHeight, 0.249766, tmpHeight, 0, 0, 0, 60); //background
 }
 
 void draw_menu() {
     draw_menu_title("Goy Menu");
-    float tmpHeight = (float)2 * 0.026094;
+    int menuItems = 0;
     switch (currentMenu) {
         case MainMenu.PLAYER_MENU:
-        currentMenuHeight = tmpHeight + 0.030944;
+        menuItems = 3;
         break;
         case MainMenu.VEHICLE_MENU:
-        currentMenuHeight = tmpHeight + 0.030943;
+        menuItems = 5;
         break;
         default:
         break;
     }
-    draw_background();
+    draw_background(menuItems);
+
     // if (currentMenu == MainMenu.PLAYER_MENU) {
     //     switch (currentOption) {
     //         case PlayerMenu.GODMODE:
@@ -67,20 +69,27 @@ void draw_menu() {
     // }
 }
 
-
 void main() {
     while (true) 
     {
         if (!open) {
-            if (IS_DISABLED_CONTROL_PRESSED(2, 0xcc) && IS_DISABLED_CONTROL_PRESSED(2, 0xc9)) {
-                open = true;
-                currentMenu = 0;
-                currentOption = 0;
-                lastButtonPress = GET_GAME_TIMER();
-            }
+            open = true;
         } else {
             draw_menu();
         }
+        // if (IS_DISABLED_CONTROL_PRESSED(2, 0xcc) && IS_DISABLED_CONTROL_PRESSED(2, 0xc9)) {
+        //     if (!open) {
+        //         open = true;
+        //         currentMenu = 0;
+        //         currentOption = 0;
+        //         lastButtonPress = GET_GAME_TIMER();
+        //         show_notification("menu opened");   
+        //     }
+        // }
+
+        // if (open == true) {
+        //     draw_menu();
+        // }
         wait(0);
     }
 }

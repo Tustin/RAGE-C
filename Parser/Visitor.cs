@@ -509,6 +509,12 @@ namespace RAGE.Parser
                     code.AddRange(left.Assembly);
                     return new Value(DataType.Int, null, code);
                 }
+                if (left.Type == DataType.Static)
+                {
+                    code.AddRange(right.Assembly);
+                    code.Add(StaticVar.Set(Script.StaticVariables.GetVariable(left.Data as string)));
+                    return new Value(DataType.Int, null, code);
+                }
 
                 if (right.Data == null)
                 {
@@ -961,7 +967,39 @@ namespace RAGE.Parser
                 Error($"Casting only supports int to float and vice-versa | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
             }
             var expr = VisitCastExpression(context.castExpression());
-            if (expr.Type != DataType.Int && expr.Type != DataType.Float && expr.Type != DataType.Variable && expr.Type != DataType.Static)
+
+            if (expr.Type == DataType.Static || expr.Type == DataType.Argument || expr.Type == DataType.Variable)
+            {
+                switch (expr.Type)
+                {
+                    case DataType.Static:
+                    var @static = Script.StaticVariables.GetVariable(expr.Data as string);
+                    if (@static == null)
+                    {
+                        Error($"Cast expression assumed static, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    }
+                    expr.Type = @static.Type;
+                    break;
+                    case DataType.Variable:
+                    var var = RAGEListener.CurrentFunction.Variables.GetVariable(expr.Data as string);
+                    if (var == null)
+                    {
+                        Error($"Cast expression assumed frame variable, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    }
+                    expr.Type = var.Type;
+                    break;
+                    case DataType.Argument:
+                    var arg = RAGEListener.CurrentFunction.GetParameter(expr.Data as string);
+                    if (arg == null)
+                    {
+                        Error($"Cast expression assumed function param, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                    }
+                    expr.Type = arg.Type;
+                    break;
+                }
+            }
+
+            if (expr.Type != DataType.Int && expr.Type != DataType.Float && expr.Type != DataType.Variable && expr.Type != DataType.Static && expr.Type != DataType.Argument)
             {
                 Error($"Casting only supports int to float and vice-versa | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
             }
@@ -1329,7 +1367,7 @@ namespace RAGE.Parser
                 }
                 else
                 {
-                    ival = int.Parse(value, System.Globalization.NumberStyles.HexNumber);
+                    ival = int.Parse(value);
                 }
                 code.Add(Push.Generate(value, type));
                 return new Value(DataType.Int, ival, code);
