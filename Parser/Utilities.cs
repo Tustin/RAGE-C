@@ -234,5 +234,24 @@ namespace RAGE.Parser
             return enumerators.Where(a => a.Name == name).FirstOrDefault();
         }
 
+        public static int GetCaseExpression(Value expr)
+        {
+            int value = 0;
+            if (expr.Data is int i)
+            {
+                value = i;
+            }
+            else if (expr.Data is Enumerator e)
+            {
+                var enumVar = e.Variable as Variable;
+                value = int.Parse(enumVar.Value.Value);
+            }
+            else
+            {
+                Error($"Unable to determine case type | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+            }
+            return value;
+        }
+
     }
 }

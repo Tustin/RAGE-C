@@ -17,7 +17,10 @@ namespace RAGE.Parser
         //Stuff that gets populated as the walker goes through the tree
         public static Function CurrentFunction;
         public static Variable CurrentVariable;
+
         public static Switch CurrentSwitch;
+
+        public static LabelData CurrentLabel;
 
         public static int lineNumber = 0;
         public static int linePosition = 0;
@@ -212,7 +215,7 @@ namespace RAGE.Parser
         //Statements
         public override void EnterStatement(StatementContext context)
         {
-            if (context.expressionStatement() == null)
+            if (context.expressionStatement() == null || CurrentSwitch != null)
             {
                 base.EnterStatement(context);
                 return;
@@ -269,7 +272,7 @@ namespace RAGE.Parser
                 //Create the switch so we can add the items to it
                 int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
 
-                StoredContext sc = new StoredContext($"selection_end_{count}", count, context);
+                StoredContext sc = new StoredContext($"switch_end_{count}", count, context);
 
                 storedContexts.Add(sc);
 
@@ -294,7 +297,14 @@ namespace RAGE.Parser
                     cases = cases.blockItemList();
                 }
 
-                currentSwitch.Cases.Reverse();
+                //currentSwitch.Cases.Reverse();
+
+                //Move the default item to the front (if it exists)
+                var index = currentSwitch.Cases.FindIndex(a => a.IsDefault == true);
+                var defaultCase = CurrentSwitch.Cases[index];
+                currentSwitch.Cases.RemoveAt(index);
+                currentSwitch.Cases.Insert(0, defaultCase);
+
                 var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
                 switches.Add(sc, currentSwitch);
                 if (conditionType == DataType.NativeCall || conditionType == DataType.LocalCall)
@@ -321,6 +331,8 @@ namespace RAGE.Parser
                 sb.Append("Switch ");
                 foreach (var @case in currentSwitch.Cases)
                 {
+                    //Dont generate a case for default
+                    if (@case.IsDefault) continue;
                     sb.Append($"[{@case.Condition}=@{@case.Label}]");
                 }
                 cf.Add(sb.ToString());
@@ -331,6 +343,7 @@ namespace RAGE.Parser
         public override void EnterSelectionElseStatement([NotNull] SelectionElseStatementContext context)
         {
             var contextScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
+
             if (contextScope == null)
             {
                 Error($"Found else statement, but unable to find context | line {lineNumber},{linePosition}");
@@ -344,50 +357,154 @@ namespace RAGE.Parser
         {
             var code = new List<string>();
             string selectionType = context.GetText();
-
+            var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
             var contextScope = storedContexts.Where(a => a.Context == context).FirstOrDefault();
-            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
             visitor.CurrentContext = null;
+            if (selectionType.StartsWith("switch"))
+            {
+                LabelData.ForEach(a => cf.AddRange(a.Code));
+                CurrentSwitch = null;
+            }
+
+            cf.Add($":{contextScope.Label}");
         }
 
-        //Switch cases
+        public List<LabelData> LabelData = new List<LabelData>();
+        //Entering switch case
         public override void EnterLabeledStatement([NotNull] LabeledStatementContext context)
         {
-            if (context.GetChild(0).GetText() == "case")
+            var label = context.GetChild(0).GetText();
+            List<string> caseCode = new List<string>();
+            if (label == "case")
             {
                 if (CurrentSwitch == null)
                 {
                     Error($"Found case label, but no switch was found | line {lineNumber},{linePosition}");
                 }
+                var expr = visitor.VisitConstantExpression(context.constantExpression());
+                int caseCondition = Utilities.GetCaseExpression(expr);
 
-                Case nextCase = CurrentSwitch.Cases.Where(a => a.Generated == false).FirstOrDefault();
+                Case nextCase = CurrentSwitch.Cases.Where(a => a.Generated == false && a.Condition == caseCondition).FirstOrDefault();
 
                 if (nextCase == null)
                 {
                     Error($"Found case that wasn't defined | line {lineNumber},{linePosition}");
                 }
 
-                Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{nextCase.Label}");
-                nextCase.Generated = true;
+                caseCode.Add($":{nextCase.Label}");
+                var statement = visitor.VisitExpression(context.statement().expressionStatement().expression());
+
+                caseCode.AddRange(statement.Assembly);
+
+
+                //@TODO: Put this in a visitor
+                var jump = context.jumpStatement();
+
+                if (jump != null)
+                {
+                    var jumpLoc = storedContexts.LastOrDefault();
+                    string jumpType = jump.GetText().Replace(";", "");
+                    switch (jumpType)
+                    {
+                        case "break":
+                        caseCode.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+                        break;
+                    }
+                }
+                else
+                {
+                    Warn($"Switch case '{nextCase.Condition}' does not contain a jump statement | line {lineNumber},{linePosition}");
+                }
+
+
+                //Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{nextCase.Label}");
+                //nextCase.Generated = true;
+                var ld = new LabelData(caseCode, expr, nextCase);
+
+                LabelData.Add(ld);
+                CurrentLabel = ld;
 
             }
-            base.EnterLabeledStatement(context);
+            else if (label == "default")
+            {
+                if (CurrentSwitch == null)
+                {
+                    Error($"Found case label, but no switch was found | line {lineNumber},{linePosition}");
+                }
+
+                Case nextCase = CurrentSwitch.Cases.Where(a => a.Generated == false && a.IsDefault).FirstOrDefault();
+
+                if (nextCase == null)
+                {
+                    Error($"Found a default label but couldn't find it's case | line {lineNumber},{linePosition}");
+                }
+
+                caseCode.Add($":{nextCase.Label}");
+
+                var statement = context.statement().expressionStatement();
+                if (statement != null)
+                {
+                    var statementRes = visitor.VisitExpression(statement.expression());
+                    caseCode.AddRange(statementRes.Assembly);
+                }
+
+                //@TODO: Put this in a visitor
+                var jump = context.jumpStatement();
+                var jumpLoc = storedContexts.LastOrDefault();
+
+                if (jump != null)
+                {
+                    string jumpType = jump.GetText().Replace(";", "");
+                    switch (jumpType)
+                    {
+                        case "break":
+                        caseCode.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+                        break;
+                    }
+                } //For some reason the jump statement will be null if theres no statement in the case... Do this hack for now
+                else if (statement == null)
+                {
+                    caseCode.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+                }
+                else
+                {
+                    Warn($"Switch case '{nextCase.Condition}' does not contain a jump statement | line {lineNumber},{linePosition}");
+                }
+
+                var ld = new LabelData(caseCode, null, nextCase);
+
+                //Insert the default case into the first slot (because unmatched switches will just execute the next opcode)
+                LabelData.Insert(0, ld);
+                CurrentLabel = ld;
+                //Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{nextCase.Label}");
+                //nextCase.Generated = true;
+            }
+        }
+
+        //Exiting switch case
+        public override void ExitLabeledStatement([NotNull] LabeledStatementContext context)
+        {
+            CurrentLabel = null;
+            base.ExitLabeledStatement(context);
         }
 
         //Break, continue, return
         public override void EnterJumpStatement([NotNull] JumpStatementContext context)
         {
+            var jumpLoc = storedContexts.LastOrDefault();
+            if (switches.ContainsKey(jumpLoc)) return;
             string jumpType = context.GetText().Replace(";", "");
             switch (jumpType)
             {
                 case "break":
                 //Get the last stored context to jump to it
-                var jumpLoc = storedContexts.LastOrDefault();
                 if (jumpLoc == null)
                 {
                     Error($"Tried to use a jump statement without a context to jump out of | line {lineNumber},{linePosition}");
                 }
+
                 Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+
                 break;
                 case "continue":
                 //@TODO

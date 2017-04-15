@@ -342,8 +342,8 @@ statement
 
 labeledStatement
     :   Identifier ':' statement
-    |   'case' constantExpression ':' statement
-    |   'default' ':' statement
+    |   'case' constantExpression ':' statement jumpStatement?
+    |   'default' ':' statement jumpStatement?
     ;
 
 compoundStatement

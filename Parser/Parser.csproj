@@ -60,6 +60,7 @@
     <Compile Include="Enumerator.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="IVariable.cs" />
+    <Compile Include="LabelData.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="NativeJson.cs" />
     <Compile Include="NativeParameter.cs" />

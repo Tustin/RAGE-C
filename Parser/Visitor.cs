@@ -327,20 +327,7 @@ namespace RAGE.Parser
                     Error($"Case could not be evaluted | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
                 }
 
-                int value = 0;
-                if (expr.Data is int i)
-                {
-                    value = i;
-                }
-                else if (expr.Data is Enumerator e)
-                {
-                    var enumVar = e.Variable as Variable;
-                    value = int.Parse(enumVar.Value.Value);
-                }
-                else
-                {
-                    Error($"Unable to determine case type | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
-                }
+                int value = Utilities.GetCaseExpression(expr);
 
                 if (RAGEListener.CurrentSwitch.Cases.Any(a => a.Condition == value))
                 {
@@ -349,6 +336,18 @@ namespace RAGE.Parser
 
                 string caseLabel = $"selection_{CurrentContext.Id}_case_{value}";
                 ret.Data = new Case(value, caseLabel);
+
+                return ret;
+            }
+            else if (label == "default")
+            {
+                var expr = context.constantExpression();
+                if (expr != null)
+                {
+                    Error($"Default case cannot have an expression | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+                }
+                string caseLabel = $"selection_default";
+                ret.Data = new Case(null, caseLabel, isDefault: true);
 
                 return ret;
             }
@@ -803,27 +802,29 @@ namespace RAGE.Parser
             switch (op)
             {
                 case "+":
-                if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '+' on two different types.");
-                if (left.Data != null && right.Data != null) return new Value(DataType.Int, (int)left.Data + (int)right.Data, new List<string>());
-                if (left.Data != null && left.Data.Equals(0)) return new Value(DataType.Int, (int)right.Data, new List<string>());
-                if (right.Data != null && right.Data.Equals(0)) return new Value(DataType.Int, (int)left.Data, new List<string>());
+                code.AddRange(left.Assembly);
+                code.AddRange(right.Assembly);
+                //if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '+' on two different types.");
+                //if (left.Data != null && right.Data != null) return new Value(DataType.Int, (int)left.Data + (int)right.Data, new List<string>());
+                //if (left.Data != null && left.Data.Equals(0)) return new Value(DataType.Int, (int)right.Data, new List<string>());
+                //if (right.Data != null && right.Data.Equals(0)) return new Value(DataType.Int, (int)left.Data, new List<string>());
 
-                if (left.Data != null)
-                {
-                    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
-                }
-                else
-                {
-                    code.AddRange(left.Assembly);
-                }
-                if (right.Data != null)
-                {
-                    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
-                }
-                else
-                {
-                    code.AddRange(right.Assembly);
-                }
+                //if (left.Data != null)
+                //{
+                //    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
+                //}
+                //else
+                //{
+                //    code.AddRange(left.Assembly);
+                //}
+                //if (right.Data != null)
+                //{
+                //    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
+                //}
+                //else
+                //{
+                //    code.AddRange(right.Assembly);
+                //}
                 code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
                 return new Value(DataType.Int, null, code);
                 case "-":
@@ -870,51 +871,53 @@ namespace RAGE.Parser
             switch (op)
             {
                 case "*":
-                if (left.Type != right.Type)
-                {
-                    if (left.Type == DataType.Variable)
-                    {
-                        if (RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString()).Type != right.Type)
-                        {
-                            Error($"Left operand variable type is not equal to the right operand type | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                            return null;
-                        }
-                    }
-                    else if (right.Type == DataType.Variable)
-                    {
-                        if (RAGEListener.CurrentFunction.Variables.GetVariable(right.Data.ToString()).Type != left.Type)
-                        {
-                            Error($"Right operand variable type is not equal to the left operand type | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                            return null;
-                        }
-                    }
-                }
-                if (left.Data != null && right.Data != null && left.Type != DataType.Variable && right.Type != DataType.Variable) return new Value(DataType.Int, (int)left.Data * (int)right.Data, new List<string>());
-                if ((left.Data != null && left.Data.Equals(0)) || (right.Data != null && right.Data.Equals(0))) return new Value(DataType.Int, 0, new List<string>());
-                if (left.Data != null)
-                {
-                    if (left.Type == DataType.Variable)
-                    {
-                        var var = RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
-                        code.Add(FrameVar.Get(var));
-                    }
-                    else
-                    {
-                        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
-                    }
-                }
-                if (right.Data != null)
-                {
-                    if (right.Type == DataType.Variable)
-                    {
-                        var var = RAGEListener.CurrentFunction.Variables.GetVariable(right.Data.ToString());
-                        code.Add(FrameVar.Get(var));
-                    }
-                    else
-                    {
-                        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
-                    }
-                }
+                code.AddRange(left.Assembly);
+                code.AddRange(right.Assembly);
+                //if (left.Type != right.Type)
+                //{
+                //    if (left.Type == DataType.Variable)
+                //    {
+                //        if (RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString()).Type != right.Type)
+                //        {
+                //            Error($"Left operand variable type is not equal to the right operand type | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                //            return null;
+                //        }
+                //    }
+                //    else if (right.Type == DataType.Variable)
+                //    {
+                //        if (RAGEListener.CurrentFunction.Variables.GetVariable(right.Data.ToString()).Type != left.Type)
+                //        {
+                //            Error($"Right operand variable type is not equal to the left operand type | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                //            return null;
+                //        }
+                //    }
+                //}
+                //if (left.Data != null && right.Data != null && left.Type != DataType.Variable && right.Type != DataType.Variable) return new Value(DataType.Int, (int)left.Data * (int)right.Data, new List<string>());
+                //if ((left.Data != null && left.Data.Equals(0)) || (right.Data != null && right.Data.Equals(0))) return new Value(DataType.Int, 0, new List<string>());
+                //if (left.Data != null)
+                //{
+                //    if (left.Type == DataType.Variable)
+                //    {
+                //        var var = RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
+                //        code.Add(FrameVar.Get(var));
+                //    }
+                //    else
+                //    {
+                //        code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
+                //    }
+                //}
+                //if (right.Data != null)
+                //{
+                //    if (right.Type == DataType.Variable)
+                //    {
+                //        var var = RAGEListener.CurrentFunction.Variables.GetVariable(right.Data.ToString());
+                //        code.Add(FrameVar.Get(var));
+                //    }
+                //    else
+                //    {
+                //        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
+                //    }
+                //}
                 code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Multiplication));
                 return new Value(DataType.Int, null, code);
                 case "/":
@@ -965,11 +968,11 @@ namespace RAGE.Parser
             code.AddRange(expr.Assembly);
             if (castType == DataType.Float && expr.Type == DataType.Int)
             {
-                code.Add(Conversion.FloatToInt());
+                code.Add(Conversion.IntToFloat());
             }
             else if (castType == DataType.Int && expr.Type == DataType.Float)
             {
-                code.Add(Conversion.IntToFloat());
+                code.Add(Conversion.FloatToInt());
             }
             else
             {

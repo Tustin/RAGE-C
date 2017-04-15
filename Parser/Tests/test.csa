@@ -1,7 +1,7 @@
 //Compiled using RAGE-C by Tustin 4/14/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 10 statics
+//Auto assigning 11 statics
 push_0
 setStatic1 1 //MainMenu_PLAYER_MENU
 push_1
@@ -21,6 +21,8 @@ setStatic1 8 //currentOption
 push_0
 setStatic1 9 //open
 setStatic1 10 //currentMenuHeight
+push_0
+setStatic1 11 //lastButtonPress
 Call @main
 Return 0 0
 
@@ -68,24 +70,51 @@ Call @draw_text
 Return 1 0
 
 :draw_background
-Function 0 2 0
+Function 0 3 0
+getStatic1 10 //currentMenuHeight
+fpush 0.5
+Mult
+setF1 3 //tmpHeight
+fpush 0.840576
+fpush 0.248187
+getF1 3 //tmpHeight
+Add
+fpush 0.249766
+getStatic1 10 //currentMenuHeight
+push_0
+push_0
+push_0
+push1 60
+CallNative DRAW_RECT 8 0
 Return 0 0
 
 :draw_menu
-Function 0 2 0
+Function 0 3 0
 PushString "Goy Menu"
 Call @draw_menu_title
+push_2
+ItoF
+fpush 0.026094
+Mult
+setF1 3 //tmpHeight
 getStatic1 7 //currentMenu
-getStatic1 1 //MainMenu_PLAYER_MENU
-JumpNE @selection_end_0
-getStatic1 8 //currentOption
-Switch [0=@selection_1_case_0][1=@selection_1_case_1]
-:selection_1_case_0
-Jump @selection_end_1
-:selection_1_case_1
-Jump @selection_end_1
-:selection_end_1
-:selection_end_0
+Switch [1=@selection_0_case_1][0=@selection_0_case_0]
+:selection_default
+Jump @switch_end_0
+:selection_0_case_0
+getF1 3 //tmpHeight
+fpush 0.030944
+Add
+setF1 10 //currentMenuHeight
+Jump @switch_end_0
+:selection_0_case_1
+getF1 3 //tmpHeight
+fpush 0.030943
+Add
+setF1 10 //currentMenuHeight
+Jump @switch_end_0
+:switch_end_0
+Call @draw_background
 Return 0 0
 
 :main
@@ -93,14 +122,27 @@ Function 0 2 0
 :loop_0
 getStatic1 9 //open
 Not
-JumpFalse @selection_else_2
+JumpFalse @selection_else_1
+push_2
+push1 204
+CallNative IS_DISABLED_CONTROL_PRESSED 2 1
+push_2
+push1 201
+CallNative IS_DISABLED_CONTROL_PRESSED 2 1
+And
+JumpFalse @selection_end_2
 push_1
 setF1 9 //open
-:selection_else_2
-Call @draw_menu
 push_0
-setF1 9 //open
+setF1 7 //currentMenu
+push_0
+setF1 8 //currentOption
+CallNative GET_GAME_TIMER 0 1
+setF1 11 //lastButtonPress
 :selection_end_2
+:selection_else_1
+Call @draw_menu
+:selection_end_1
 push_0
 CallNative wait 1 0
 Jump @loop_0
