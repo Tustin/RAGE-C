@@ -73,23 +73,22 @@ void main() {
     while (true) 
     {
         if (!open) {
-            open = true;
+            if (IS_DISABLED_CONTROL_PRESSED(2, 0xcc) && IS_DISABLED_CONTROL_PRESSED(2, 0xc9)) {
+                if (!open) {
+                    open = true;
+                    currentMenu = 0;
+                    currentOption = 0;
+                    lastButtonPress = GET_GAME_TIMER();
+                    show_notification("menu opened");   
+                }
+            }
         } else {
             draw_menu();
         }
-        // if (IS_DISABLED_CONTROL_PRESSED(2, 0xcc) && IS_DISABLED_CONTROL_PRESSED(2, 0xc9)) {
-        //     if (!open) {
-        //         open = true;
-        //         currentMenu = 0;
-        //         currentOption = 0;
-        //         lastButtonPress = GET_GAME_TIMER();
-        //         show_notification("menu opened");   
-        //     }
-        // }
 
-        // if (open == true) {
-        //     draw_menu();
-        // }
+        else {
+            
+        }
         wait(0);
     }
 }

@@ -344,6 +344,10 @@ namespace RAGE.Parser
         {
             var contextScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
             var parentContextScope = storedContexts.Where(a => a.Context == context.Parent).LastOrDefault();
+            if (parentContextScope == null)
+            {
+                Error($"Found else statement, but it has no parent if statement | line {lineNumber},{linePosition}");
+            }
             if (contextScope == null)
             {
                 Error($"Found else statement, but unable to find context | line {lineNumber},{linePosition}");

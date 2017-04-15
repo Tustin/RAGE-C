@@ -122,8 +122,31 @@ Function 0 2 0
 getStatic1 9 //open
 Not
 JumpFalse @selection_else_1
+push_2
+push1 204
+CallNative IS_DISABLED_CONTROL_PRESSED 2 1
+push_2
+push1 201
+CallNative IS_DISABLED_CONTROL_PRESSED 2 1
+And
+JumpFalse @selection_end_2
+getStatic1 9 //open
+Not
+JumpFalse @selection_end_3
 push_1
 setStatic1 9 //open
+push_0
+setStatic1 7 //currentMenu
+push_0
+setStatic1 8 //currentOption
+CallNative GET_GAME_TIMER 0 1
+setStatic1 11 //lastButtonPress
+PushString "menu opened"
+Call @show_notification
+Jump @selection_end_3
+:selection_end_3
+Jump @selection_end_2
+:selection_end_2
 Jump @selection_end_1
 :selection_else_1
 Call @draw_menu

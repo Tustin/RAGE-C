@@ -1159,7 +1159,7 @@ namespace RAGE.Parser
                             }
                         }
                         code.Add(Call.Local(expression));
-                        return new Value(DataType.NativeCall, null, code);
+                        return new Value(DataType.LocalCall, null, code);
 
                     }
                     //@TODO: Argument checking
