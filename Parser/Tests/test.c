@@ -1,4 +1,8 @@
-enum MainMenu {
+static string arrTest[5] = {"test", "aaa", "something1", "something2", "lastone"};
+int intArr[3];
+
+enum Menus {
+    MAIN_MENU,
     PLAYER_MENU,
     VEHICLE_MENU,
     WEAPON_MENU,
@@ -15,6 +19,7 @@ static int currentOption = 0;
 static bool open = false;
 static int currentMenuHeight;
 static int lastButtonPress = 0;
+static int buttonPressDelay = 200; //I used this in The Tesseract
 
 void draw_text(string text, int font, float x, float y, float size) {
     SET_TEXT_FONT(font);
@@ -38,35 +43,58 @@ void draw_menu_title(string title) {
 
 void draw_background(int items) {
     float tmpHeight = (float)items * 0.026094
-    tmpHeight = tmpHeight * 0.5;
+    tmpHeight = tmpHeight * 0.030943;
     DRAW_RECT(0.840576, 0.248187 + tmpHeight, 0.249766, tmpHeight, 0, 0, 0, 60); //background
 }
 
+//Draws menu and the items
 void draw_menu() {
     draw_menu_title("Goy Menu");
     int menuItems = 0;
     switch (currentMenu) {
-        case MainMenu.PLAYER_MENU:
-        menuItems = 3;
+        case Menus.MAIN_MENU:
+        menuItems = 4;
         break;
-        case MainMenu.VEHICLE_MENU:
-        menuItems = 5;
-        break;
-        default:
+        case Menus.PLAYER_MENU:
+        menuItems = 2;
         break;
     }
+
     draw_background(menuItems);
+}
 
-    // if (currentMenu == MainMenu.PLAYER_MENU) {
-    //     switch (currentOption) {
-    //         case PlayerMenu.GODMODE:
+//Returns whether a key has been pressed while accounting for the last button press delay
+bool delayed_key_press(int control) {
+    if (GET_GAME_TIMER() - lastButtonPress < buttonPressDelay) {
+        return false;
+    }
+    if (IS_DISABLED_CONTROL_PRESSED(2, control)) {
+        lastButtonPress = GET_GAME_TIMER();
+        return true;
+    }
+    return false;
+}
 
-    //         break;
-    //         case PlayerMenu.INFINITE_AMMO:
+//Deals with user input
+void handle_input() {
+    //Down
+    if (delayed_key_press(203) == true) {
+        show_notification("pressed down");
+        currentOption++;
+        switch (currentMenu) {
+            case Menus.MAIN_MENU:
+            if (currentOption == 3) {
+                currentOption = 0;
+            }
+            break;
+        }
+    } else if (delayed_key_press(204) == true) {
+        show_notification("pressed left");
+    } else if (delayed_key_press(195) == true) {
+        open = false;
+        show_notification("closed");
 
-    //         break;
-    //     }
-    // }
+    }
 }
 
 void main() {
@@ -74,20 +102,15 @@ void main() {
     {
         if (!open) {
             if (IS_DISABLED_CONTROL_PRESSED(2, 0xcc) && IS_DISABLED_CONTROL_PRESSED(2, 0xc9)) {
-                if (!open) {
-                    open = true;
-                    currentMenu = 0;
-                    currentOption = 0;
-                    lastButtonPress = GET_GAME_TIMER();
-                    show_notification("menu opened");   
-                }
+                open = true;
+                currentMenu = 0;
+                currentOption = 0;
+                lastButtonPress = GET_GAME_TIMER();
+                show_notification("menu opened");   
             }
         } else {
             draw_menu();
-        }
-
-        else {
-            
+            handle_input();
         }
         wait(0);
     }

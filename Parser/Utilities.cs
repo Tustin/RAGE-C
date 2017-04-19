@@ -26,9 +26,14 @@ namespace RAGE.Parser
             return functions.Where(a => a.Name == name).FirstOrDefault();
         }
 
-        public static bool ContainVariable(this List<IVariable> variables, string name)
+        public static bool ContainsVariable(this List<IVariable> variables, string name)
         {
             return variables.Any(a => a.Name == name);
+        }
+
+        public static bool ContainsVariable<T>(this List<IVariable> variables, string name)
+        {
+            return variables.Any(a => a.Name == name && a.GetType() == typeof(T));
         }
 
         public static IVariable GetVariable(this List<IVariable> variables, string name)
@@ -86,7 +91,7 @@ namespace RAGE.Parser
             {
                 if (function == null) return DataType.Variable;
 
-                if (function.Variables.ContainVariable(value))
+                if (function.Variables.ContainsVariable(value))
                 {
                     return DataType.Variable;
                 }
@@ -94,7 +99,7 @@ namespace RAGE.Parser
                 {
                     return DataType.Global;
                 }
-                else if (Script.StaticVariables.ContainVariable(value))
+                else if (Script.StaticVariables.ContainsVariable(value))
                 {
                     return DataType.Static;
                 }

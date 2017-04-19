@@ -407,6 +407,42 @@ public partial class RAGEBaseListener : IRAGEListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.arrayDeclarator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterArrayDeclarator([NotNull] RAGEParser.ArrayDeclaratorContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.arrayDeclarator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitArrayDeclarator([NotNull] RAGEParser.ArrayDeclaratorContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.arrayDeclarationList"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterArrayDeclarationList([NotNull] RAGEParser.ArrayDeclarationListContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.arrayDeclarationList"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitArrayDeclarationList([NotNull] RAGEParser.ArrayDeclarationListContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.arrayDeclaration"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterArrayDeclaration([NotNull] RAGEParser.ArrayDeclarationContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.arrayDeclaration"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitArrayDeclaration([NotNull] RAGEParser.ArrayDeclarationContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.structDeclarationList"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

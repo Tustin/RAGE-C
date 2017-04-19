@@ -43,6 +43,10 @@ namespace RAGE.Parser
             }
         }
 
+        public override Value VisitArrayDeclarationList([NotNull] ArrayDeclarationListContext context)
+        {
+            return base.VisitArrayDeclarationList(context);
+        }
         public override Value VisitDeclaration([NotNull] DeclarationContext context)
         {
             var specifiers = VisitDeclarationSpecifiers(context.declarationSpecifiers());
@@ -57,101 +61,66 @@ namespace RAGE.Parser
             var initializer = declarator.initializer();
 
             //Handle statics and frame vars the same minus a few differences
-            //Array
-            if (varName.Contains("["))
+            if (RAGEListener.CurrentFunction == null)
             {
-                //Get the count
-                int openBracket = varName.IndexOf('[');
-                int closeBracket = varName.IndexOf(']');
-                string arrName = varName.Split('[')[0];
-                if (RAGEListener.CurrentFunction == null)
+                if (Script.StaticVariables.ContainsVariable(varName))
                 {
-                    if (Script.StaticVariables.ContainVariable(arrName))
+                    Error($"Static variable '{varName}' has already been declared | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                }
+            }
+            else
+            {
+                if (RAGEListener.CurrentFunction.AlreadyDeclared(varName, true))
+                {
+                    //Check to see if the already declared variable is an iterator
+                    //This can happen due to the IterationStatement generating the for loop iterator before the
+                    //Declaration does
+                    var iterator = RAGEListener.CurrentFunction.GetVariable(varName) as Variable;
+                    if (iterator.IsIterator)
                     {
-                        Error($"Static variable '{arrName}' has already been declared | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                        return new Value(DataType.Iterator, null, null);
                     }
+                    Error($"'{varName}' has already been declared in this scope | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                 }
-                else
-                {
-                    if (RAGEListener.CurrentFunction.AlreadyDeclared(arrName))
-                    {
-                        Error($"'{arrName}' has already been declared in this scope | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                    }
-                }
+            }
 
-                if (!int.TryParse(varName.Substring(openBracket + 1, closeBracket - openBracket - 1), out int arrayIndexCount))
-                {
-                    Error($"Failed parsing length for array {arrName} | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                }
-
-                Array arr = new Array(arrName, RAGEListener.CurrentFunction.FrameVars, arrayIndexCount);
-                arr.Specifier = declSpec;
-                arr.Type = declType;
-                return new Value(DataType.Array, arr, null);
+            Variable variable;
+            //Specified as static
+            if (declSpec == Specifier.Static)
+            {
+                variable = new Variable(varName, Script.StaticVariables.Count + 1, declType);
+                variable.Specifier = declSpec;
             }
             else
             {
                 if (RAGEListener.CurrentFunction == null)
                 {
-                    if (Script.StaticVariables.ContainVariable(varName))
-                    {
-                        Error($"Static variable '{varName}' has already been declared | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                    }
+                    Error($"Non-static variable used outside of function scope | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
                 }
-                else
-                {
-                    if (RAGEListener.CurrentFunction.AlreadyDeclared(varName, true))
-                    {
-                        //Check to see if the already declared variable is an iterator
-                        //This can happen due to the IterationStatement generating the for loop iterator before the
-                        //Declaration does
-                        var iterator = RAGEListener.CurrentFunction.GetVariable(varName) as Variable;
-                        if (iterator.IsIterator)
-                        {
-                            return new Value(DataType.Iterator, null, null);
-                        }
-                        Error($"'{varName}' has already been declared in this scope | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-                    }
-                }
-
-                Variable variable;
-                //Specified as static
-                if (declSpec == Specifier.Static)
-                {
-                    variable = new Variable(varName, Script.StaticVariables.Count + 1, declType);
-                    variable.Specifier = declSpec;
-                }
-                else
-                {
-                    if (RAGEListener.CurrentFunction == null)
-                    {
-                        Error($"Non-static variable used outside of function scope | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
-                    }
-                    variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, declType);
-                    variable.Specifier = declSpec;
-                }
-                //See if this variable is being initialized
-                //If not, then we'll give it a default value
-                if (initializer != null)
-                {
-                    var resp = VisitInitDeclarator(declarator);
-                    if (resp.Data != null)
-                    {
-                        variable.Value.Value = resp.Data.ToString();
-                    }
-                    variable.ValueAssembly = resp.Assembly;
-                    variable.Value.Type = resp.Type;
-                    variable.Value.IsDefault = false;
-                }
-                else
-                {
-                    variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
-                    variable.Value.Type = variable.Type;
-                    variable.Value.IsDefault = true;
-                }
-
-                return new Value(DataType.Variable, variable, null);
+                variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, declType);
+                variable.Specifier = declSpec;
             }
+            //See if this variable is being initialized
+            //If not, then we'll give it a default value
+            if (initializer != null)
+            {
+                var resp = VisitInitDeclarator(declarator);
+                if (resp.Data != null)
+                {
+                    variable.Value.Value = resp.Data.ToString();
+                }
+                variable.ValueAssembly = resp.Assembly;
+                variable.Value.Type = resp.Type;
+                variable.Value.IsDefault = false;
+            }
+            else
+            {
+                variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+                variable.Value.Type = variable.Type;
+                variable.Value.IsDefault = true;
+            }
+
+            return new Value(DataType.Variable, variable, null);
         }
 
         //public override Value VisitDeclaration(DeclarationContext context)
@@ -339,18 +308,18 @@ namespace RAGE.Parser
 
                 return ret;
             }
-            else if (label == "default")
-            {
-                var expr = context.constantExpression();
-                if (expr != null)
-                {
-                    Error($"Default case cannot have an expression | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
-                }
-                string caseLabel = $"selection_default";
-                ret.Data = new Case(null, caseLabel, isDefault: true);
+            //else if (label == "default")
+            //{
+            //    var expr = context.constantExpression();
+            //    if (expr != null)
+            //    {
+            //        Error($"Default case cannot have an expression | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+            //    }
+            //    string caseLabel = $"selection_default";
+            //    ret.Data = new Case(null, caseLabel, isDefault: true);
 
-                return ret;
-            }
+            //    return ret;
+            //}
 
             Error($"Unsupported label '{label}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
             return null;
@@ -387,22 +356,22 @@ namespace RAGE.Parser
                     return val;
                 }
             }
-            if (expression == "false")
-            {
-                val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
-                return val;
-            }
+            //if (expression == "false")
+            //{
+            //    val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
+            //    return val;
+            //}
 
             Value output = VisitAssignmentExpression(context.assignmentExpression());
 
             if (output.Data != null)
             {
-                if (output.Type == DataType.Bool && output.Data.Equals(true)) return val;
-                if (output.Type == DataType.Bool && output.Data.Equals(false))
-                {
-                    val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
-                    return val;
-                }
+                //if (output.Type == DataType.Bool && output.Data.Equals(true)) return val;
+                //if (output.Type == DataType.Bool && output.Data.Equals(false))
+                //{
+                //    val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
+                //    return val;
+                //}
             }
             //If the if expression doesnt have ==, then the result will come back as a type other than bool
             if (output.Type != DataType.Bool && CurrentContext != null)
@@ -692,17 +661,17 @@ namespace RAGE.Parser
             List<string> code = new List<string>();
 
             //@TODO Clean this
-            if (left.Type != DataType.Int && left.Type != DataType.Variable)
-            {
-                Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
-                return null;
-            }
+            //if (left.Type != DataType.Int && left.Type != DataType.Variable)
+            //{
+            //    Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
+            //    return null;
+            //}
 
-            if (right.Type != DataType.Int && right.Type != DataType.Variable)
-            {
-                Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
-                return null;
-            }
+            //if (right.Type != DataType.Int && right.Type != DataType.Variable)
+            //{
+            //    Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
+            //    return null;
+            //}
 
 
             //Lets just output the variables here because fuck optimization
@@ -744,7 +713,7 @@ namespace RAGE.Parser
                 //        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                 //    }
                 //}
-                code.Add(Jump.Generate(JumpType.LessThan, CurrentContext.Label));
+                code.Add(Jump.Generate(JumpType.GreaterThan, CurrentContext.Label));
                 return new Value(DataType.Bool, null, code);
 
                 case "<=":
@@ -758,7 +727,7 @@ namespace RAGE.Parser
                 {
                     code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                 }
-                code.Add(Compare.Generate(CompareType.LessThanEqual));
+                code.Add(Compare.Generate(CompareType.GreaterThanEqual));
                 return new Value(DataType.Bool, null, code);
 
                 case ">":
@@ -772,7 +741,7 @@ namespace RAGE.Parser
                 {
                     code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                 }
-                code.Add(Compare.Generate(CompareType.GreaterThan));
+                code.Add(Compare.Generate(CompareType.LessThan));
                 return new Value(DataType.Bool, null, code);
 
                 case ">=":
@@ -786,7 +755,7 @@ namespace RAGE.Parser
                 {
                     code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(null, right.Data.ToString())));
                 }
-                code.Add(Compare.Generate(CompareType.GreaterThan));
+                code.Add(Compare.Generate(CompareType.LessThanEqual));
                 return new Value(DataType.Bool, null, code);
             }
             Error($"Unsupported operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
@@ -834,26 +803,28 @@ namespace RAGE.Parser
                 code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
                 return new Value(DataType.Int, null, code);
                 case "-":
-                if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '-' on two different types.");
-                if (left.Data != null && right.Data != null) return new Value(DataType.Int, (int)left.Data - (int)right.Data, new List<string>());
-                if (left.Data != null && left.Data.Equals(0)) return new Value(DataType.Int, (int)right.Data, new List<string>());
-                if (right.Data != null && right.Data.Equals(0)) return new Value(DataType.Int, (int)left.Data, new List<string>());
-                if (left.Data != null)
-                {
-                    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
-                }
-                else
-                {
-                    code.AddRange(left.Assembly);
-                }
-                if (right.Data != null)
-                {
-                    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
-                }
-                else
-                {
-                    code.AddRange(right.Assembly);
-                }
+                code.AddRange(left.Assembly);
+                code.AddRange(right.Assembly);
+                //if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '-' on two different types.");
+                //if (left.Data != null && right.Data != null) return new Value(DataType.Int, (int)left.Data - (int)right.Data, new List<string>());
+                //if (left.Data != null && left.Data.Equals(0)) return new Value(DataType.Int, (int)right.Data, new List<string>());
+                //if (right.Data != null && right.Data.Equals(0)) return new Value(DataType.Int, (int)left.Data, new List<string>());
+                //if (left.Data != null)
+                //{
+                //    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
+                //}
+                //else
+                //{
+                //    code.AddRange(left.Assembly);
+                //}
+                //if (right.Data != null)
+                //{
+                //    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
+                //}
+                //else
+                //{
+                //    code.AddRange(right.Assembly);
+                //}
                 code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
                 return new Value(DataType.Int, null, code);
 
@@ -1032,7 +1003,7 @@ namespace RAGE.Parser
 
                     string var = context.GetChild(1).GetText();
 
-                    if (!RAGEListener.CurrentFunction.Variables.ContainVariable(var) && op.Type == DataType.Address)
+                    if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(var) && op.Type == DataType.Address)
                     {
                         Error($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         return null;
@@ -1092,7 +1063,7 @@ namespace RAGE.Parser
             List<string> code = new List<string>();
             IVariable variable = null;
 
-            if (RAGEListener.CurrentFunction == null)
+            if (RAGEListener.CurrentFunction == null || Script.StaticVariables.ContainsVariable(expression))
             {
                 variable = Script.StaticVariables.GetVariable(expression);
             }
@@ -1104,17 +1075,27 @@ namespace RAGE.Parser
             switch (symbol)
             {
                 case "++":
-                if (!RAGEListener.CurrentFunction.Variables.ContainVariable(expression))
+                if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(expression) && !Script.StaticVariables.ContainsVariable(expression))
                 {
                     Error($"Postfix operator '{symbol}' can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     return null;
                 }
-                code.Add(FrameVar.Get(variable));
-                code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
-                code.Add(FrameVar.Set(variable));
+                if (RAGEListener.CurrentFunction.Variables.ContainsVariable(expression))
+                {
+                    code.Add(FrameVar.Get(variable));
+                    code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
+                    code.Add(FrameVar.Set(variable));
+                }
+                else
+                {
+                    code.Add(StaticVar.Get(variable));
+                    code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
+                    code.Add(StaticVar.Set(variable));
+                }
+
                 return new Value(DataType.Int, null, code);
                 case "--":
-                if (!RAGEListener.CurrentFunction.Variables.ContainVariable(expression))
+                if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(expression))
                 {
                     Error($"Postfix operator '{symbol}' can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                     return null;

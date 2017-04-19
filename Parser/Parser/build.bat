@@ -1,0 +1,1 @@
+java -jar antlr-4.6.jar -Dlanguage=CSharp RAGE.g4 -visitor

@@ -341,6 +341,36 @@ public interface IRAGEListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.arrayDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterArrayDeclarator([NotNull] RAGEParser.ArrayDeclaratorContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.arrayDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitArrayDeclarator([NotNull] RAGEParser.ArrayDeclaratorContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.arrayDeclarationList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterArrayDeclarationList([NotNull] RAGEParser.ArrayDeclarationListContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.arrayDeclarationList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitArrayDeclarationList([NotNull] RAGEParser.ArrayDeclarationListContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.arrayDeclaration"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterArrayDeclaration([NotNull] RAGEParser.ArrayDeclarationContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.arrayDeclaration"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitArrayDeclaration([NotNull] RAGEParser.ArrayDeclarationContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.structDeclarationList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

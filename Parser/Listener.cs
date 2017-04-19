@@ -170,10 +170,15 @@ namespace RAGE.Parser
         {
             var function = Core.AssemblyCode.FindFunction(CurrentFunction.Name);
             string funcEntry = function.Value[0];
+            var funcCode = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
             //@TODO: Update first 0 for param count
             funcEntry = funcEntry.Replace("Function 0 2 0", $"Function {CurrentFunction.Parameters.Count} {CurrentFunction.FrameVars + CurrentFunction.Parameters.Count} 0");
             function.Value[0] = funcEntry;
-            Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Opcodes.Return.Generate(CurrentFunction.Parameters.Count));
+            //@Hack: Fix me!
+            if (!funcCode.Last().StartsWith("Return"))
+            {
+                Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Opcodes.Return.Generate(CurrentFunction));
+            }
             LogVerbose($"Leaving function '{CurrentFunction.Name}'");
             CurrentFunction = null;
         }
@@ -183,39 +188,130 @@ namespace RAGE.Parser
         {
             var variable = visitor.VisitDeclaration(context);
 
-            if (variable.Type == DataType.Array)
+            Variable var = variable.Data as Variable;
+            if (var.Specifier == Specifier.Static)
             {
-                Array arr = variable.Data as Array;
-                if (arr.Specifier == Specifier.Static)
-                {
-                    Script.StaticVariables.Add(arr);
-                }
-                else
-                {
-                    CurrentFunction.Variables.Add(arr);
-                }
+                Script.StaticVariables.Add(var);
             }
-            else if (variable.Type == DataType.Variable)
+            else
             {
-                Variable var = variable.Data as Variable;
-                if (var.Specifier == Specifier.Static)
-                {
-                    Script.StaticVariables.Add(var);
-                }
-                else
-                {
-                    CurrentFunction.Variables.Add(var);
-                    var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
-                    cf.AddRange(var.ValueAssembly);
-                    cf.Add(FrameVar.Set(var));
-                }
+                CurrentFunction.Variables.Add(var);
+                var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
+                cf.AddRange(var.ValueAssembly);
+                cf.Add(FrameVar.Set(var));
             }
+
         }
 
+        //New array
+        public override void EnterArrayDeclarator([NotNull] ArrayDeclaratorContext context)
+        {
+            var arrType = Utilities.GetTypeFromDeclaration(context.typeSpecifier().GetText());
+            var arrName = context.Identifier().GetText();
+            var arrSizeText = context.constantExpression().GetText();
+            var isStatic = context.storageClassSpecifier() != null;
+
+            //I won't force the static keyword but i'd rather it exist for clarity
+            if (isStatic || CurrentFunction == null)
+            {
+                if (!isStatic)
+                {
+                    Warn($"Array '{arrName}' isn't specified as a static but is assumed to be static | line {lineNumber},{linePosition}");
+                }
+
+                if (Script.StaticVariables.ContainsVariable(arrName))
+                {
+                    Error($"Script already contains static variable '{arrName}' | line {lineNumber},{linePosition}");
+                }
+
+                //Just in case
+                isStatic = true;
+            }
+            else if (CurrentFunction != null)
+            {
+                if (CurrentFunction.Variables.ContainsVariable(arrName))
+                {
+                    Error($"Function '{arrName}' already contains variable '{arrName}' | line {lineNumber},{linePosition}");
+                }
+
+                isStatic = false;
+            }
+            else
+            {
+                Error($"Unable to infer scope for array '{arrName}' | line {lineNumber},{linePosition}");
+            }
+
+            if (!int.TryParse(arrSizeText, out int arrSize))
+            {
+                Error($"Array size can only be an integer | line {lineNumber},{linePosition}");
+            }
+
+            int varOffset = CurrentFunction == null ? Script.StaticVariables.Count : CurrentFunction.FrameVars;
+            Array arr = new Array(arrName, varOffset, arrSize);
+
+            if (context.arrayDeclarationList() != null)
+            {
+                var arrayItems = new List<ArrayDeclarationContext>();
+                var arrList = context.arrayDeclarationList();
+                while (arrList != null)
+                {
+                    var item = arrList.arrayDeclaration();
+                    var itemType = Utilities.GetType(null, item.GetText());
+                    if (itemType != arrType)
+                    {
+                        Error($"Value '{item.GetText()}' in array '{arrName}' was interpreted as type '{itemType}', which doesn't match the array type of '{arrType}' | line {lineNumber},{linePosition}");
+                    }
+                    arrayItems.Add(item);
+                    arrList = arrList.arrayDeclarationList();
+                }
+
+                if (arrayItems.Count != arrSize)
+                {
+                    Error($"Size of array doesn't match the count of declarators ('{arrName}' size: {arrSize}, declarators count: {arrayItems.Count} | line {lineNumber},{linePosition}");
+                }
+
+
+                //Sort them in the right order
+                arrayItems.Reverse();
+
+                int i = 0;
+                foreach (var index in arrayItems)
+                {
+                    Variable var = new Variable($"{arrName}.{i}", i, arrType);
+                    var.Value.Value = index.GetText();
+                    var.Value.IsDefault = false;
+                    var.Value.Type = arrType;
+                    var.ValueAssembly = visitor.VisitConstantExpression(index.constantExpression()).Assembly;
+                    arr.Indices.Add(var);
+                    i++;
+                }
+            }
+            else
+            {
+                //No items were initialized with the array, so just generate default vals
+                for (int i = 0; i < arrSize; i++)
+                {
+                    Variable var = new Variable($"{arrName}.{i}", i, arrType);
+                    var.Value.Value = Utilities.GetDefaultValue(arrType);
+                    var.Value.IsDefault = true;
+                    var.Value.Type = arrType;
+                    arr.Indices.Add(var);
+                }
+            }
+
+            if (isStatic)
+            {
+                Script.StaticVariables.Add(arr);
+            }
+            else
+            {
+                CurrentFunction.Variables.Add(arr);
+            }
+        }
         //Statements
         public override void EnterStatement(StatementContext context)
         {
-            if (context.expressionStatement() == null || CurrentSwitch != null)
+            if (context.expressionStatement() == null)
             {
                 base.EnterStatement(context);
                 return;
@@ -300,10 +396,6 @@ namespace RAGE.Parser
                 currentSwitch.Cases.Reverse();
 
                 //Move the default item to the front (if it exists)
-                var index = currentSwitch.Cases.FindIndex(a => a.IsDefault == true);
-                var defaultCase = CurrentSwitch.Cases[index];
-                currentSwitch.Cases.RemoveAt(index);
-                currentSwitch.Cases.Insert(0, defaultCase);
 
                 var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
                 switches.Add(sc, currentSwitch);
@@ -314,11 +406,11 @@ namespace RAGE.Parser
                 }
                 else if (conditionType == DataType.Variable)
                 {
-                    if (CurrentFunction.Variables.ContainVariable(conditionVariable))
+                    if (CurrentFunction.Variables.ContainsVariable(conditionVariable))
                     {
                         cf.Add(FrameVar.Get(CurrentFunction.Variables.GetVariable(conditionVariable)));
                     }
-                    else if (Script.StaticVariables.ContainVariable(conditionVariable))
+                    else if (Script.StaticVariables.ContainsVariable(conditionVariable))
                     {
                         cf.Add(StaticVar.Get(Script.StaticVariables.GetVariable(conditionVariable)));
                     }
@@ -331,11 +423,10 @@ namespace RAGE.Parser
                 sb.Append("Switch ");
                 foreach (var @case in currentSwitch.Cases)
                 {
-                    //Dont generate a case for default
-                    if (@case.IsDefault) continue;
                     sb.Append($"[{@case.Condition}=@{@case.Label}]");
                 }
                 cf.Add(sb.ToString());
+                cf.Add(Jump.Generate(JumpType.Unconditional, sc.Label));
             }
         }
 
@@ -368,7 +459,7 @@ namespace RAGE.Parser
 
             if (selectionType.StartsWith("switch"))
             {
-                LabelData.ForEach(a => cf.AddRange(a.Code));
+                //LabelData.ForEach(a => cf.AddRange(a.Code));
                 CurrentSwitch = null;
             }
             if (selectionType.StartsWith("if"))
@@ -410,7 +501,6 @@ namespace RAGE.Parser
                     caseCode.AddRange(statementRes.Assembly);
                 }
 
-
                 //@TODO: Put this in a visitor
                 var jump = context.jumpStatement();
 
@@ -431,68 +521,68 @@ namespace RAGE.Parser
                 }
 
 
-                //Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{nextCase.Label}");
+                Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{nextCase.Label}");
                 //nextCase.Generated = true;
                 var ld = new LabelData(caseCode, expr, nextCase);
-
+                //Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(caseCode);
                 LabelData.Add(ld);
                 CurrentLabel = ld;
 
             }
-            else if (label == "default")
-            {
-                if (CurrentSwitch == null)
-                {
-                    Error($"Found case label, but no switch was found | line {lineNumber},{linePosition}");
-                }
+            //else if (label == "default")
+            //{
+            //    if (CurrentSwitch == null)
+            //    {
+            //        Error($"Found case label, but no switch was found | line {lineNumber},{linePosition}");
+            //    }
 
-                Case nextCase = CurrentSwitch.Cases.Where(a => a.Generated == false && a.IsDefault).FirstOrDefault();
+            //    Case nextCase = CurrentSwitch.Cases.Where(a => a.Generated == false && a.IsDefault).FirstOrDefault();
 
-                if (nextCase == null)
-                {
-                    Error($"Found a default label but couldn't find it's case | line {lineNumber},{linePosition}");
-                }
+            //    if (nextCase == null)
+            //    {
+            //        Error($"Found a default label but couldn't find it's case | line {lineNumber},{linePosition}");
+            //    }
 
-                caseCode.Add($":{nextCase.Label}");
+            //    caseCode.Add($":{nextCase.Label}");
 
-                var statement = context.statement().expressionStatement();
-                if (statement != null)
-                {
-                    var statementRes = visitor.VisitExpression(statement.expression());
-                    caseCode.AddRange(statementRes.Assembly);
-                }
+            //    var statement = context.statement().expressionStatement();
+            //    if (statement != null)
+            //    {
+            //        var statementRes = visitor.VisitExpression(statement.expression());
+            //        caseCode.AddRange(statementRes.Assembly);
+            //    }
 
-                //@TODO: Put this in a visitor
-                var jump = context.jumpStatement();
-                var jumpLoc = storedContexts.LastOrDefault();
+            //    //@TODO: Put this in a visitor
+            //    var jump = context.jumpStatement();
+            //    var jumpLoc = storedContexts.LastOrDefault();
 
-                if (jump != null)
-                {
-                    string jumpType = jump.GetText().Replace(";", "");
-                    switch (jumpType)
-                    {
-                        case "break":
-                        caseCode.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
-                        break;
-                    }
-                } //For some reason the jump statement will be null if theres no statement in the case... Do this hack for now
-                else if (statement == null)
-                {
-                    caseCode.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
-                }
-                else
-                {
-                    Warn($"Switch case '{nextCase.Condition}' does not contain a jump statement | line {lineNumber},{linePosition}");
-                }
+            //    if (jump != null)
+            //    {
+            //        string jumpType = jump.GetText().Replace(";", "");
+            //        switch (jumpType)
+            //        {
+            //            case "break":
+            //            caseCode.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+            //            break;
+            //        }
+            //    } //For some reason the jump statement will be null if theres no statement in the case... Do this hack for now
+            //    else if (statement == null)
+            //    {
+            //        caseCode.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+            //    }
+            //    else
+            //    {
+            //        Warn($"Switch case '{nextCase.Condition}' does not contain a jump statement | line {lineNumber},{linePosition}");
+            //    }
 
-                var ld = new LabelData(caseCode, null, nextCase);
+            //    var ld = new LabelData(caseCode, null, nextCase);
 
-                //Insert the default case into the first slot (because unmatched switches will just execute the next opcode)
-                LabelData.Insert(0, ld);
-                CurrentLabel = ld;
-                //Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{nextCase.Label}");
-                //nextCase.Generated = true;
-            }
+            //    //Insert the default case into the first slot (because unmatched switches will just execute the next opcode)
+            //    LabelData.Insert(0, ld);
+            //    CurrentLabel = ld;
+            //    //Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{nextCase.Label}");
+            //    //nextCase.Generated = true;
+            //}
         }
 
         //Exiting switch case
@@ -505,9 +595,19 @@ namespace RAGE.Parser
         //Break, continue, return
         public override void EnterJumpStatement([NotNull] JumpStatementContext context)
         {
-            var jumpLoc = storedContexts.LastOrDefault();
-            if (switches.ContainsKey(jumpLoc)) return;
-            string jumpType = context.GetText().Replace(";", "");
+            StoredContext jumpLoc = null;
+            if (CurrentSwitch != null)
+            {
+                jumpLoc = switches.Where(a => a.Value == CurrentSwitch).FirstOrDefault().Key;
+            }
+            else
+            {
+                jumpLoc = storedContexts.LastOrDefault();
+
+            }
+            //if (switches.ContainsKey(jumpLoc)) return;
+            string jumpType = context.GetChild(0).GetText();
+            var functionCode = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
             switch (jumpType)
             {
                 case "break":
@@ -517,11 +617,30 @@ namespace RAGE.Parser
                     Error($"Tried to use a jump statement without a context to jump out of | line {lineNumber},{linePosition}");
                 }
 
-                Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
+                functionCode.Add(Jump.Generate(JumpType.Unconditional, jumpLoc.Label));
 
                 break;
                 case "continue":
                 //@TODO
+                break;
+                case "return":
+                if (CurrentFunction == null)
+                {
+                    Error($"Cannot return outside of function scope | line {lineNumber},{linePosition}");
+                }
+                var expr = context.expression();
+                if (context.expression() == null)
+                {
+                    if (CurrentFunction.Type != DataType.Void)
+                    {
+                        Error($"'{CurrentFunction.Name}' expects a return type of '{CurrentFunction.Type}' but no return expression was given | line {lineNumber},{linePosition}");
+                    }
+                    functionCode.Add(Opcodes.Return.Generate(CurrentFunction));
+                    return;
+                }
+                var exprRes = visitor.VisitExpression(expr);
+                functionCode.AddRange(exprRes.Assembly);
+                functionCode.Add(Opcodes.Return.Generate(CurrentFunction));
                 break;
             }
             base.EnterJumpStatement(context);

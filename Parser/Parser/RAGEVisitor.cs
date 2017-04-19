@@ -218,6 +218,24 @@ public interface IRAGEVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="RAGEParser.arrayDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitArrayDeclarator([NotNull] RAGEParser.ArrayDeclaratorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="RAGEParser.arrayDeclarationList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitArrayDeclarationList([NotNull] RAGEParser.ArrayDeclarationListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="RAGEParser.arrayDeclaration"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitArrayDeclaration([NotNull] RAGEParser.ArrayDeclarationContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="RAGEParser.structDeclarationList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -177,6 +177,21 @@ structOrUnion
     |   'union'
     ;
 
+arrayDeclarator
+    : storageClassSpecifier? typeSpecifier Identifier '[' constantExpression ']'
+    | storageClassSpecifier? typeSpecifier Identifier '[' constantExpression ']' '=' '{' arrayDeclarationList? '}'
+    | storageClassSpecifier? typeSpecifier Identifier '[' constantExpression ']' '=' '{' arrayDeclarationList ',' '}'
+    ;
+
+arrayDeclarationList
+    :   arrayDeclaration
+    |   arrayDeclarationList ',' arrayDeclaration
+    ;
+
+arrayDeclaration
+    :   constantExpression
+    ;
+
 structDeclarationList
     :   structDeclaration
     |   structDeclarationList structDeclaration
@@ -328,6 +343,7 @@ selectionStatement
     ;
 selectionElseStatement
     :   'else' statement
+    |   'else' selectionStatement?
     ;
 statement
     :   labeledStatement
@@ -338,6 +354,7 @@ statement
     |   jumpStatement
     |   enumSpecifier
     |   enumDeclarator
+    |   arrayDeclarator
     ;
 
 labeledStatement
@@ -390,6 +407,7 @@ translationUnit
 externalDeclaration
     :   functionDefinition
     |   enumDeclarator
+    |   arrayDeclarator
     |   declaration
     |   ';' // stray ;
     ;
