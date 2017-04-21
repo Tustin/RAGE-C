@@ -4,7 +4,7 @@ using System.IO;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using NDesk.Options;
-using static RAGE.Logger.Logger;
+using static RAGE.Main.Logger;
 namespace RAGE.Parser
 {
     class Program

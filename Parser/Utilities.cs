@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-using static RAGE.Logger.Logger;
+using static RAGE.Main.Logger;
 
 namespace RAGE.Parser
 {

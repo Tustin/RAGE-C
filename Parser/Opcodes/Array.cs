@@ -10,11 +10,11 @@ namespace RAGE.Parser.Opcodes
     {
         public static string Get()
         {
-            return $"GetArray1 1";
+            return $"ArrayGet1 1";
         }
         public static string Set()
         {
-            return $"SetArray1 1";
+            return $"ArraySet1 1";
         }
     }
 }

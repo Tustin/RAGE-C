@@ -1,5 +1,4 @@
-static string arrTest[5] = {"test", "aaa", "something1", "something2", "lastone"};
-int intArr[3];
+static string mainMenu[4] = {"Player", "Vehicle", "Weapon", "World"};
 
 enum Menus {
     MAIN_MENU,
@@ -41,6 +40,11 @@ void draw_menu_title(string title) {
     draw_text(title, 1, 0.839844, 0.191832, 1.05);
 }
 
+void draw_menu_option(string option, int index) {
+    float temp = (float)index * 0.026094;
+    draw_text(option, 1, 0.729657, 0.25647797 + temp, 0.437500);
+}
+
 void draw_background(int items) {
     float tmpHeight = (float)items * 0.026094
     tmpHeight = tmpHeight * 0.030943;
@@ -53,6 +57,9 @@ void draw_menu() {
     int menuItems = 0;
     switch (currentMenu) {
         case Menus.MAIN_MENU:
+        // for (int i = 0; i < 4; i++) {        
+        //     //draw_menu_option(mainMenu[i], i);
+        // }
         menuItems = 4;
         break;
         case Menus.PLAYER_MENU:

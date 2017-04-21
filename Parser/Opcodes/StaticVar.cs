@@ -12,7 +12,7 @@
             return $"StaticSet1 {var.FrameId} //{var.Name}"; //change
         }
 
-        public static string GetPointer(IVariable var)
+        public static string Pointer(IVariable var)
         {
             return $"pStatic1 {var.FrameId} //&{var.Name}";
         }

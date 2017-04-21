@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using static RAGE.Logger.Logger;
+using static RAGE.Main.Logger;
 
 namespace RAGE.Compiler
 {
@@ -46,7 +46,6 @@ namespace RAGE.Compiler
             var StringData = new List<StringData>();
             var NativeData = new List<NativeData>();
             var LabelData = new List<LabelData>();
-            //var LabelsToReplace = new Dictionary<string, List<int>>();
             var LabelsToReplace = new List<LabelMap>();
             var StaticsData = new List<byte>();
 
@@ -309,11 +308,11 @@ namespace RAGE.Compiler
                     bytes.Add(0x34);
                     bytes.Add(Utilities.ByteToHex(lineParts[1]));
                     break;
-                    case "getarray1"://2
+                    case "arrayget1"://2
                     bytes.Add(0x35);
                     bytes.Add(Utilities.ByteToHex(lineParts[1]));
                     break;
-                    case "setarray1"://2
+                    case "arrayset1"://2
                     bytes.Add(0x36);
                     bytes.Add(Utilities.ByteToHex(lineParts[1]));
                     break;

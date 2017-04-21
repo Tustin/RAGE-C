@@ -1,37 +1,53 @@
-//Compiled using RAGE-C by Tustin 4/18/2017
+//Compiled using RAGE-C by Tustin 4/20/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 15 statics
+//Auto assigning 14 statics
+PushString "Player"
 push_0
-StaticSet1 3 //Menus_MAIN_MENU
+pStatic1 0 //&mainMenu
+ArraySet1 1
+PushString "Vehicle"
 push_1
-StaticSet1 4 //Menus_PLAYER_MENU
+pStatic1 0 //&mainMenu
+ArraySet1 1
+PushString "Weapon"
 push_2
-StaticSet1 5 //Menus_VEHICLE_MENU
+pStatic1 0 //&mainMenu
+ArraySet1 1
+PushString "World"
 push_3
-StaticSet1 6 //Menus_WEAPON_MENU
-push_4
-StaticSet1 7 //Menus_WORLD_MENU
+pStatic1 0 //&mainMenu
+ArraySet1 1
 push_0
-StaticSet1 8 //PlayerMenu_GODMODE
+StaticSet1 4 //Menus_MAIN_MENU
 push_1
-StaticSet1 9 //PlayerMenu_INFINITE_AMMO
+StaticSet1 5 //Menus_PLAYER_MENU
+push_2
+StaticSet1 6 //Menus_VEHICLE_MENU
+push_3
+StaticSet1 7 //Menus_WEAPON_MENU
+push_4
+StaticSet1 8 //Menus_WORLD_MENU
 push_0
-StaticSet1 10 //currentMenu
+StaticSet1 9 //PlayerMenu_GODMODE
+push_1
+StaticSet1 10 //PlayerMenu_INFINITE_AMMO
 push_0
-StaticSet1 11 //currentOption
+StaticSet1 11 //currentMenu
 push_0
-StaticSet1 12 //open
-StaticSet1 13 //currentMenuHeight
+StaticSet1 12 //currentOption
 push_0
-StaticSet1 14 //lastButtonPress
+StaticSet1 13 //open
+StaticSet1 14 //currentMenuHeight
+push_0
+StaticSet1 15 //lastButtonPress
 push1 200
-StaticSet1 15 //buttonPressDelay
+StaticSet1 16 //buttonPressDelay
 Call @main
 Return 0 0
 
 :draw_text
-Function 5 7 0
+Function 5 12 0
 getF1 1 //font
 CallNative SET_TEXT_FONT 1 0
 getF1 4 //size
@@ -53,7 +69,7 @@ CallNative END_TEXT_COMMAND_DISPLAY_TEXT 2 0
 Return 5 0
 
 :show_notification
-Function 1 3 0
+Function 1 4 0
 PushString "STRING"
 CallNative BEGIN_TEXT_COMMAND_PRINT 1 0
 getF1 0 //message
@@ -64,7 +80,7 @@ CallNative END_TEXT_COMMAND_PRINT 2 0
 Return 1 0
 
 :draw_menu_title
-Function 1 3 0
+Function 1 4 0
 getF1 0 //title
 push_1
 fpush 0.839844
@@ -73,23 +89,40 @@ fpush 1.05
 Call @draw_text
 Return 1 0
 
+:draw_menu_option
+Function 2 7 0
+getF1 1 //index
+ItoF
+fpush 0.026094
+Mult
+setF1 5 //temp
+getF1 0 //option
+push_1
+fpush 0.729657
+fpush 0.256478
+getF1 5 //temp
+Add
+fpush 0.4375
+Call @draw_text
+Return 2 0
+
 :draw_background
-Function 1 4 0
+Function 1 5 0
 getF1 0 //items
 ItoF
 fpush 0.026094
 Mult
-setF1 3 //tmpHeight
-getF1 3 //tmpHeight
+setF1 4 //tmpHeight
+getF1 4 //tmpHeight
 fpush 0.030943
 Mult
-setF1 3 //tmpHeight
+setF1 4 //tmpHeight
 fpush 0.840576
 fpush 0.248187
-getF1 3 //tmpHeight
+getF1 4 //tmpHeight
 Add
 fpush 0.249766
-getF1 3 //tmpHeight
+getF1 4 //tmpHeight
 push_0
 push_0
 push_0
@@ -103,7 +136,7 @@ PushString "Goy Menu"
 Call @draw_menu_title
 push_0
 setF1 3 //menuItems
-StaticGet1 10 //currentMenu
+StaticGet1 11 //currentMenu
 Switch [0=@selection_0_case_0][1=@selection_0_case_1]
 Jump @switch_end_0
 :selection_0_case_0
@@ -120,12 +153,12 @@ Call @draw_background
 Return 0 0
 
 :delayed_key_press
-Function 1 3 0
+Function 1 4 0
 CallNative GET_GAME_TIMER 0 1
-StaticGet1 14 //lastButtonPress
+StaticGet1 15 //lastButtonPress
 Sub
-StaticGet1 15 //buttonPressDelay
-JumpGT @selection_end_1
+StaticGet1 16 //buttonPressDelay
+JumpLT @selection_end_1
 push_0
 Return 1 1
 Jump @selection_end_1
@@ -135,7 +168,7 @@ getF1 0 //control
 CallNative IS_DISABLED_CONTROL_PRESSED 2 1
 JumpFalse @selection_end_2
 CallNative GET_GAME_TIMER 0 1
-StaticSet1 14 //lastButtonPress
+StaticSet1 15 //lastButtonPress
 push_1
 Return 1 1
 Jump @selection_end_2
@@ -151,18 +184,18 @@ push_1
 JumpNE @selection_else_3
 PushString "pressed down"
 Call @show_notification
-StaticGet1 11 //currentOption
+StaticGet1 12 //currentOption
 Add1 1
-StaticSet1 11 //currentOption
-StaticGet1 10 //currentMenu
+StaticSet1 12 //currentOption
+StaticGet1 11 //currentMenu
 Switch [0=@selection_4_case_0]
 Jump @switch_end_4
 :selection_4_case_0
-StaticGet1 11 //currentOption
+StaticGet1 12 //currentOption
 push_3
 JumpNE @selection_end_5
 push_0
-StaticSet1 11 //currentOption
+StaticSet1 12 //currentOption
 Jump @selection_end_5
 :selection_end_5
 Jump @switch_end_4
@@ -182,7 +215,7 @@ Call @delayed_key_press
 push_1
 JumpNE @selection_end_7
 push_0
-StaticSet1 12 //open
+StaticSet1 13 //open
 PushString "closed"
 Call @show_notification
 Jump @selection_end_7
@@ -196,7 +229,7 @@ Return 0 0
 :main
 Function 0 2 0
 :loop_0
-StaticGet1 12 //open
+StaticGet1 13 //open
 Not
 JumpFalse @selection_else_8
 push_2
@@ -208,13 +241,13 @@ CallNative IS_DISABLED_CONTROL_PRESSED 2 1
 And
 JumpFalse @selection_end_9
 push_1
-StaticSet1 12 //open
+StaticSet1 13 //open
 push_0
-StaticSet1 10 //currentMenu
+StaticSet1 11 //currentMenu
 push_0
-StaticSet1 11 //currentOption
+StaticSet1 12 //currentOption
 CallNative GET_GAME_TIMER 0 1
-StaticSet1 14 //lastButtonPress
+StaticSet1 15 //lastButtonPress
 PushString "menu opened"
 Call @show_notification
 Jump @selection_end_9

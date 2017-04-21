@@ -12,7 +12,7 @@ namespace RAGE.Parser
         {
             get
             {
-                return Variables.Count + 2;
+                return Variables.Count + Parameters.Count + 2;
             }
         }
 

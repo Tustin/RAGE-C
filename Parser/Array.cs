@@ -13,7 +13,7 @@ namespace RAGE.Parser
         /// The amount of items in the array
         /// </summary>
         /// 
-        public List<IVariable> Indices { get; set; }
+        public List<Variable> Indices { get; set; }
         public int Length { get; set; }
         public string Name { get; set; }
         public int FrameId { get; set; }
@@ -25,7 +25,7 @@ namespace RAGE.Parser
             Name = name;
             VariableOffset = offset;
             Length = length;
-            Indices = new List<IVariable>();
+            Indices = new List<Variable>();
         }
     }
 }

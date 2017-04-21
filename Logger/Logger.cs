@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace RAGE.Logger
+namespace RAGE.Main
 {
     public static class Logger
     {

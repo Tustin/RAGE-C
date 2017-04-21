@@ -7,7 +7,7 @@ using Antlr4.Runtime;
 using RAGE.Parser.Opcodes;
 
 using static RAGEParser;
-using static RAGE.Logger.Logger;
+using static RAGE.Main.Logger;
 using System.Text;
 
 namespace RAGE.Parser
@@ -100,11 +100,27 @@ namespace RAGE.Parser
                     entryContents.Add($"//Auto assigning {Script.StaticVariables.Count} statics");
                     foreach (var variable in Script.StaticVariables)
                     {
-                        if (variable is Array)
-                            continue;
-                        Variable var = variable as Variable;
-                        entryContents.AddRange(var.ValueAssembly);
-                        entryContents.Add(StaticVar.Set(var));
+                        //Fill out each item in the array also
+                        if (variable is Array arr)
+                        {
+                            int index = 0;
+                            //entryContents.Add(Push.Int(arr.Indices.Count.ToString()));
+                            //entryContents.Add(StaticVar.Set(arr));
+                            foreach (var var in arr.Indices)
+                            {
+                                entryContents.AddRange(var.ValueAssembly);
+                                entryContents.Add(Push.Int(index.ToString()));
+                                entryContents.Add(StaticVar.Pointer(arr));
+                                entryContents.Add(Opcodes.Array.Set());
+                                index++;
+                            }
+                        }
+                        else if (variable is Variable var)
+                        {
+                            entryContents.AddRange(var.ValueAssembly);
+                            entryContents.Add(StaticVar.Set(var));
+                        }
+
                     }
                 }
                 entryContents.Add("Call @main");
@@ -186,11 +202,20 @@ namespace RAGE.Parser
         //New variables
         public override void EnterDeclaration(DeclarationContext context)
         {
-            var variable = visitor.VisitDeclaration(context);
+            var ff = context.GetText();
 
+            var variable = visitor.VisitDeclaration(context);
             Variable var = variable.Data as Variable;
+
+            if (var == null)
+            {
+                return;
+            }
+            
+
             if (var.Specifier == Specifier.Static)
             {
+                var.FrameId = Script.GetNextStaticIndex();
                 Script.StaticVariables.Add(var);
             }
             else
@@ -246,7 +271,7 @@ namespace RAGE.Parser
                 Error($"Array size can only be an integer | line {lineNumber},{linePosition}");
             }
 
-            int varOffset = CurrentFunction == null ? Script.StaticVariables.Count : CurrentFunction.FrameVars;
+            int varOffset = CurrentFunction == null ? Script.GetNextStaticIndex() : CurrentFunction.FrameVars;
             Array arr = new Array(arrName, varOffset, arrSize);
 
             if (context.arrayDeclarationList() != null)
@@ -308,6 +333,7 @@ namespace RAGE.Parser
                 CurrentFunction.Variables.Add(arr);
             }
         }
+
         //Statements
         public override void EnterStatement(StatementContext context)
         {
@@ -395,10 +421,9 @@ namespace RAGE.Parser
 
                 currentSwitch.Cases.Reverse();
 
-                //Move the default item to the front (if it exists)
-
                 var cf = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
                 switches.Add(sc, currentSwitch);
+
                 if (conditionType == DataType.NativeCall || conditionType == DataType.LocalCall)
                 {
                     var output = visitor.VisitExpression(context.expression());
@@ -605,7 +630,6 @@ namespace RAGE.Parser
                 jumpLoc = storedContexts.LastOrDefault();
 
             }
-            //if (switches.ContainsKey(jumpLoc)) return;
             string jumpType = context.GetChild(0).GetText();
             var functionCode = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
             switch (jumpType)

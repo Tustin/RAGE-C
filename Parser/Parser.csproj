@@ -111,9 +111,9 @@
       <Project>{66127ac6-df3e-4a19-9772-85d48d068895}</Project>
       <Name>Compiler</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Logger\Logger.csproj">
+    <ProjectReference Include="..\Logger\Main.csproj">
       <Project>{f706e629-4585-4e2f-a347-5c4cbad38346}</Project>
-      <Name>Logger</Name>
+      <Name>Main</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

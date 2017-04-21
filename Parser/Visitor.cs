@@ -5,7 +5,7 @@ using Antlr4.Runtime.Misc;
 using System.Text.RegularExpressions;
 
 using static RAGEParser;
-using static RAGE.Logger.Logger;
+using static RAGE.Main.Logger;
 using RAGE.Parser.Opcodes;
 
 namespace RAGE.Parser
@@ -225,7 +225,7 @@ namespace RAGE.Parser
             {
                 Error($"Enum '{currentEnum.Name}' already contains enumerator '{enumName}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
             }
-            Variable enumVar = new Variable($"{currentEnum.Name}_{enumName}", Script.StaticVariables.Count + 1, DataType.Int);
+            Variable enumVar = new Variable($"{currentEnum.Name}_{enumName}", Script.GetNextStaticIndex(), DataType.Int);
             enumVar.Specifier = Specifier.Static;
             //ENUMERATOR    
             if (context.ChildCount == 1)
@@ -713,7 +713,7 @@ namespace RAGE.Parser
                 //        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                 //    }
                 //}
-                code.Add(Jump.Generate(JumpType.GreaterThan, CurrentContext.Label));
+                code.Add(Jump.Generate(JumpType.LessThan, CurrentContext.Label));
                 return new Value(DataType.Bool, null, code);
 
                 case "<=":
@@ -1247,6 +1247,10 @@ namespace RAGE.Parser
                     var array = RAGEListener.CurrentFunction.Variables.GetArray(arrayName) as Array;
                     if (array == null)
                     {
+                        array = Script.StaticVariables.GetArray(arrayName) as Array;
+                    }
+                    if (array == null)
+                    {
                         Error($"No array '{arrayName}' exists  | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
                         return null;
                     }
@@ -1269,7 +1273,14 @@ namespace RAGE.Parser
 
                         //Build stack
                         code.Add(Push.Int(index));
-                        code.Add(FrameVar.GetPointer(array));
+                        if (array.Specifier == Specifier.Static)
+                        {
+                            code.Add(StaticVar.Pointer(array));
+                        }
+                        else
+                        {
+                            code.Add(FrameVar.GetPointer(array));
+                        }
                         code.Add(Opcodes.Array.Set());
                     }
                     else if (indexType == DataType.Variable)
@@ -1282,8 +1293,15 @@ namespace RAGE.Parser
                         var expr = VisitExpression(context.expression());
                         //Since its a var, just generate the code and hope the dev knows what theyre doing
                         code.AddRange(expr.Assembly);
-                        code.Add(FrameVar.GetPointer(array));
-                        code.Add(Opcodes.Array.Set());
+                        if (array.Specifier == Specifier.Static)
+                        {
+                            code.Add(StaticVar.Pointer(array));
+                        }
+                        else
+                        {
+                            code.Add(FrameVar.GetPointer(array));
+                        }
+                        code.Add(Opcodes.Array.Get());
                     }
                     return new Value(DataType.Array, null, code);
                 }
