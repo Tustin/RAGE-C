@@ -1,4 +1,4 @@
-static string mainMenu[4] = {"Player", "Vehicle", "Weapon", "World"};
+static string mainMenu[4] = {"Player", "Vehicle", "Weapons", "World"};
 
 enum Menus {
     MAIN_MENU,
@@ -57,9 +57,9 @@ void draw_menu() {
     int menuItems = 0;
     switch (currentMenu) {
         case Menus.MAIN_MENU:
-        // for (int i = 0; i < 4; i++) {        
-        //     //draw_menu_option(mainMenu[i], i);
-        // }
+        for (int i = 0; i < 4; i++) {        
+            draw_menu_option(mainMenu[i], i);
+        }
         menuItems = 4;
         break;
         case Menus.PLAYER_MENU:
@@ -113,7 +113,9 @@ void main() {
                 currentMenu = 0;
                 currentOption = 0;
                 lastButtonPress = GET_GAME_TIMER();
-                show_notification("menu opened");   
+                string first = "menu ";
+                first . "opened";
+                show_notification(first);   
             }
         } else {
             draw_menu();

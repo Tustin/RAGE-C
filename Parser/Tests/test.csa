@@ -1,7 +1,9 @@
-//Compiled using RAGE-C by Tustin 4/20/2017
+//Compiled using RAGE-C by Tustin 4/23/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 14 statics
+push_4
+StaticSet1 0 //mainMenu
 PushString "Player"
 push_0
 pStatic1 0 //&mainMenu
@@ -10,7 +12,7 @@ PushString "Vehicle"
 push_1
 pStatic1 0 //&mainMenu
 ArraySet1 1
-PushString "Weapon"
+PushString "Weapons"
 push_2
 pStatic1 0 //&mainMenu
 ArraySet1 1
@@ -19,30 +21,30 @@ push_3
 pStatic1 0 //&mainMenu
 ArraySet1 1
 push_0
-StaticSet1 4 //Menus_MAIN_MENU
+StaticSet1 5 //Menus_MAIN_MENU
 push_1
-StaticSet1 5 //Menus_PLAYER_MENU
+StaticSet1 6 //Menus_PLAYER_MENU
 push_2
-StaticSet1 6 //Menus_VEHICLE_MENU
+StaticSet1 7 //Menus_VEHICLE_MENU
 push_3
-StaticSet1 7 //Menus_WEAPON_MENU
+StaticSet1 8 //Menus_WEAPON_MENU
 push_4
-StaticSet1 8 //Menus_WORLD_MENU
+StaticSet1 9 //Menus_WORLD_MENU
 push_0
-StaticSet1 9 //PlayerMenu_GODMODE
+StaticSet1 10 //PlayerMenu_GODMODE
 push_1
-StaticSet1 10 //PlayerMenu_INFINITE_AMMO
+StaticSet1 11 //PlayerMenu_INFINITE_AMMO
 push_0
-StaticSet1 11 //currentMenu
+StaticSet1 12 //currentMenu
 push_0
-StaticSet1 12 //currentOption
+StaticSet1 13 //currentOption
 push_0
-StaticSet1 13 //open
-StaticSet1 14 //currentMenuHeight
+StaticSet1 14 //open
+StaticSet1 15 //currentMenuHeight
 push_0
-StaticSet1 15 //lastButtonPress
+StaticSet1 16 //lastButtonPress
 push1 200
-StaticSet1 16 //buttonPressDelay
+StaticSet1 17 //buttonPressDelay
 Call @main
 Return 0 0
 
@@ -131,15 +133,29 @@ CallNative DRAW_RECT 8 0
 Return 1 0
 
 :draw_menu
-Function 0 3 0
+Function 0 4 0
 PushString "Goy Menu"
 Call @draw_menu_title
 push_0
 setF1 3 //menuItems
-StaticGet1 11 //currentMenu
+StaticGet1 12 //currentMenu
 Switch [0=@selection_0_case_0][1=@selection_0_case_1]
 Jump @switch_end_0
 :selection_0_case_0
+push_0
+setF1 4 //i
+:loop_0
+getF1 4 //i
+pStatic1 0 //&mainMenu
+ArrayGet1 1
+getF1 4 //i
+Call @draw_menu_option
+getF1 4 //i
+Add1 1
+setF1 4 //i
+getF1 4 //i
+push_4
+JumpLT @loop_0
 push_4
 setF1 3 //menuItems
 Jump @switch_end_0
@@ -155,10 +171,10 @@ Return 0 0
 :delayed_key_press
 Function 1 4 0
 CallNative GET_GAME_TIMER 0 1
-StaticGet1 15 //lastButtonPress
+StaticGet1 16 //lastButtonPress
 Sub
-StaticGet1 16 //buttonPressDelay
-JumpLT @selection_end_1
+StaticGet1 17 //buttonPressDelay
+JumpGT @selection_end_1
 push_0
 Return 1 1
 Jump @selection_end_1
@@ -168,7 +184,7 @@ getF1 0 //control
 CallNative IS_DISABLED_CONTROL_PRESSED 2 1
 JumpFalse @selection_end_2
 CallNative GET_GAME_TIMER 0 1
-StaticSet1 15 //lastButtonPress
+StaticSet1 16 //lastButtonPress
 push_1
 Return 1 1
 Jump @selection_end_2
@@ -184,18 +200,18 @@ push_1
 JumpNE @selection_else_3
 PushString "pressed down"
 Call @show_notification
-StaticGet1 12 //currentOption
+StaticGet1 13 //currentOption
 Add1 1
-StaticSet1 12 //currentOption
-StaticGet1 11 //currentMenu
+StaticSet1 13 //currentOption
+StaticGet1 12 //currentMenu
 Switch [0=@selection_4_case_0]
 Jump @switch_end_4
 :selection_4_case_0
-StaticGet1 12 //currentOption
+StaticGet1 13 //currentOption
 push_3
 JumpNE @selection_end_5
 push_0
-StaticSet1 12 //currentOption
+StaticSet1 13 //currentOption
 Jump @selection_end_5
 :selection_end_5
 Jump @switch_end_4
@@ -215,7 +231,7 @@ Call @delayed_key_press
 push_1
 JumpNE @selection_end_7
 push_0
-StaticSet1 13 //open
+StaticSet1 14 //open
 PushString "closed"
 Call @show_notification
 Jump @selection_end_7
@@ -227,9 +243,9 @@ Jump @selection_end_3
 Return 0 0
 
 :main
-Function 0 2 0
-:loop_0
-StaticGet1 13 //open
+Function 0 3 0
+:loop_1
+StaticGet1 14 //open
 Not
 JumpFalse @selection_else_8
 push_2
@@ -241,14 +257,20 @@ CallNative IS_DISABLED_CONTROL_PRESSED 2 1
 And
 JumpFalse @selection_end_9
 push_1
-StaticSet1 13 //open
+StaticSet1 14 //open
 push_0
-StaticSet1 11 //currentMenu
+StaticSet1 12 //currentMenu
 push_0
-StaticSet1 12 //currentOption
+StaticSet1 13 //currentOption
 CallNative GET_GAME_TIMER 0 1
-StaticSet1 15 //lastButtonPress
-PushString "menu opened"
+StaticSet1 16 //lastButtonPress
+PushString "menu "
+pFrame1 3 //&first
+strcopy 64
+PushString "opened"
+pFrame1 3 //&first
+stradd 64
+getF1 3 //first
 Call @show_notification
 Jump @selection_end_9
 :selection_end_9
@@ -260,6 +282,6 @@ Jump @selection_end_8
 :selection_end_8
 push_0
 CallNative wait 1 0
-Jump @loop_0
+Jump @loop_1
 Return 0 0
 

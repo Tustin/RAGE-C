@@ -103,16 +103,15 @@ namespace RAGE.Parser
                         //Fill out each item in the array also
                         if (variable is Array arr)
                         {
-                            int index = 0;
-                            //entryContents.Add(Push.Int(arr.Indices.Count.ToString()));
-                            //entryContents.Add(StaticVar.Set(arr));
+                            entryContents.Add(Push.Int(arr.Indices.Count.ToString()));
+                            entryContents.Add(StaticVar.Set(arr));
                             foreach (var var in arr.Indices)
                             {
                                 entryContents.AddRange(var.ValueAssembly);
-                                entryContents.Add(Push.Int(index.ToString()));
+                                entryContents.Add(Push.Int(var.FrameId.ToString()));
                                 entryContents.Add(StaticVar.Pointer(arr));
                                 entryContents.Add(Opcodes.Array.Set());
-                                index++;
+                                //index++;
                             }
                         }
                         else if (variable is Variable var)
@@ -273,7 +272,6 @@ namespace RAGE.Parser
 
             int varOffset = CurrentFunction == null ? Script.GetNextStaticIndex() : CurrentFunction.FrameVars;
             Array arr = new Array(arrName, varOffset, arrSize);
-
             if (context.arrayDeclarationList() != null)
             {
                 var arrayItems = new List<ArrayDeclarationContext>();
@@ -360,11 +358,11 @@ namespace RAGE.Parser
                 var hasElse = context.selectionElseStatement() != null;
                 StoredContext sc;
                 //Set specific label if this selection has an else statement
-                sc = new StoredContext($"selection_end_{count}", count, context);
+                sc = new StoredContext($"selection_end_{count}", count, context, ScopeTypes.Conditional);
                 storedContexts.Add(sc);
                 if (hasElse)
                 {
-                    sc = new StoredContext($"selection_else_{count}", count, context.selectionElseStatement());
+                    sc = new StoredContext($"selection_else_{count}", count, context.selectionElseStatement(), ScopeTypes.Conditional);
                     storedContexts.Add(sc);
                 }
 
@@ -394,7 +392,7 @@ namespace RAGE.Parser
                 //Create the switch so we can add the items to it
                 int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
 
-                StoredContext sc = new StoredContext($"switch_end_{count}", count, context);
+                StoredContext sc = new StoredContext($"switch_end_{count}", count, context, ScopeTypes.Conditional);
 
                 storedContexts.Add(sc);
 
@@ -691,8 +689,8 @@ namespace RAGE.Parser
                 CurrentVariable = v;
 
                 int count = storedContexts.Count(a => a.Context is IterationStatementContext);
-                StoredContext sc = new StoredContext($"loop_{count}", count, context);
-                sc.Selection = SelectionTypes.For;
+                StoredContext sc = new StoredContext($"loop_{count}", count, context, ScopeTypes.For);
+                sc.Type = ScopeTypes.For;
                 storedContexts.Add(sc);
                 visitor.CurrentContext = sc;
 
@@ -708,8 +706,8 @@ namespace RAGE.Parser
             else if (loop.StartsWith("while"))
             {
                 int count = storedContexts.Count(a => a.Context is IterationStatementContext);
-                StoredContext sc = new StoredContext($"loop_{count}", count, context);
-                sc.Selection = SelectionTypes.While;
+                StoredContext sc = new StoredContext($"loop_{count}", count, context, ScopeTypes.While);
+                sc.Type = ScopeTypes.While;
                 storedContexts.Add(sc);
                 visitor.CurrentContext = sc;
                 Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":loop_{count}");

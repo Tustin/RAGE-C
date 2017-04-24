@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace RAGE
 {
-    public enum SelectionTypes
+    public enum ScopeTypes
     {
         For,
-        While
+        While,
+        Conditional
     }
 }

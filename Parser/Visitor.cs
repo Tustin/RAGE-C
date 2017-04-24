@@ -601,8 +601,11 @@ namespace RAGE.Parser
                 case "==":
                 code.AddRange(left.Assembly);
                 code.AddRange(right.Assembly);
+                code.Add(Jump.Generate(JumpType.NotEqual, CurrentContext.Label));
+                return new Value(DataType.Bool, null, code);
 
-                //if (left.Data != null && right.Data != null) return new Value(DataType.Bool, left.Data.Equals(right.Data), new List<string>());
+                case "!=":
+                //if (left.Data != null && right.Data != null) return new Value(DataType.Bool, !left.Data.Equals(right.Data), new List<string>());
 
                 //if (left.Data != null)
                 //{
@@ -620,27 +623,8 @@ namespace RAGE.Parser
                 //{
                 //    code.AddRange(right.Assembly);
                 //}
-                code.Add(Jump.Generate(JumpType.NotEqual, CurrentContext.Label));
-                return new Value(DataType.Bool, null, code);
-                case "!=":
-                if (left.Data != null && right.Data != null) return new Value(DataType.Bool, !left.Data.Equals(right.Data), new List<string>());
-
-                if (left.Data != null)
-                {
-                    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
-                }
-                else
-                {
-                    code.AddRange(left.Assembly);
-                }
-                if (right.Data != null)
-                {
-                    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
-                }
-                else
-                {
-                    code.AddRange(right.Assembly);
-                }
+                code.AddRange(left.Assembly);
+                code.AddRange(right.Assembly);
                 code.Add(Jump.Generate(JumpType.Equal, CurrentContext.Label));
                 return new Value(DataType.Bool, null, code);
             }
@@ -713,7 +697,14 @@ namespace RAGE.Parser
                 //        code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
                 //    }
                 //}
-                code.Add(Jump.Generate(JumpType.LessThan, CurrentContext.Label));
+                if (CurrentContext.Type == ScopeTypes.For)
+                {
+                    code.Add(Jump.Generate(JumpType.LessThan, CurrentContext.Label));
+                }
+                else
+                {
+                    code.Add(Jump.Generate(JumpType.GreaterThan, CurrentContext.Label));
+                }
                 return new Value(DataType.Bool, null, code);
 
                 case "<=":
@@ -779,27 +770,7 @@ namespace RAGE.Parser
                 case "+":
                 code.AddRange(left.Assembly);
                 code.AddRange(right.Assembly);
-                //if (left.Type != right.Type && (left.Type != DataType.Variable || right.Type != DataType.Variable)) throw new Exception("Cannot use operand '+' on two different types.");
-                //if (left.Data != null && right.Data != null) return new Value(DataType.Int, (int)left.Data + (int)right.Data, new List<string>());
-                //if (left.Data != null && left.Data.Equals(0)) return new Value(DataType.Int, (int)right.Data, new List<string>());
-                //if (right.Data != null && right.Data.Equals(0)) return new Value(DataType.Int, (int)left.Data, new List<string>());
 
-                //if (left.Data != null)
-                //{
-                //    code.Add(Push.Generate(left.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, left.Data.ToString())));
-                //}
-                //else
-                //{
-                //    code.AddRange(left.Assembly);
-                //}
-                //if (right.Data != null)
-                //{
-                //    code.Add(Push.Generate(right.Data.ToString(), Utilities.GetType(RAGEListener.CurrentFunction, right.Data.ToString())));
-                //}
-                //else
-                //{
-                //    code.AddRange(right.Assembly);
-                //}
                 code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
                 return new Value(DataType.Int, null, code);
                 case "-":
@@ -826,6 +797,17 @@ namespace RAGE.Parser
                 //    code.AddRange(right.Assembly);
                 //}
                 code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
+                return new Value(DataType.Int, null, code);
+
+                case ".":
+                //Make sure both sides are strings
+                if (left.Type != DataType.Variable && right.Type != DataType.String)
+                {
+                    Error($"String concatenation can only be performed on two strings | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+                }
+                code.AddRange(right.Assembly);
+                code.Add(FrameVar.GetPointer(RAGEListener.CurrentFunction.GetVariable(left.Data.ToString())));
+                code.Add(Opcodes.String.Strcat());
                 return new Value(DataType.Int, null, code);
 
             }

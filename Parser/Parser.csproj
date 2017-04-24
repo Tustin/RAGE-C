@@ -78,6 +78,7 @@
     <Compile Include="Opcodes\Push.cs" />
     <Compile Include="Opcodes\Return.cs" />
     <Compile Include="Opcodes\StaticVar.cs" />
+    <Compile Include="Opcodes\String.cs" />
     <Compile Include="Parameter.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="Keyword.cs" />

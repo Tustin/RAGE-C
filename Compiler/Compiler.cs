@@ -12,15 +12,17 @@ namespace RAGE.Compiler
     public class Compiler
     {
         internal List<string> AssemblyCode { get; set; }
-
-        public Compiler(string filepath)
+        internal int StaticsCount { get; set; }
+        public Compiler(string filepath, int staticsCount)
         {
             AssemblyCode = File.ReadAllLines(filepath).ToList();
+            StaticsCount = staticsCount;
         }
 
-        public Compiler(List<string> code)
+        public Compiler(List<string> code, int staticsCount)
         {
             AssemblyCode = code;
+            StaticsCount = staticsCount;
         }
 
         public byte[] Compile()
@@ -61,10 +63,10 @@ namespace RAGE.Compiler
 
             var StringOffsetSize = 0;
 
-            //Fill static data 
-            while (StaticsData.Count < 60)
+            //Fill static data
+            for (int i = 0; i < StaticsCount; i++)
             {
-                StaticsData.Add(0x00);
+                StaticsData.AddRange(new List<byte>() { 0x00, 0x00, 0x00, 0x00 });
             }
 
             foreach (string line in AssemblyCode)

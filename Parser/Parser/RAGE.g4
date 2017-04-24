@@ -50,6 +50,7 @@ additiveExpression
     :   multiplicativeExpression
     |   additiveExpression '+' multiplicativeExpression
     |   additiveExpression '-' multiplicativeExpression
+    |   additiveExpression '.' multiplicativeExpression
     ;
 
 shiftExpression

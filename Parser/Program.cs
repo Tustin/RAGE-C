@@ -11,7 +11,6 @@ namespace RAGE.Parser
     {
         static void Main(string[] args)
         {
-
             Logo();
             string filePath = null;
             bool showingHelp = false;
@@ -83,7 +82,7 @@ namespace RAGE.Parser
 
             File.WriteAllLines(Core.PROJECT_ROOT + "\\Tests\\test.csa", final.ToArray());
 
-            Compiler.Compiler compiler = new Compiler.Compiler(final);
+            Compiler.Compiler compiler = new Compiler.Compiler(final, Script.GetNextStaticIndex());
 
             LogVerbose("Compiling script file...");
 

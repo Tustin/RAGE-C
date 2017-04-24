@@ -8,9 +8,16 @@ namespace RAGE.Main
         private static Stopwatch timer = Stopwatch.StartNew();
         public static bool Verbose = false;
 
+        private static void Time()
+        {
+            Console.Write($"[{timer.Elapsed.ToString("mm\\:ss\\:ff")}] ");
+
+        }
         public static void Log(string message)
         {
-            Console.WriteLine($"[{timer.Elapsed.ToString("mm\\:ss\\.ff")}] {message}");
+            Time();
+            Console.Write(message);
+            Console.Write("\r\n");
         }
 
         public static void LogVerbose(string message)
@@ -21,7 +28,7 @@ namespace RAGE.Main
 
         public static void Error(string message)
         {
-            Console.Write($"[{timer.Elapsed.TotalSeconds}] ");
+            Time();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.Write("ERROR: ");
             Console.ResetColor();
@@ -33,7 +40,7 @@ namespace RAGE.Main
 
         public static void Warn(string message)
         {
-            Console.Write($"[{timer.Elapsed.TotalSeconds}] ");
+            Time();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Write("WARN: ");
             Console.ResetColor();

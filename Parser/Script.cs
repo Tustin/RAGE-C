@@ -19,7 +19,7 @@ namespace RAGE.Parser
             {
                 if (var is Array arr)
                 {
-                    next += arr.Indices.Count;
+                    next += arr.Indices.Count + 1;
                 }
                 else if (var is Variable)
                 {
