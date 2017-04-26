@@ -6,5 +6,7 @@
 	public interface IGlobal
 	{
 		int Id { get; set; }
+		int Index { get; set; }
+
 	}
 }

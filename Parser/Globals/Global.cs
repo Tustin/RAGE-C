@@ -51,20 +51,23 @@ namespace RAGE.Parser.Globals
 			for (; currentIndex < expr.Length;)
 			{
 				//Found immediate
+				IGlobal currentIdentifier = null;
 				if (expr[currentIndex] == '.')
 				{
-					var currentIdentifier = new Globals.Immediate();
-					currentIndex = ParseImmediate(expr, ++currentIndex, out int id);
-					currentIdentifier.Index = id;
-					global.Identifiers.Add(currentIdentifier);
+					currentIdentifier = new Globals.Immediate();
 				}
 				else if (expr[currentIndex] == '[')
 				{
-					var currentIdentifier = new Globals.Array();
+					currentIdentifier = new Globals.Array();
+				}
+
+				if (currentIdentifier != null)
+				{
 					currentIndex = ParseImmediate(expr, ++currentIndex, out int id);
 					currentIdentifier.Index = id;
 					global.Identifiers.Add(currentIdentifier);
 				}
+
 				currentIndex++;
 
 			}
