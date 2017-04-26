@@ -66,6 +66,7 @@ namespace RAGE.Parser.Globals
 					currentIndex = ParseImmediate(expr, ++currentIndex, out int id);
 					currentIdentifier.Index = id;
 					global.Identifiers.Add(currentIdentifier);
+					currentIdentifier = null;
 				}
 
 				currentIndex++;
