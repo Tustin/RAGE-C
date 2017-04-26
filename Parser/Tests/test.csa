@@ -1,4 +1,4 @@
-//Compiled using RAGE-C by Tustin 4/23/2017
+//Compiled using RAGE-C by Tustin 4/25/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 14 statics
@@ -174,7 +174,7 @@ CallNative GET_GAME_TIMER 0 1
 StaticGet1 16 //lastButtonPress
 Sub
 StaticGet1 17 //buttonPressDelay
-JumpGT @selection_end_1
+JumpGE @selection_end_1
 push_0
 Return 1 1
 Jump @selection_end_1
@@ -192,54 +192,80 @@ Jump @selection_end_2
 push_0
 Return 1 1
 
+:disable_phone
+Function 0 4 0
+PushString "test"
+push_0
+pStatic1 0 //&mainMenu
+ArraySet1 1
+push_0
+pStatic1 0 //&mainMenu
+ArrayGet1 1
+setF1 3 //item_1
+push_0
+pStatic1 0 //&mainMenu
+ArrayGet1 1
+PushString "test"
+JumpNE @selection_end_3
+Jump @selection_end_3
+:selection_end_3
+push_1
+JumpNE @selection_end_4
+push_0
+setGlobal2 10589 //Global_10589
+setF1 4 //testing
+Jump @selection_end_4
+:selection_end_4
+Return 0 0
+
 :handle_input
 Function 0 2 0
 push1 203
 Call @delayed_key_press
 push_1
-JumpNE @selection_else_3
+JumpNE @selection_else_5
 PushString "pressed down"
 Call @show_notification
 StaticGet1 13 //currentOption
 Add1 1
 StaticSet1 13 //currentOption
 StaticGet1 12 //currentMenu
-Switch [0=@selection_4_case_0]
-Jump @switch_end_4
-:selection_4_case_0
+Switch [0=@selection_6_case_0]
+Jump @switch_end_6
+:selection_6_case_0
 StaticGet1 13 //currentOption
 push_3
-JumpNE @selection_end_5
+JumpNE @selection_end_7
 push_0
 StaticSet1 13 //currentOption
+Jump @selection_end_7
+:selection_end_7
+Jump @switch_end_6
+:switch_end_6
 Jump @selection_end_5
-:selection_end_5
-Jump @switch_end_4
-:switch_end_4
-Jump @selection_end_3
-:selection_else_3
+:selection_else_5
 push1 204
 Call @delayed_key_press
 push_1
-JumpNE @selection_else_6
+JumpNE @selection_else_8
 PushString "pressed left"
 Call @show_notification
-Jump @selection_end_6
-:selection_else_6
+Jump @selection_end_8
+:selection_else_8
 push1 195
 Call @delayed_key_press
 push_1
-JumpNE @selection_end_7
+JumpNE @selection_end_9
 push_0
 StaticSet1 14 //open
 PushString "closed"
 Call @show_notification
-Jump @selection_end_7
-:selection_end_7
-Jump @selection_end_6
-:selection_end_6
-Jump @selection_end_3
-:selection_end_3
+Jump @selection_end_9
+:selection_end_9
+Jump @selection_end_8
+:selection_end_8
+Jump @selection_end_5
+:selection_end_5
 Return 0 0
 
 :main
@@ -247,7 +273,7 @@ Function 0 3 0
 :loop_1
 StaticGet1 14 //open
 Not
-JumpFalse @selection_else_8
+JumpFalse @selection_else_10
 push_2
 push1 204
 CallNative IS_DISABLED_CONTROL_PRESSED 2 1
@@ -255,7 +281,7 @@ push_2
 push1 201
 CallNative IS_DISABLED_CONTROL_PRESSED 2 1
 And
-JumpFalse @selection_end_9
+JumpFalse @selection_end_11
 push_1
 StaticSet1 14 //open
 push_0
@@ -265,21 +291,20 @@ StaticSet1 13 //currentOption
 CallNative GET_GAME_TIMER 0 1
 StaticSet1 16 //lastButtonPress
 PushString "menu "
-pFrame1 3 //&first
-strcopy 64
+setF1 3 //first
 PushString "opened"
 pFrame1 3 //&first
-stradd 64
+strcat 64
 getF1 3 //first
 Call @show_notification
-Jump @selection_end_9
-:selection_end_9
-Jump @selection_end_8
-:selection_else_8
+Jump @selection_end_11
+:selection_end_11
+Jump @selection_end_10
+:selection_else_10
 Call @draw_menu
 Call @handle_input
-Jump @selection_end_8
-:selection_end_8
+Jump @selection_end_10
+:selection_end_10
 push_0
 CallNative wait 1 0
 Jump @loop_1

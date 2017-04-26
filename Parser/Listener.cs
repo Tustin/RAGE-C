@@ -204,6 +204,7 @@ namespace RAGE.Parser
             var ff = context.GetText();
 
             var variable = visitor.VisitDeclaration(context);
+
             Variable var = variable.Data as Variable;
 
             if (var == null)
@@ -271,7 +272,7 @@ namespace RAGE.Parser
             }
 
             int varOffset = CurrentFunction == null ? Script.GetNextStaticIndex() : CurrentFunction.FrameVars;
-            Array arr = new Array(arrName, varOffset, arrSize);
+            Array arr = new Array(arrName, varOffset, arrSize, arrType);
             if (context.arrayDeclarationList() != null)
             {
                 var arrayItems = new List<ArrayDeclarationContext>();
@@ -332,8 +333,8 @@ namespace RAGE.Parser
             }
         }
 
-        //Statements
-        public override void EnterStatement(StatementContext context)
+		//Statements
+		public override void EnterStatement(StatementContext context)
         {
             if (context.expressionStatement() == null)
             {

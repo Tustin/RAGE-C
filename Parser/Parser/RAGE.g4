@@ -120,6 +120,10 @@ constantExpression
     :   conditionalExpression
     ;
 
+globalExpression
+    :   'Global_'
+    ;
+
 declaration
     :   declarationSpecifiers initDeclaratorList? ';'
     ;
@@ -356,6 +360,7 @@ statement
     |   enumSpecifier
     |   enumDeclarator
     |   arrayDeclarator
+    |   globalExpression
     ;
 
 labeledStatement
@@ -409,6 +414,7 @@ externalDeclaration
     :   functionDefinition
     |   enumDeclarator
     |   arrayDeclarator
+    |   globalExpression
     |   declaration
     |   ';' // stray ;
     ;

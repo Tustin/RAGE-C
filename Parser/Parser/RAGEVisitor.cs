@@ -158,6 +158,12 @@ public interface IRAGEVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitConstantExpression([NotNull] RAGEParser.ConstantExpressionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="RAGEParser.globalExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitGlobalExpression([NotNull] RAGEParser.GlobalExpressionContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="RAGEParser.declaration"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -241,6 +241,16 @@ public interface IRAGEListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitConstantExpression([NotNull] RAGEParser.ConstantExpressionContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.globalExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterGlobalExpression([NotNull] RAGEParser.GlobalExpressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.globalExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitGlobalExpression([NotNull] RAGEParser.GlobalExpressionContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.declaration"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

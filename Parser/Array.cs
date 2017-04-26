@@ -20,12 +20,13 @@ namespace RAGE.Parser
         public DataType Type { get; set; }
         public Specifier Specifier { get; set; }
 
-        public Array(string name, int offset, int length)
+        public Array(string name, int offset, int length, DataType type)
         {
             Name = name;
             VariableOffset = offset;
             Length = length;
             Indices = new List<Variable>();
+			Type = type;
         }
     }
 }

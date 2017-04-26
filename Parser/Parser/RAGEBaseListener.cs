@@ -287,6 +287,18 @@ public partial class RAGEBaseListener : IRAGEListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitConstantExpression([NotNull] RAGEParser.ConstantExpressionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.globalExpression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterGlobalExpression([NotNull] RAGEParser.GlobalExpressionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.globalExpression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitGlobalExpression([NotNull] RAGEParser.GlobalExpressionContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.declaration"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
