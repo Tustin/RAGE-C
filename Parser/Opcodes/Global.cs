@@ -10,18 +10,31 @@ namespace RAGE.Parser.Opcodes
     {
         public static string Get(int global)
         {
-            return $"getGlobal2 {global} //Global_{global}";
-        }
+			if (global > short.MaxValue)
+			{
+				return $"GetGlobal3 {global} //Global_{global}";
+			}
+			return $"GetGlobal2 {global} //Global_{global}";
 
-        public static string Set(int global)
+		}
+
+		public static string Set(int global)
         {
-            return $"setGlobal2 {global} //Global_{global}";
+			if (global > short.MaxValue)
+			{
+				return $"SetGlobal3 {global} //Global_{global}";
+			}
+			return $"SetGlobal2 {global} //Global_{global}";
 
-        }
+		}
 
         public static string GetPointer(int global)
         {
-            return $"pGlobal2 {global} //&Global_{global}";
+			if (global > short.MaxValue)
+			{
+				return $"pGlobal3 {global} //&Global_{global}";
+			}
+			return $"pGlobal2 {global} //&Global_{global}";
         }
     }
 }

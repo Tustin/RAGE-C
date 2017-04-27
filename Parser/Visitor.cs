@@ -395,14 +395,18 @@ namespace RAGE.Parser
 				//Use global opcodes
 				if (left.Type == DataType.Global)
 				{
-					var pieces = left.Data.ToString().Split('_');
-					if (!int.TryParse(pieces[1], out int globalIndex))
-					{
-						Error($"Global variable '{left.Data.ToString()}' has an invalid global index | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-					}
+					var output = Globals.Global.Parse(left.Data as Globals.Global, false);
 					code.AddRange(right.Assembly);
-					code.Add(Opcodes.Global.Set(globalIndex));
+					code.AddRange(output);
 					return new Value(DataType.Int, null, code);
+					//var pieces = left.Data.ToString().Split('_');
+					//if (!int.TryParse(pieces[1], out int globalIndex))
+					//{
+					//	Error($"Global variable '{left.Data.ToString()}' has an invalid global index | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+					//}
+					//code.AddRange(right.Assembly);
+					//code.Add(Opcodes.Global.Set(globalIndex));
+					//return new Value(DataType.Int, null, code);
 				}
 
 				//Use global opcodes
@@ -1002,7 +1006,7 @@ namespace RAGE.Parser
 				if (arrayName.StartsWith("Global_"))
 				{
 					var global = Globals.Global.Parse(context.GetText());
-					return new Value(DataType.GlobalArray, global, code);
+					return new Value(DataType.Global, global, code);
 				}
 				else
 				{
@@ -1074,6 +1078,7 @@ namespace RAGE.Parser
 				if (enumName.StartsWith("Global_"))
 				{
 					var global = Globals.Global.Parse(context.GetText());
+					return new Value(DataType.Global, global, code);
 				}
 				else
 				{
@@ -1166,7 +1171,7 @@ namespace RAGE.Parser
 				return new Value(DataType.LocalCall, value, new List<string>());
 				case DataType.Global:
 				var global = Globals.Global.Parse(value);
-				return new Value(DataType.Global, value, new List<string>());
+				return new Value(DataType.Global, global, new List<string>());
 				case DataType.Static:
 				var = Script.StaticVariables.GetVariable(value);
 				code.Add(StaticVar.Get(var));

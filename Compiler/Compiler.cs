@@ -306,7 +306,7 @@ namespace RAGE.Compiler
                     case "fromstack"://1
                     bytes.Add(0x33);
                     break;
-                    case "getarrayp1"://2
+                    case "arraygetp1"://2
                     bytes.Add(0x34);
                     bytes.Add(Utilities.ByteToHex(lineParts[1]));
                     break;

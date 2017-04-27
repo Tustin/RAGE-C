@@ -94,11 +94,16 @@ namespace RAGE.Compiler
 
         internal static byte[] I24ToHex(string i24)
         {
-            int int3 = i24[0] + (i24[1] << 8) + (i24[2] << 16);
+			int int3 = int.Parse(i24);
 
-            var hex = int3.ToString("X6");
+			if (int3 > 8388607)
+			{
+				throw new Exception("Value expected to be int24 but it exceeds max value");
+			}
 
-            return Enumerable.Range(0, hex.Length)
+			var hex = int3.ToString("X6");
+
+			return Enumerable.Range(0, hex.Length)
                      .Where(x => x % 2 == 0)
                      .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
                      .ToArray();

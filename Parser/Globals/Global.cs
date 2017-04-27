@@ -64,6 +64,7 @@ namespace RAGE.Parser.Globals
 				if (currentIdentifier != null)
 				{
 					currentIndex = ParseImmediate(expr, ++currentIndex, out int id);
+					currentIdentifier.Id = global.Identifiers.Count + 1;
 					currentIdentifier.Index = id;
 					global.Identifiers.Add(currentIdentifier);
 					currentIdentifier = null;
@@ -98,6 +99,60 @@ namespace RAGE.Parser.Globals
 			}
 
 			return --index;
+		}
+
+		public static List<string> Parse(Global global, bool isGetting)
+		{
+			var code = new List<string>();
+
+			//No items so it's just a simple global val
+			if (global.Identifiers.Count == 0)
+			{
+				code.Add(isGetting ? Opcodes.Global.Get(global.Index) : Opcodes.Global.Set(global.Index));
+			}
+			else
+			{
+				//Pop the last item from the list because this is what is getting set or retrieved
+				var lastIdentifier = global.Identifiers[global.Identifiers.Count - 1];
+				global.Identifiers.Remove(lastIdentifier);
+
+				//Sort any array identifiers because they get pushed first
+				var arrayIdentifiers = global.Identifiers.Where(a => a is Globals.Array).OrderByDescending(a => a.Id);
+
+				foreach (var identifier in arrayIdentifiers)
+				{
+					code.Add(Opcodes.Push.Int(identifier.Index.ToString()));
+				}
+
+				//Push the pointer for the global index
+				code.Add(Opcodes.Global.GetPointer(global.Index));
+
+				//Get all the immediates
+				var immediateIdentifiers = global.Identifiers.Where(a => a is Globals.Immediate).OrderBy(a => a.Id);
+
+				foreach (var identifier in immediateIdentifiers)
+				{
+					code.Add(Opcodes.Immediate.GetPointer(identifier.Index));
+				}
+
+				//Now go back to the arrays and push the pointers for them (needs to be in reverse order)
+				foreach (var arr in arrayIdentifiers.OrderBy(a => a.Id))
+				{
+					code.Add(Opcodes.Array.GetPointer());
+				}
+
+				if (lastIdentifier is Globals.Immediate imm)
+				{
+					code.Add(isGetting ? Opcodes.Immediate.Get(imm.Index) : Opcodes.Immediate.Set(imm.Index));
+				}
+				else if (lastIdentifier is Globals.Array arr)
+				{
+					code.Add(isGetting ? Opcodes.Array.Get() : Opcodes.Array.Set());
+				}
+			}
+
+			return code;
+
 		}
 	}
 }
