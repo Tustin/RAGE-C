@@ -9,6 +9,7 @@ namespace RAGE.Parser
     public class Enum
     {
         public string Name { get; set; }
+
         public List<Enumerator> Enumerators { get; set; }
 
         public Enum(string name)

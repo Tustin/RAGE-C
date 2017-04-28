@@ -25,7 +25,6 @@ namespace RAGE.Parser
         public Function()
         {
             Variables = new List<IVariable>();
-            //Arrays = new List<Array>();
             Parameters = new List<Parameter>();
         }
 
@@ -34,7 +33,6 @@ namespace RAGE.Parser
             Name = name;
             Type = Utilities.GetTypeFromDeclaration(returnType);
             Variables = new List<IVariable>();
-            //Arrays = new List<Array>();
             Parameters = new List<Parameter>();
         }
 
@@ -43,7 +41,6 @@ namespace RAGE.Parser
             Name = name;
             Type = returnType;
             Variables = new List<IVariable>();
-            //Arrays = new List<Array>();
             Parameters = new List<Parameter>();
         }
 

@@ -4,119 +4,134 @@ using System.IO;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using NDesk.Options;
+
 using static RAGE.Main.Logger;
+
 namespace RAGE.Parser
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Logo();
-            string filePath = null;
-            bool showingHelp = false;
-            new OptionSet() {
-                { "s=|script=", a => filePath = a },
-                { "v|verbose", a => Verbose = true},
-                { "h|help", a => showingHelp = true }
-            }.Parse(args);
+	class Program
+	{
+		static void Main(string[] args)
+		{
+			Logo();
+
+			string FilePath = null;
+			string FileName = null;
+			string FileDirectory = null;
+			bool ShowHelp = false;
+
+			new OptionSet() {
+				{ "s=|script=", a => FilePath = a },
+				{ "v|verbose", a => Verbose = true},
+				{ "h|help", a => ShowHelp = true }
+			}.Parse(args);
+
+
 #if DEBUG
-            filePath = Core.PROJECT_ROOT + "\\Tests\\test.c";         
+			Warn("No script path supplied. Using debug script path...");
+			FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
 #endif
-            if (showingHelp)
-            {
-                Help();
-                return;
-            }
 
-            if (filePath == null)
-            {
-                Error("No script file path set. Please use -h for help");
-                return;
-            }
+			FilePath = Path.GetFullPath(FilePath);
+			FileName = Path.GetFileNameWithoutExtension(FilePath);
+			FileDirectory = Path.GetDirectoryName(FilePath);
 
-            LogVerbose("Populating native table...");
+			if (ShowHelp)
+			{
+				Help();
+				return;
+			}
 
-            Native.PopulateNativeTable();
+			if (FilePath == null)
+			{
+				Error("No script file path set. Please use -h for help");
+				return;
+			}
 
-            LogVerbose($"Added {Core.Natives.Native.Count} natives to native table");
+			LogVerbose("Populating native table...");
 
-            AntlrFileStream fs = new AntlrFileStream(Core.PROJECT_ROOT + "\\Tests\\test.c");
+			Native.PopulateNativeTable();
 
-            Core.AssemblyCode = new Dictionary<string, List<string>>();
+			LogVerbose($"Added {Core.Natives.Native.Count} natives to native table");
 
-            Script.Functions = new List<Function>();
+			AntlrFileStream fs = new AntlrFileStream(Core.PROJECT_ROOT + "\\Tests\\test.c");
 
-            LogVerbose("Loaded script file");
+			Core.AssemblyCode = new Dictionary<string, List<string>>();
 
-            RAGELexer lexer = new RAGELexer(fs);
+			Script.Functions = new List<Function>();
 
-            CommonTokenStream tokens = new CommonTokenStream(lexer);
+			LogVerbose("Loaded script file");
 
-            LogVerbose($"Successfully lexed tokens");
+			RAGELexer lexer = new RAGELexer(fs);
 
-            RAGEParser parser = new RAGEParser(tokens);
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
 
-            ParseTreeWalker walker = new ParseTreeWalker();
+			LogVerbose($"Successfully lexed tokens");
 
-            RAGEListener listener = new RAGEListener();
+			RAGEParser parser = new RAGEParser(tokens);
 
-            LogVerbose("Starting to walk parse tree...");
-            parser.RemoveErrorListeners();
-            ParseTreeWalker.Default.Walk(listener, parser.compilationUnit());
+			ParseTreeWalker walker = new ParseTreeWalker();
 
-            LogVerbose("Finished walking parse tree");
+			RAGEListener listener = new RAGEListener();
 
-            LogVerbose("Writing assembly to output file...");
+			LogVerbose("Starting to walk parse tree...");
+			parser.RemoveErrorListeners();
+			ParseTreeWalker.Default.Walk(listener, parser.compilationUnit());
 
-            List<string> final = new List<string>
-            {
-                $"//Compiled using RAGE-C by Tustin {DateTime.Now.ToShortDateString()}"
-            };
+			LogVerbose("Finished walking parse tree");
 
-            foreach (var item in Core.AssemblyCode)
-            {
-                final.Add($":{item.Key}");
-                final.AddRange(item.Value);
-                final.Add("");
-            }
+			LogVerbose("Writing assembly to output file...");
 
-            File.WriteAllLines(Core.PROJECT_ROOT + "\\Tests\\test.csa", final.ToArray());
+			List<string> final = new List<string>
+			{
+				$"//Compiled using RAGE-C by Tustin {DateTime.Now.ToShortDateString()}"
+			};
 
-            Compiler.Compiler compiler = new Compiler.Compiler(final, Script.GetNextStaticIndex());
+			foreach (var item in Core.AssemblyCode)
+			{
+				final.Add($":{item.Key}");
+				final.AddRange(item.Value);
+				final.Add("");
+			}
 
-            LogVerbose("Compiling script file...");
+			File.WriteAllLines(FileDirectory + $"\\{FileName}.csa", final.ToArray());
 
-            var res = compiler.Compile();
+			Compiler.Compiler compiler = new Compiler.Compiler(final, FileName, Script.GetNextStaticIndex());
 
-            File.WriteAllBytes(Core.PROJECT_ROOT + "\\Tests\\test.csc", res);
+			LogVerbose("Compiling script file...");
 
-            Log("Successfully saved assembly!");
-        }
+			var res = compiler.Compile();
 
-        static void Help()
-        {
-            Console.Clear();
-            Logo();
-            Console.WriteLine("-s|-script   --   C script to be compiled");
-            Console.WriteLine("-v|-verbose  --   Output additional compilation info");
-            Console.WriteLine("-h|-help     --   You're already here ya dingus");
-            Console.ReadKey();
-        }
-        static void Logo()
-        {
-            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
-            Console.WriteLine(@"  _____            _____ ______       _____ ");
-            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
-            Console.WriteLine(@" |  __ \     /\   / ____|  ____|     / ____|");
-            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
-            Console.WriteLine(@" | |__) |   /  \ | |  __| |__ ______| |     ");
-            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
-            Console.WriteLine(@" |  _  /   / /\ \| | |_ |  __|______| |     ");
-            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
-            Console.WriteLine(@" | | \ \  / ____ \ |__| | |____     | |____ ");
-            Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
-            Console.WriteLine(@" |_|  \_\/_/    \_\_____|______|     \_____|");
-            Console.WriteLine();
-        }
-    }
+			File.WriteAllBytes(FileDirectory + $"\\{FileName}.csc", res);
+
+
+			Log("Successfully saved assembly!");
+		}
+
+		static void Help()
+		{
+			Console.Clear();
+			Logo();
+			Console.WriteLine("-s|-script   --   C script to be compiled");
+			Console.WriteLine("-v|-verbose  --   Output additional compilation info");
+			Console.WriteLine("-h|-help     --   You're already here ya dingus");
+			Console.ReadKey();
+		}
+		static void Logo()
+		{
+			Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+			Console.WriteLine(@"  _____            _____ ______       _____ ");
+			Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+			Console.WriteLine(@" |  __ \     /\   / ____|  ____|     / ____|");
+			Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+			Console.WriteLine(@" | |__) |   /  \ | |  __| |__ ______| |     ");
+			Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+			Console.WriteLine(@" |  _  /   / /\ \| | |_ |  __|______| |     ");
+			Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+			Console.WriteLine(@" | | \ \  / ____ \ |__| | |____     | |____ ");
+			Console.SetCursorPosition((Console.WindowWidth - 44) / 2, Console.CursorTop);
+			Console.WriteLine(@" |_|  \_\/_/    \_\_____|______|     \_____|");
+			Console.WriteLine();
+		}
+	}
 }

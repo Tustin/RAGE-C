@@ -9,6 +9,7 @@ namespace RAGE.Parser
     public class Enumerator
     {
         public string Name { get; set; }
+
         public IVariable Variable { get; set; } 
 
         public Enumerator(string name, Variable var)

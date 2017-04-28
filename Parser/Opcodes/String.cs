@@ -10,11 +10,11 @@ namespace RAGE.Parser.Opcodes
     {
         public static string Strcpy(int size = 64)
         {
-            return $"strcpy {size}";
+            return $"StrCpy {size}";
         }
         public static string Strcat(int size = 64)
         {
-            return $"strcat {size}";
+            return $"StrCat {size}";
         }
     }
 }

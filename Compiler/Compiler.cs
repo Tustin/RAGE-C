@@ -12,17 +12,22 @@ namespace RAGE.Compiler
     public class Compiler
     {
         internal List<string> AssemblyCode { get; set; }
-        internal int StaticsCount { get; set; }
-        public Compiler(string filepath, int staticsCount)
-        {
-            AssemblyCode = File.ReadAllLines(filepath).ToList();
-            StaticsCount = staticsCount;
-        }
 
-        public Compiler(List<string> code, int staticsCount)
+        internal int StaticsCount { get; set; }
+
+		internal string ScriptName { get; set; }
+
+        //public Compiler(string filepath, int staticsCount)
+        //{
+        //    AssemblyCode = File.ReadAllLines(filepath).ToList();
+        //    StaticsCount = staticsCount;
+        //}
+
+        public Compiler(List<string> code, string scriptName, int staticsCount)
         {
             AssemblyCode = code;
             StaticsCount = staticsCount;
+			ScriptName = scriptName;
         }
 
         public byte[] Compile()
@@ -751,7 +756,7 @@ namespace RAGE.Compiler
             Header.GlobalsOffset = 0;
             Header.Unk2 = 0;
             Header.Unk3 = 0;
-            Header.NameHash = Utilities.Joaat("test"); //@TODO: DONT HARDCODE!!!
+            Header.NameHash = Utilities.Joaat(ScriptName);
             Header.Unk4 = 1;
             Header.StringsSize = stringSectionSize;
             Header.Unk5 = 0;
@@ -771,7 +776,7 @@ namespace RAGE.Compiler
 
             int fileNamePointerLoc = fileLength + 16;
 
-            List<byte> fileName = Utilities.StringToBytes("test").ToList(); //@TODO: ALSO DONT HARDCODE!!!
+            List<byte> fileName = Utilities.StringToBytes(ScriptName).ToList(); //@TODO: ALSO DONT HARDCODE!!!
 
             //Make sure filename has 4 null bytes affer it
             if (fileName.Count > 12)

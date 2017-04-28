@@ -5,16 +5,15 @@ using System.IO;
 
 namespace RAGE.Parser
 {
-    //Singleton
-    public static class Core
-    {
-        public readonly static string PROJECT_ROOT = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName;
+	public static class Core
+	{
+		public readonly static string PROJECT_ROOT = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName;
 
-        public static List<string> SourceCode { get; internal set; }
+		public static List<string> SourceCode { get; internal set; }
 
-        public static NativeJson Natives = new NativeJson();
+		public static NativeJson Natives = new NativeJson();
 
-        public static Dictionary<string, List<string>> AssemblyCode { get; internal set; }
+		public static Dictionary<string, List<string>> AssemblyCode { get; internal set; }
 
-    }
+	}
 }

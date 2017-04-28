@@ -4,12 +4,12 @@
     {
         public static string Get(IVariable var)
         {
-            return $"getF1 {var.FrameId} //{var.Name}";
+            return $"GetF1 {var.FrameId} //{var.Name}";
         }
 
         public static string Set(IVariable var)
         {
-            return $"setF1 {var.FrameId} //{var.Name}";
+            return $"SetF1 {var.FrameId} //{var.Name}";
         }
 
         public static string GetPointer(IVariable var)
