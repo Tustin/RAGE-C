@@ -184,8 +184,8 @@ structOrUnion
 
 arrayDeclarator
     : storageClassSpecifier? typeSpecifier Identifier '[' constantExpression ']'
-    | storageClassSpecifier? typeSpecifier Identifier '[' constantExpression ']' '=' '{' arrayDeclarationList? '}'
-    | storageClassSpecifier? typeSpecifier Identifier '[' constantExpression ']' '=' '{' arrayDeclarationList ',' '}'
+    | storageClassSpecifier? typeSpecifier Identifier '[' constantExpression? ']' '=' '{' arrayDeclarationList? '}'
+    | storageClassSpecifier? typeSpecifier Identifier '[' constantExpression? ']' '=' '{' arrayDeclarationList ',' '}'
     ;
 
 arrayDeclarationList

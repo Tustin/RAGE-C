@@ -1,4 +1,4 @@
-static string mainMenu[4] = {"Player", "Vehicle", "Weapons", "World"};
+static string mainMenu[] = {"Player", "Vehicle", "Weapons", "World"};
 
 enum Menus {
     MAIN_MENU,

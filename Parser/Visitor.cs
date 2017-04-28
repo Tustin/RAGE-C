@@ -297,7 +297,7 @@ namespace RAGE.Parser
 
 			IVariable variable = null;
 
-			if (left.Type != DataType.Global && left.Type != DataType.GlobalArray)
+			if (left.Type != DataType.Global)
 			{
 				//TODO: Clean me!
 				variable = Script.StaticVariables.GetVariable(left.Data.ToString());
@@ -310,7 +310,6 @@ namespace RAGE.Parser
 				if (variable == null)
 				{
 					Error($"Unable to find variable '{left.Data.ToString()}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-					return null;
 				}
 			}
 
