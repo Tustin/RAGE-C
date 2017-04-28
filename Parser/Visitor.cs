@@ -314,9 +314,11 @@ namespace RAGE.Parser
 				}
 			}
 
-			List<string> code = new List<string>();
-			string op = context.GetChild(1).GetText();
+			var code = new List<string>();
+			var leftCode = new List<string>();
+			var rightCode = new List<string>();
 
+			var op = context.GetChild(1).GetText();
 			switch (op)
 			{
 
@@ -338,102 +340,65 @@ namespace RAGE.Parser
 				return new Value(DataType.Int, null, code);
 
 				case "=":
-				//Since its an array, we need to push the value before the array indexing
+
 				if (left.Type == DataType.Array)
 				{
 					//Array is on the left so we need to set the value
 					left.Assembly.Add(Opcodes.Array.Set());
-
-					if (right.Type == DataType.Variable)
-					{
-						var rightVar = RAGEListener.CurrentFunction.Variables.GetVariable(right.Data.ToString());
-						code.Add(FrameVar.Get(rightVar));
-					}
-					else if (right.Type == DataType.Array)
-					{
-						right.Assembly.Add(Opcodes.Array.Get());
-						code.AddRange(right.Assembly);
-					}
-					else
-					{
-						if (variable.Type != right.Type)
-						{
-							Error($"Value type '{right.Type}' doesn't match array type '{variable.Type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-						}
-						code.AddRange(right.Assembly);
-					}
-					code.AddRange(left.Assembly);
-					return new Value(DataType.Int, null, code);
+					leftCode.AddRange(left.Assembly);
 				}
 
 				if (right.Type == DataType.Array)
 				{
 					//Array is on the right so we need to get the value
 					right.Assembly.Add(Opcodes.Array.Get());
-
-					if (left.Type == DataType.Variable)
-					{
-						var leftVar = RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
-						code.Add(FrameVar.Get(leftVar));
-					}
-					else if (left.Type == DataType.Array)
-					{
-						code.AddRange(left.Assembly);
-					}
-					else
-					{
-						if (variable.Type != left.Type)
-						{
-							Error($"Value type '{left.Type}' doesn't match array type '{variable.Type}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-						}
-						code.AddRange(left.Assembly);
-					}
-					code.AddRange(right.Assembly);
-					return new Value(DataType.Int, null, code);
+					rightCode.AddRange(right.Assembly);
 				}
 
 				//Use global opcodes
 				if (left.Type == DataType.Global)
 				{
 					var output = Globals.Global.Parse(left.Data as Globals.Global, false);
-					code.AddRange(right.Assembly);
-					code.AddRange(output);
-					return new Value(DataType.Int, null, code);
-					//var pieces = left.Data.ToString().Split('_');
-					//if (!int.TryParse(pieces[1], out int globalIndex))
-					//{
-					//	Error($"Global variable '{left.Data.ToString()}' has an invalid global index | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-					//}
-					//code.AddRange(right.Assembly);
-					//code.Add(Opcodes.Global.Set(globalIndex));
-					//return new Value(DataType.Int, null, code);
+					leftCode.AddRange(output);
 				}
 
-				//Use global opcodes
-				if (left.Type == DataType.GlobalArray)
+				if (right.Type == DataType.Global)
 				{
-					code.AddRange(right.Assembly);
-					code.AddRange(left.Assembly);
-					return new Value(DataType.Int, null, code);
+					var output = Globals.Global.Parse(right.Data as Globals.Global, true);
+					rightCode.AddRange(output);
 				}
 
 				if (left.Type == DataType.Static)
 				{
-					code.AddRange(right.Assembly);
-					code.Add(StaticVar.Set(Script.StaticVariables.GetVariable(left.Data as string)));
-					return new Value(DataType.Int, null, code);
+					leftCode.Add(StaticVar.Set(Script.StaticVariables.GetVariable(left.Data as string)));
 				}
 
-				if (right.Data == null)
+				if (right.Type == DataType.Static)
 				{
-					code.AddRange(right.Assembly);
+					rightCode.Add(StaticVar.Set(Script.StaticVariables.GetVariable(right.Data as string)));
+				}
+
+				if (right.Assembly.Count > 0 && rightCode.Count == 0)
+				{
+					rightCode.AddRange(right.Assembly);
+				}
+				else if (right.Data != null)
+				{
+					rightCode.Add(Push.Generate(right.Data.ToString(), variable.Type));
 				}
 				else
 				{
-					code.Add(Push.Generate(right.Data.ToString(), variable.Type));
+					Error($"Unable to parse right hand side of expression | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 				}
 
-				code.Add(FrameVar.Set(variable));
+				if (leftCode.Count == 0)
+				{
+					leftCode.Add(FrameVar.Set(variable));
+				}
+
+				code.AddRange(rightCode);
+				code.AddRange(leftCode);
+
 				return new Value(DataType.Int, null, code);
 			}
 
@@ -478,7 +443,7 @@ namespace RAGE.Parser
 				return VisitEqualityExpression(context.inclusiveOrExpression().exclusiveOrExpression().andExpression().equalityExpression());
 			}
 
-			Value left = VisitLogicalAndExpression(context.logicalAndExpression());	
+			Value left = VisitLogicalAndExpression(context.logicalAndExpression());
 			Value right = VisitEqualityExpression(context.inclusiveOrExpression().exclusiveOrExpression().andExpression().equalityExpression());
 
 			List<string> code = new List<string>();
@@ -1096,7 +1061,6 @@ namespace RAGE.Parser
 					code.Add(StaticVar.Get(thisEnumerator.Variable as Variable));
 					return new Value(DataType.Enum, thisEnumerator, code);
 				}
-				return null;
 
 				default:
 				Error($"Unknown postfix type '{symbol}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");

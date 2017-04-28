@@ -776,7 +776,7 @@ namespace RAGE.Compiler
 
             int fileNamePointerLoc = fileLength + 16;
 
-            List<byte> fileName = Utilities.StringToBytes(ScriptName).ToList(); //@TODO: ALSO DONT HARDCODE!!!
+            List<byte> fileName = Utilities.StringToBytes(ScriptName).ToList();
 
             //Make sure filename has 4 null bytes affer it
             if (fileName.Count > 12)
