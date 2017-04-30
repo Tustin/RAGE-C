@@ -1,4 +1,5 @@
-#include "a"
+#include "statics"
+
 
 void main() {
     int items = getMenuItems();

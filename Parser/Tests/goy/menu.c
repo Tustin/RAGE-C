@@ -1,24 +1,5 @@
-static string mainMenu[] = {"Player", "Vehicle", "Weapons", "World"};
-
-enum Menus {
-    MAIN_MENU,
-    PLAYER_MENU,
-    VEHICLE_MENU,
-    WEAPON_MENU,
-    WORLD_MENU,
-};
-
-enum PlayerMenu {
-    GODMODE,
-    INFINITE_AMMO,
-};
-
-static int currentMenu = 0;
-static int currentOption = 0;
-static bool open = false;
-static int currentMenuHeight;
-static int lastButtonPress = 0;
-static int buttonPressDelay = 200; //I used this in The Tesseract
+#include "statics"
+#include "menus"
 
 void draw_text(string text, int font, float x, float y, float size) {
     SET_TEXT_FONT(font);

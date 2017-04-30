@@ -123,6 +123,7 @@ namespace RAGE.Parser
 			else
 			{
 				variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
+				variable.ValueAssembly.Add(Push.Generate(variable.Value.Value, variable.Type));
 				variable.Value.Type = variable.Type;
 				variable.Value.IsDefault = true;
 			}

@@ -24,10 +24,12 @@ namespace RAGE.Parser
 			}.Parse(args);
 
 
-#if DEBUG
-			Warn("No script path supplied. Using debug script path...");
-			Core.FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
-#endif
+			if (Core.FilePath == null)
+			{
+				Warn("No script path supplied. Using debug script path...");
+				//Core.FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
+				Core.FilePath = @"D:\GitHub\RAGE-C\Parser\bin\Debug\goy\menu.c";
+			}
 
 			Core.FilePath = Path.GetFullPath(Core.FilePath);
 			Core.FileName = Path.GetFileNameWithoutExtension(Core.FilePath);
@@ -51,7 +53,7 @@ namespace RAGE.Parser
 
 			LogVerbose($"Added {Core.Natives.Native.Count} natives to native table");
 
-			AntlrFileStream fs = new AntlrFileStream(Core.PROJECT_ROOT + "\\Tests\\test.c");
+			AntlrFileStream fs = new AntlrFileStream(Core.FilePath);
 
 			Core.AssemblyCode = new Dictionary<string, List<string>>();
 
