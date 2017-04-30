@@ -499,4 +499,10 @@ public interface IRAGEVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitDeclarationList([NotNull] RAGEParser.DeclarationListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="RAGEParser.includeExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIncludeExpression([NotNull] RAGEParser.IncludeExpressionContext context);
 }

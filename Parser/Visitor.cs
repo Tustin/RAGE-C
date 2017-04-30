@@ -524,7 +524,7 @@ namespace RAGE.Parser
 				//Use global opcodes
 				if (left.Type == DataType.Global)
 				{
-					var output = Globals.Global.Parse(left.Data as Globals.Global, false);
+					var output = Globals.Global.Parse(left.Data as Globals.Global, true);
 					left.Assembly.AddRange(output);
 				}
 

@@ -810,4 +810,14 @@ public interface IRAGEListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitDeclarationList([NotNull] RAGEParser.DeclarationListContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.includeExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterIncludeExpression([NotNull] RAGEParser.IncludeExpressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.includeExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitIncludeExpression([NotNull] RAGEParser.IncludeExpressionContext context);
 }

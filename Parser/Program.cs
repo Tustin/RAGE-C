@@ -15,13 +15,10 @@ namespace RAGE.Parser
 		{
 			Logo();
 
-			string FilePath = null;
-			string FileName = null;
-			string FileDirectory = null;
 			bool ShowHelp = false;
 
 			new OptionSet() {
-				{ "s=|script=", a => FilePath = a },
+				{ "s=|script=", a => Core.FilePath = a },
 				{ "v|verbose", a => Verbose = true},
 				{ "h|help", a => ShowHelp = true }
 			}.Parse(args);
@@ -29,12 +26,12 @@ namespace RAGE.Parser
 
 #if DEBUG
 			Warn("No script path supplied. Using debug script path...");
-			FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
+			Core.FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
 #endif
 
-			FilePath = Path.GetFullPath(FilePath);
-			FileName = Path.GetFileNameWithoutExtension(FilePath);
-			FileDirectory = Path.GetDirectoryName(FilePath);
+			Core.FilePath = Path.GetFullPath(Core.FilePath);
+			Core.FileName = Path.GetFileNameWithoutExtension(Core.FilePath);
+			Core.FileDirectory = Path.GetDirectoryName(Core.FilePath);
 
 			if (ShowHelp)
 			{
@@ -42,7 +39,7 @@ namespace RAGE.Parser
 				return;
 			}
 
-			if (FilePath == null)
+			if (Core.FilePath == null)
 			{
 				Error("No script file path set. Please use -h for help");
 				return;
@@ -94,15 +91,15 @@ namespace RAGE.Parser
 				final.Add("");
 			}
 
-			File.WriteAllLines(FileDirectory + $"\\{FileName}.csa", final.ToArray());
+			File.WriteAllLines(Core.FileDirectory + $"\\{Core.FileName}.csa", final.ToArray());
 
-			Compiler.Compiler compiler = new Compiler.Compiler(final, FileName, Script.GetNextStaticIndex());
+			Compiler.Compiler compiler = new Compiler.Compiler(final, Core.FileName, Script.GetNextStaticIndex());
 
 			LogVerbose("Compiling script file...");
 
 			var res = compiler.Compile();
 
-			File.WriteAllBytes(FileDirectory + $"\\{FileName}.csc", res);
+			File.WriteAllBytes(Core.FileDirectory + $"\\{Core.FileName}.csc", res);
 
 
 			Log("Successfully saved assembly!");

@@ -970,6 +970,18 @@ public partial class RAGEBaseListener : IRAGEListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDeclarationList([NotNull] RAGEParser.DeclarationListContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.includeExpression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterIncludeExpression([NotNull] RAGEParser.IncludeExpressionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.includeExpression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitIncludeExpression([NotNull] RAGEParser.IncludeExpressionContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

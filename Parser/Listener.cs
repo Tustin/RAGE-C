@@ -9,6 +9,8 @@ using RAGE.Parser.Opcodes;
 using static RAGEParser;
 using static RAGE.Main.Logger;
 using System.Text;
+using System.IO;
+using Antlr4.Runtime.Tree;
 
 namespace RAGE.Parser
 {
@@ -40,6 +42,31 @@ namespace RAGE.Parser
 			switches = new Dictionary<StoredContext, Switch>();
 		}
 
+		public override void EnterIncludeExpression([NotNull] IncludeExpressionContext context)
+		{
+			string ff = context.GetText();
+			var fileName = context.StringLiteral().ToString().Replace("\"", "");
+			if (!fileName.EndsWith(".c")) fileName += ".c";
+			var filePath = Core.FileDirectory + "\\" + fileName;
+			if (!File.Exists(filePath))
+			{
+				Error($"Unable to find include file '{fileName}' | line {lineNumber}, {linePosition}");
+			}
+			AntlrFileStream fs = new AntlrFileStream(filePath);
+
+			RAGELexer lexer = new RAGELexer(fs);
+
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+			RAGEParser parser = new RAGEParser(tokens);
+
+			ParseTreeWalker walker = new ParseTreeWalker();
+
+			RAGEListener listener = new RAGEListener();
+			parser.RemoveErrorListeners();
+			ParseTreeWalker.Default.Walk(listener, parser.compilationUnit());
+		}
+
 		//Set line number and position for error logging
 		public override void EnterEveryRule([NotNull] ParserRuleContext context)
 		{
@@ -65,7 +92,7 @@ namespace RAGE.Parser
 
 			if (enumList == null)
 			{
-				Error($"Enum '{enumName}' contains no enumerators | | line {lineNumber}, {linePosition}");
+				Error($"Enum '{enumName}' contains no enumerators | line {lineNumber}, {linePosition}");
 			}
 
 			while (enumList != null)

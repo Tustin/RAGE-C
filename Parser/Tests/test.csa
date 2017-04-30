@@ -1,11 +1,21 @@
 //Compiled using RAGE-C by Tustin 4/29/2017
 :__script_entry__
 Function 0 2 0
+//Auto assigning 1 statics
+Push_5
+StaticSet1 0 //menuItems
 Call @main
 Return 0 0
 
+:getMenuItems
+Function 0 2 0
+StaticGet1 0 //menuItems
+Return 0 1
+
 :main
-Function 0 3 0
+Function 0 4 0
+Call @getMenuItems
+SetF1 3 //items
 Push_5
 Push_1
 Push_0
@@ -21,7 +31,7 @@ JumpNE @selection_end_0
 Push_0
 SetGlobal2 10589 //Global_10589
 GetGlobal2 10589 //Global_10589
-SetF1 3 //testing
+SetF1 4 //testing
 Jump @selection_end_0
 :selection_end_0
 Return 0 0

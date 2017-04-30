@@ -416,6 +416,7 @@ externalDeclaration
     |   arrayDeclarator
     |   globalExpression
     |   declaration
+    |   includeExpression
     |   ';' // stray ;
     ;
 
@@ -426,6 +427,10 @@ functionDefinition
 declarationList
     :   declaration
     |   declarationList declaration
+    ;
+
+includeExpression
+    :   '#include' StringLiteral 
     ;
 
 Auto : 'auto';

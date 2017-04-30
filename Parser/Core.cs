@@ -15,5 +15,9 @@ namespace RAGE.Parser
 
 		public static Dictionary<string, List<string>> AssemblyCode { get; internal set; }
 
+		public static string FilePath { get; set; }
+		public static string FileName { get; set; }
+		public static string FileDirectory { get; set; }
+
 	}
 }
