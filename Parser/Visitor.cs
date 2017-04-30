@@ -47,6 +47,7 @@ namespace RAGE.Parser
 		{
 			return base.VisitArrayDeclarationList(context);
 		}
+
 		public override Value VisitDeclaration([NotNull] DeclarationContext context)
 		{
 			var specifiers = VisitDeclarationSpecifiers(context.declarationSpecifiers());
@@ -85,6 +86,7 @@ namespace RAGE.Parser
 			}
 
 			Variable variable;
+
 			//Specified as static
 			if (declSpec == Specifier.Static)
 			{
@@ -105,6 +107,7 @@ namespace RAGE.Parser
 			if (initializer != null)
 			{
 				var resp = VisitInitDeclarator(declarator);
+
 				if (resp.Data != null)
 				{
 					variable.Value.Value = resp.Data.ToString();
@@ -226,6 +229,12 @@ namespace RAGE.Parser
 			Value value = new Value();
 
 			var resp = VisitAssignmentExpression(context.initializer().assignmentExpression());
+
+			if (resp.Type == DataType.Global)
+			{
+				var output = Globals.Global.Parse(resp.Data as Globals.Global, true);
+				resp.Assembly.AddRange(output);
+			}
 
 			return resp;
 		}
@@ -466,18 +475,34 @@ namespace RAGE.Parser
 			Value right = VisitRelationalExpression(context.relationalExpression());
 
 			List<string> code = new List<string>();
+
 			string op = context.GetChild(1).ToString();
 
 			switch (op)
 			{
 				case "==":
+
 				if (left.Type == DataType.Array)
 				{
 					left.Assembly.Add(Opcodes.Array.Get());
 				}
+
 				if (right.Type == DataType.Array)
 				{
 					right.Assembly.Add(Opcodes.Array.Get());
+				}
+
+				//Use global opcodes
+				if (left.Type == DataType.Global)
+				{
+					var output = Globals.Global.Parse(left.Data as Globals.Global, true);
+					left.Assembly.AddRange(output);
+				}
+
+				if (right.Type == DataType.Global)
+				{
+					var output = Globals.Global.Parse(right.Data as Globals.Global, true);
+					right.Assembly.AddRange(output);
 				}
 
 				code.AddRange(left.Assembly);
@@ -486,6 +511,7 @@ namespace RAGE.Parser
 				return new Value(DataType.Bool, null, code);
 
 				case "!=":
+
 				if (left.Type == DataType.Array)
 				{
 					left.Assembly.Add(Opcodes.Array.Get());
@@ -493,6 +519,19 @@ namespace RAGE.Parser
 				if (right.Type == DataType.Array)
 				{
 					right.Assembly.Add(Opcodes.Array.Get());
+				}
+
+				//Use global opcodes
+				if (left.Type == DataType.Global)
+				{
+					var output = Globals.Global.Parse(left.Data as Globals.Global, false);
+					left.Assembly.AddRange(output);
+				}
+
+				if (right.Type == DataType.Global)
+				{
+					var output = Globals.Global.Parse(right.Data as Globals.Global, true);
+					right.Assembly.AddRange(output);
 				}
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
