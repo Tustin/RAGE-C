@@ -44,8 +44,17 @@ namespace RAGE.Parser
             Parameters = new List<Parameter>();
         }
 
-        //Because a func shouldnt return a local var or native (duh)
-        public static bool IsValidType(DataType type)
+
+		public Function(string name, DataType returnType, List<Parameter> @params) : base()
+		{
+			Name = name;
+			Type = returnType;
+			Variables = new List<IVariable>();
+			Parameters = @params;
+		}
+
+		//Because a func shouldnt return a local var or native (duh)
+		public static bool IsValidType(DataType type)
         {
             return (type == DataType.Void 
                 || type == DataType.Int 

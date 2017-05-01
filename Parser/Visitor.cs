@@ -1001,6 +1001,16 @@ namespace RAGE.Parser
 					}
 					return new Value(DataType.NativeCall, null, code);
 				}
+				else if (Core.BuiltInFunctions.ContainsFunction(expression))
+				{
+					var args = VisitArgumentExpressionList(context.argumentExpressionList());
+					var func = Core.BuiltInFunctions.GetFunction(expression);
+					var argsList = args.Data as List<Value>;
+					if (argsList.Count != func.Parameters.Count)
+					{
+						Error($"Built-in function '{expression}' requires '{func.Parameters.Count}' arguments, but only '{argsList.Count}' given | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+					}
+				}
 				Error($"Found open parens, but expression is not a function | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 				return null;
 

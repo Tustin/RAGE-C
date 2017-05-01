@@ -19,5 +19,25 @@ namespace RAGE.Parser
 		public static string FileName { get; set; }
 		public static string FileDirectory { get; set; }
 
+		private static Function strcopy = new Function("strcopy", DataType.Void, new List<Parameter>()
+		{
+			new Parameter(DataType.Variable, "buffer", 0),
+			new Parameter(DataType.String, "string", 1),
+			new Parameter(DataType.Int, "size", 2)
+		});
+
+		private static Function strcat = new Function("strcat", DataType.Void, new List<Parameter>()
+		{
+			new Parameter(DataType.Variable, "buffer", 0),
+			new Parameter(DataType.String, "string", 1),
+			new Parameter(DataType.Int, "size", 2)
+		});
+
+		public static List<Function> BuiltInFunctions = new List<Function>()
+		{
+			strcopy,
+			strcat
+		};
+
 	}
 }

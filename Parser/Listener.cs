@@ -160,6 +160,10 @@ namespace RAGE.Parser
 			{
 				Error($"Script already contains function named '{name}' | line {lineNumber},{linePosition}");
 			}
+			else if (Core.BuiltInFunctions.ContainsFunction(name))
+			{
+				Error($"Function name '{name}' is a reserved built-in function | line {lineNumber},{linePosition}");
+			}
 			var comp = context.declarationSpecifiers();
 
 			//Add the default function entry instruction

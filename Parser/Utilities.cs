@@ -206,7 +206,7 @@ namespace RAGE.Parser
                 case DataType.Float:
                 return "0.0";
                 case DataType.String:
-                return "";
+                return "\"\"";
                 case DataType.Bool:
                 return "false";
                 default:
