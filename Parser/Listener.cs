@@ -322,7 +322,7 @@ namespace RAGE.Parser
 			int varOffset = CurrentFunction == null ? Script.GetNextStaticIndex() : CurrentFunction.FrameVars;
 
 			Array arr = new Array(arrName, varOffset, arrSize, arrType);
-
+			arr.FrameId = Script.GetNextStaticIndex();
 			if (context.arrayDeclarationList() != null)
 			{
 				var arrayItems = new List<ArrayDeclarationContext>();
