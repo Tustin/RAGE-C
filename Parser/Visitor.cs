@@ -913,7 +913,7 @@ namespace RAGE.Parser
 				code.Add(FrameVar.Set(variable));
 				return new Value(DataType.Int, null, code);
 				case "(":
-				if (Script.Functions.ContainFunction(expression))
+				if (Script.Functions.ContainsFunction(expression))
 				{
 					var args = VisitArgumentExpressionList(context.argumentExpressionList());
 					var func = Script.Functions.GetFunction(expression);

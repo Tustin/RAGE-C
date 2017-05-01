@@ -156,7 +156,10 @@ namespace RAGE.Parser
 			var specifier = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
 
 			string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
-
+			if (Script.Functions.ContainsFunction(name))
+			{
+				Error($"Script already contains function named '{name}' | line {lineNumber},{linePosition}");
+			}
 			var comp = context.declarationSpecifiers();
 
 			//Add the default function entry instruction

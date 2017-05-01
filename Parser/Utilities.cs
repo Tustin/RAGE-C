@@ -16,7 +16,7 @@ namespace RAGE.Parser
             return pieces;
         }
 
-        public static bool ContainFunction(this List<Function> functions, string name)
+        public static bool ContainsFunction(this List<Function> functions, string name)
         {
             return functions.Any(a => a.Name == name);
         }
@@ -77,7 +77,7 @@ namespace RAGE.Parser
                 {
                     return DataType.NativeCall;
                 }
-                else if (Script.Functions.ContainFunction(stripped))
+                else if (Script.Functions.ContainsFunction(stripped))
                 {
                     if (Script.Functions.GetFunction(stripped).Type == DataType.Void)
                     {
@@ -163,7 +163,7 @@ namespace RAGE.Parser
                     {
                         return DataType.NativeCall;
                     }
-                    else if (Script.Functions.ContainFunction(stripped))
+                    else if (Script.Functions.ContainsFunction(stripped))
                     {
                         if (Script.Functions.GetFunction(stripped).Type == DataType.Void)
                         {

@@ -2,5 +2,7 @@ static int something = 5;
 static int something2 = 10;
 
 static int someArray[] = {1, 2};
-void main() {
+
+#include "a";
+void foo1() {
 }

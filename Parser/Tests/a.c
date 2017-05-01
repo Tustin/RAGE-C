@@ -1,5 +1,5 @@
 static int menuItems = 5;
 
-int getMenuItems () {
+int foo () {
     return menuItems;
 }

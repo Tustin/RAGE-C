@@ -76,7 +76,10 @@ namespace RAGE.Parser
 			LogVerbose("Starting to walk parse tree...");
 			parser.RemoveErrorListeners();
 			ParseTreeWalker.Default.Walk(listener, parser.compilationUnit());
-
+			if (!Script.Functions.ContainsFunction("main"))
+			{
+				Error("Script must contain a function called 'main'");
+			}
 			LogVerbose("Finished walking parse tree");
 
 			LogVerbose("Writing assembly to output file...");

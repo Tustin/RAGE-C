@@ -19,7 +19,7 @@ ArraySet1 1
 Call @main
 Return 0 0
 
-:main
+:foo
 Function 0 2 0
 Return 0 0
 
