@@ -1,7 +1,7 @@
-//Compiled using RAGE-C by Tustin 4/30/2017
+//Compiled using RAGE-C by Tustin 5/30/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 3 statics
+//Auto assigning 4 statics
 Push_5
 StaticSet1 0 //something
 Push1 10
@@ -16,10 +16,28 @@ Push_2
 Push_1
 pStatic1 2 //&someArray
 ArraySet1 1
+Push_5
+StaticSet1 5 //menuItems
 Call @main
 Return 0 0
 
 :foo
+Function 0 4 0
+Push_0
+SetF1 3 //i
+:for_0
+GetF1 3 //i
+SetF1 4 //a
+GetF1 3 //i
+Add1 1
+SetF1 3 //i
+GetF1 3 //i
+StaticGet1 5 //menuItems
+JumpLT @for_0
+StaticGet1 5 //menuItems
+Return 0 1
+
+:main
 Function 0 2 0
 Return 0 0
 

@@ -731,7 +731,7 @@ namespace RAGE.Parser
 			base.EnterJumpStatement(context);
 		}
 
-		//Entering for, while
+		//Entering for, while, foreach
 		public override void EnterIterationStatement(IterationStatementContext context)
 		{
 			string loop = context.GetText();
@@ -752,8 +752,9 @@ namespace RAGE.Parser
 				CurrentVariable = v;
 
 				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
-				StoredContext sc = new StoredContext($"loop_{count}", count, context, ScopeTypes.For);
-				sc.Type = ScopeTypes.For;
+				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.For);
+				StoredContext sc = new StoredContext($"for_{labelCount}", count, context, ScopeTypes.For);
+
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
 
@@ -763,17 +764,26 @@ namespace RAGE.Parser
 				func.Value.Add(Push.Generate(v.Value.Value, v.Value.Type));
 				func.Value.Add(FrameVar.Set(v));
 				//Add label
-				func.Value.Add($":loop_{count}");
+				func.Value.Add($":for_{count}");
 			}
 			//While loops
 			else if (loop.StartsWith("while"))
 			{
 				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
-				StoredContext sc = new StoredContext($"loop_{count}", count, context, ScopeTypes.While);
-				sc.Type = ScopeTypes.While;
+				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.While);
+				StoredContext sc = new StoredContext($"while_{labelCount}", count, context, ScopeTypes.While);
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
-				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":loop_{count}");
+				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":while_{count}");
+			}
+			else if (loop.StartsWith("foreach"))
+			{
+				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
+				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.Foreach);
+				StoredContext sc = new StoredContext($"foreach_{labelCount}", count, context, ScopeTypes.Foreach);
+				storedContexts.Add(sc);
+				visitor.CurrentContext = sc;
+				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":foreach_{count}");
 			}
 		}
 

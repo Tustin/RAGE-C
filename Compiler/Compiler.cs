@@ -30,7 +30,7 @@ namespace RAGE.Compiler
 			ScriptName = scriptName;
         }
 
-        public byte[] Compile()
+        public byte[] Compile(Platform platform)
         {
             if (AssemblyCode == null || AssemblyCode.Count == 0)
             {
@@ -42,13 +42,13 @@ namespace RAGE.Compiler
             AssemblyCode.RemoveAll(string.IsNullOrWhiteSpace);
             AssemblyCode.RemoveAll(a => a.StartsWith("/"));
 
-            byte[] result = Parse();
+            byte[] result = Parse(platform);
 
             return result;
         }
-        public byte[] Parse()
+        public byte[] Parse(Platform platform)
         {
-            var Header = new ScriptHeader();
+			var Header = new ConsoleHeader();
             var bytes = new List<byte>();
             var StringData = new List<StringData>();
             var NativeData = new List<NativeData>();

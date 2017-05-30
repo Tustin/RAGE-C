@@ -27,7 +27,7 @@ void draw_menu_option(string option, int index) {
 }
 
 void draw_background(int items) {
-    float tmpHeight = (float)items * 0.026094
+    float tmpHeight = (float)items * 0.026094;
     tmpHeight = tmpHeight * 0.030943;
     DRAW_RECT(0.840576, 0.248187 + tmpHeight, 0.249766, tmpHeight, 0, 0, 0, 60); //background
 }

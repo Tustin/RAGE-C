@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -50,6 +51,7 @@
     <Compile Include="ListExtensions.cs" />
     <Compile Include="NativeData.cs" />
     <Compile Include="Opcodes.cs" />
+    <Compile Include="Platform.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PushData.cs" />
     <Compile Include="RSC7Header.cs" />

@@ -10,6 +10,7 @@ namespace RAGE
     {
         For,
         While,
-        Conditional
+        Conditional,
+		Foreach
     }
 }

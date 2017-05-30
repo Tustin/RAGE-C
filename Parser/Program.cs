@@ -26,8 +26,9 @@ namespace RAGE.Parser
 
 			if (Core.FilePath == null)
 			{
-				Warn("No script path supplied. Using debug script path...");
 				Core.FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
+				Warn($"No script path supplied. Using debug script path... ({Core.FilePath})");
+
 				//Core.FilePath = @"D:\GitHub\RAGE-C\Parser\bin\Debug\goy\menu.c";
 			}
 
@@ -102,7 +103,7 @@ namespace RAGE.Parser
 
 			LogVerbose("Compiling script file...");
 
-			var res = compiler.Compile();
+			var res = compiler.Compile(Compiler.Platform.PS3);
 
 			File.WriteAllBytes(Core.FileDirectory + $"\\{Core.FileName}.csc", res);
 
