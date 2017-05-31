@@ -38,10 +38,15 @@ namespace RAGE.Parser
 
         public static IVariable GetVariable(this List<IVariable> variables, string name)
         {
-            return variables.Where(a => a.Name == name).FirstOrDefault();
+            return variables.Where(a => a.Name == name ).FirstOrDefault();
         }
 
-        public static IVariable GetArray(this List<IVariable> variables, string name)
+		public static IVariable GetVariable<T>(this List<IVariable> variables, string name)
+		{
+			return variables.Where(a => a.Name == name && a.GetType() == typeof(T)).FirstOrDefault();
+		}
+
+		public static IVariable GetArray(this List<IVariable> variables, string name)
         {
             return variables.Where(a => a.Name == name && a is Array).FirstOrDefault();
         }
@@ -51,7 +56,29 @@ namespace RAGE.Parser
             return dictionary.Where(a => a.Key == name).FirstOrDefault();
         }
 
-        public static DataType GetType(Function function, string value)
+		/// <summary>
+		/// Searches the extension list AND static variables (favors local scope first)
+		/// </summary>
+		/// <param name="variabes"></param>
+		/// <param name="name"></param>
+		/// <returns></returns>
+		public static IVariable GetAnyVariable(this List<IVariable> variables, string name)
+		{
+			return variables.Where(a => a.Name == name).FirstOrDefault() ?? Script.StaticVariables.Where(a => a.Name == name).FirstOrDefault();
+		}
+
+		/// <summary>
+		/// Searches the extension list AND static variables (favors local scope first)
+		/// </summary>
+		/// <param name="variabes"></param>
+		/// <param name="name"></param>
+		/// <returns></returns>
+		public static IVariable GetAnyVariable<T>(this List<IVariable> variables, string name)
+		{
+			return variables.Where(a => a.Name == name && a.GetType() == typeof(T)).FirstOrDefault() ?? Script.StaticVariables.Where(a => a.Name == name && a.GetType() == typeof(T)).FirstOrDefault();
+		}
+
+		public static DataType GetType(Function function, string value)
         {
             //Do type checking
             if (value.ToLower() == "true" || value.ToLower() == "false")

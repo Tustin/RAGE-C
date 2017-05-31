@@ -15,11 +15,15 @@ namespace RAGE.Parser
 
         public bool IsIterator { get; set; }
 
+		public Array ForeachReference { get; set; }
+
         public List<string> ValueAssembly { get; set; }
 
         public Specifier Specifier { get; set; }
 
-        public Variable(string name, int id, string type)
+		public StoredContext Scope { get; set; }
+
+        public Variable(string name, int id, string type, StoredContext scope)
         {
             Name = name;
             FrameId = id;
@@ -29,7 +33,7 @@ namespace RAGE.Parser
             Specifier = Specifier.None;
         }
 
-        public Variable(string name, int id, DataType type)
+        public Variable(string name, int id, DataType type, StoredContext scope = null)
         {
             Name = name;
             FrameId = id;

@@ -46,6 +46,11 @@ namespace RAGE.Parser.Opcodes
 			return $"PushString {value}";
 		}
 
+		public static string Int(int value)
+		{
+			return Int(value.ToString());
+		}
+
 		public static string Int(string value)
 		{
 			if (int.TryParse(value, out int ival))

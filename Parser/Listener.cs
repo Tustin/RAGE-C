@@ -29,6 +29,8 @@ namespace RAGE.Parser
 
 		public static List<StoredContext> storedContexts;
 
+		public static ParserRuleContext Scope;
+
 		public static Dictionary<StoredContext, Switch> switches;
 
 		RAGEVisitor visitor;
@@ -40,6 +42,12 @@ namespace RAGE.Parser
 			visitor = new RAGEVisitor();
 			storedContexts = new List<StoredContext>();
 			switches = new Dictionary<StoredContext, Switch>();
+		}
+
+		public override void EnterBlockItem([NotNull] BlockItemContext context)
+		{
+			var ff = context.GetText();
+			base.EnterBlockItem(context);
 		}
 
 		public override void EnterIncludeExpression([NotNull] IncludeExpressionContext context)
@@ -73,6 +81,7 @@ namespace RAGE.Parser
 			var token = context.Start;
 			lineNumber = token.Line;
 			linePosition = token.Column;
+			Scope = context;
 			base.EnterEveryRule(context);
 		}
 
@@ -350,7 +359,7 @@ namespace RAGE.Parser
 					}
 					arrList = arrList.arrayDeclarationList();
 				}
-				
+
 				if (arrayItems.Count != arrSize)
 				{
 					Error($"Size of array doesn't match the count of declarators ('{arrName}' size: {arrSize}, declarators count: {arrayItems.Count} | line {lineNumber},{linePosition}");
@@ -398,6 +407,7 @@ namespace RAGE.Parser
 		//Statements
 		public override void EnterStatement(StatementContext context)
 		{
+			var ff = context.GetText();
 			if (context.expressionStatement() == null)
 			{
 				base.EnterStatement(context);
@@ -737,7 +747,7 @@ namespace RAGE.Parser
 			string loop = context.GetText();
 
 			//For loops
-			if (loop.StartsWith("for"))
+			if (loop.StartsWith("for") && !loop.StartsWith("foreach"))
 			{
 				//Generate the variable for the for loop
 				var variable = visitor.VisitDeclaration(context.declaration());
@@ -753,7 +763,8 @@ namespace RAGE.Parser
 
 				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
 				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.For);
-				StoredContext sc = new StoredContext($"for_{labelCount}", count, context, ScopeTypes.For);
+				var label = $"for_{labelCount}";
+				StoredContext sc = new StoredContext(label, count, context, ScopeTypes.For);
 
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
@@ -764,42 +775,98 @@ namespace RAGE.Parser
 				func.Value.Add(Push.Generate(v.Value.Value, v.Value.Type));
 				func.Value.Add(FrameVar.Set(v));
 				//Add label
-				func.Value.Add($":for_{count}");
+				func.Value.Add($":{label}");
 			}
 			//While loops
 			else if (loop.StartsWith("while"))
 			{
 				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
 				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.While);
-				StoredContext sc = new StoredContext($"while_{labelCount}", count, context, ScopeTypes.While);
+				var label = $"while_{labelCount}";
+				StoredContext sc = new StoredContext(label, count, context, ScopeTypes.While);
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
-				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":while_{count}");
+				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{label}");
 			}
+			//Foreach loops
 			else if (loop.StartsWith("foreach"))
 			{
+				var newVarName = context.Identifier()[0].GetText();
+				var existingVarName = context.Identifier()[1].GetText();
+
+				//Make sure the var exists and is an array
+				if (!Script.StaticVariables.ContainsVariable<Array>(existingVarName))
+				{
+					Error($"Foreach variable must be an array | line {lineNumber},{linePosition}");
+				}
+
+				var existingVar = Script.StaticVariables.GetVariable<Array>(existingVarName) as Array;
+				
+				//Could do this check with assembly but this can be considered optimization
+				if (existingVar.Indices.Count == 0)
+				{
+					Error($"Foreach array '{existingVarName}' is empty | line {lineNumber},{linePosition}");
+				}
+
+				//Make a new variable using the type of the array
+				Variable newVar = new Variable(newVarName, CurrentFunction.FrameVars + 1, existingVar.Type);
+				newVar.Value.Type = existingVar.Type;
+				newVar.IsIterator = true;
+				newVar.Value.Value = "0"; //Default it to 0 since it's the indexer for the array
+				newVar.Value.IsDefault = true;
+				//Use the array as a reference to get the value
+				newVar.ForeachReference = existingVar;
+
+				CurrentFunction.Variables.Add(newVar);
+
+				var currentFunc = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
+				currentFunc.Add(Push.Int(newVar.Value.Value)); //0
+				currentFunc.Add(FrameVar.Set(newVar));
+
 				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
 				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.Foreach);
-				StoredContext sc = new StoredContext($"foreach_{labelCount}", count, context, ScopeTypes.Foreach);
+				var label = $"foreach_{labelCount}";
+				StoredContext sc = new StoredContext(label, count, context, ScopeTypes.Foreach);
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
-				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":foreach_{count}");
+				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{label}");
 			}
 		}
 
-		//Exiting for, while
+		//Exiting for, while, foreach
 		public override void ExitIterationStatement(IterationStatementContext context)
 		{
 			var storedContext = storedContexts.Where(a => a.Context == context).First();
 			visitor.CurrentContext = storedContext;
 			string code = context.GetText();
 
-			//Reverse it so it evaluates the incrementing first before doing the comparison
-			foreach (ExpressionContext expression in context.expression().Reverse())
+			//Foreach needs custom code
+			if (storedContext.Type == ScopeTypes.Foreach)
 			{
-				var test = visitor.VisitExpression(expression);
-				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(test.Assembly);
+				var newVarName = context.Identifier()[0].GetText();
+				var existingVarName = context.Identifier()[1].GetText();
 
+				var newVar = CurrentFunction.Variables.GetAnyVariable<Variable>(newVarName) as Variable;
+				var existingVar = CurrentFunction.Variables.GetAnyVariable<Array>(existingVarName) as Array;
+
+				//Check if the index is still in bounds, if so, update index and keep looping
+				var func = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
+				func.Add(FrameVar.Get(newVar));
+				func.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
+				func.Add(FrameVar.Set(newVar));
+				func.Add(FrameVar.Get(newVar));
+				func.Add(Push.Int(existingVar.Indices.Count) + $" //size of {existingVarName}");
+				func.Add(Jump.Generate(JumpType.LessThan, storedContext.Label));
+
+			}
+			else
+			{
+				//Reverse it so it evaluates the incrementing first before doing the comparison
+				foreach (ExpressionContext expression in context.expression().Reverse())
+				{
+					var test = visitor.VisitExpression(expression);
+					Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(test.Assembly);
+				}
 			}
 
 			base.ExitIterationStatement(context);
