@@ -1,4 +1,4 @@
-//Compiled using RAGE-C by Tustin 5/31/2017
+//Compiled using RAGE-C by Tustin 6/1/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 5 statics
@@ -44,33 +44,22 @@ Call @main
 Return 0 0
 
 :foo
-Function 0 7 0
+Function 0 4 0
 Push_0
-SetF1 3 //i
-:for_0
-GetF1 3 //i
-SetF1 4 //b
-GetF1 3 //i
-Add1 1
-SetF1 3 //i
-GetF1 3 //i
-Push_5
-JumpLT @for_0
-Push_0
-SetF1 5 //item
+SetF1 3 //item
+
 :foreach_0
-GetF1 5 //item
-SetF1 6 //a
-GetF1 5 //item
+GetF1 3 //item
+pStatic1 6 //&foreachTest
+ArrayGet1 1
+SetF1 4 //b
+GetF1 3 //item
 Add1 1
-SetF1 5 //item
-GetF1 5 //item
+SetF1 3 //item
+GetF1 3 //item
 Push_5 //size of foreachTest
 JumpLT @foreach_0
-Push_1
-SetF1 7 //testing
-StaticGet1 5 //menuItems
-Return 0 1
+Return 0 0
 
 :main
 Function 0 2 0

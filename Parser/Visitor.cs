@@ -309,13 +309,14 @@ namespace RAGE.Parser
 
 			if (left.Type != DataType.Global)
 			{
+				variable = Utilities.GetAnyVariable(RAGEListener.CurrentFunction.Variables, left.Data.ToString());
 				//TODO: Clean me!
-				variable = Script.StaticVariables.GetVariable(left.Data.ToString());
+				//variable = Script.StaticVariables.GetVariable(left.Data.ToString());
 
-				if (variable == null)
-				{
-					variable = RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
-				}
+				//if (variable == null)
+				//{
+				//	variable = RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
+				//}
 
 				if (variable == null)
 				{
@@ -330,7 +331,6 @@ namespace RAGE.Parser
 			var op = context.GetChild(1).GetText();
 			switch (op)
 			{
-
 				case "+=":
 				//This will always be a variable
 				if (variable.Specifier == Specifier.Static)
@@ -349,6 +349,11 @@ namespace RAGE.Parser
 				return new Value(DataType.Int, null, code);
 
 				case "=":
+				//Foreach iterators are read-only so throw an error if it's being assigned a value
+				if (left.Type == DataType.ForeachVariable)
+				{
+					Error($"Foreach iterator '{left.Data.ToString()}' cannot be assigned a new value | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+				}
 
 				if (left.Type == DataType.Array)
 				{
@@ -1193,6 +1198,28 @@ namespace RAGE.Parser
 				var = RAGEListener.CurrentFunction.GetParameter(value);
 				code.Add(FrameVar.Get(var));
 				return new Value(DataType.Argument, value, code);
+				case DataType.ForeachVariable:
+				var tVar = RAGEListener.CurrentFunction.Variables.GetAnyVariable(value) as Variable;
+				var foreachVar = tVar.ForeachReference;
+				if (tVar.Specifier == Specifier.Static)
+				{
+					code.Add(StaticVar.Get(tVar));
+				}
+				else
+				{
+					code.Add(FrameVar.Get(tVar));
+
+				}
+				if (foreachVar.Specifier == Specifier.Static)
+				{
+					code.Add(StaticVar.Pointer(foreachVar));
+				}
+				else
+				{
+					code.Add(FrameVar.GetPointer(foreachVar));
+				}
+				code.Add(Opcodes.Array.Get());
+				return new Value(DataType.ForeachVariable, value, code);
 				default:
 				Error($"Type {type} is unsupported | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 				return null;

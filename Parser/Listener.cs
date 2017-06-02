@@ -407,7 +407,6 @@ namespace RAGE.Parser
 		//Statements
 		public override void EnterStatement(StatementContext context)
 		{
-			var ff = context.GetText();
 			if (context.expressionStatement() == null)
 			{
 				base.EnterStatement(context);
@@ -775,6 +774,7 @@ namespace RAGE.Parser
 				func.Value.Add(Push.Generate(v.Value.Value, v.Value.Type));
 				func.Value.Add(FrameVar.Set(v));
 				//Add label
+				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));
 				func.Value.Add($":{label}");
 			}
 			//While loops
@@ -786,6 +786,7 @@ namespace RAGE.Parser
 				StoredContext sc = new StoredContext(label, count, context, ScopeTypes.While);
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
+				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));
 				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{label}");
 			}
 			//Foreach loops
@@ -794,14 +795,14 @@ namespace RAGE.Parser
 				var newVarName = context.Identifier()[0].GetText();
 				var existingVarName = context.Identifier()[1].GetText();
 
-				//Make sure the var exists and is an array
-				if (!Script.StaticVariables.ContainsVariable<Array>(existingVarName))
+				var existingVar = CurrentFunction.Variables.GetAnyVariable<Array>(existingVarName) as Array;
+
+				if (existingVar == null)
 				{
-					Error($"Foreach variable must be an array | line {lineNumber},{linePosition}");
+					Error($"Foreach variable must be an array or it doesn't exist | line {lineNumber},{linePosition}");
+
 				}
 
-				var existingVar = Script.StaticVariables.GetVariable<Array>(existingVarName) as Array;
-				
 				//Could do this check with assembly but this can be considered optimization
 				if (existingVar.Indices.Count == 0)
 				{
@@ -829,6 +830,7 @@ namespace RAGE.Parser
 				StoredContext sc = new StoredContext(label, count, context, ScopeTypes.Foreach);
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
+				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));
 				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{label}");
 			}
 		}

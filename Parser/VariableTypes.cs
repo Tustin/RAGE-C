@@ -21,5 +21,6 @@
         Static,
         Enum,
         Cast,
+		ForeachVariable,
     }
 }

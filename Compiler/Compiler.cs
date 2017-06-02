@@ -38,7 +38,7 @@ namespace RAGE.Compiler
             }
 
             //replace carriage returns, empty lines and comment lines
-            AssemblyCode = AssemblyCode.Select(a => a.Replace("\r\n", "\n")).ToList();
+            //AssemblyCode = AssemblyCode.Select(a => a.Replace("\r\n", "\n")).ToList();
             AssemblyCode.RemoveAll(string.IsNullOrWhiteSpace);
             AssemblyCode.RemoveAll(a => a.StartsWith("/"));
 

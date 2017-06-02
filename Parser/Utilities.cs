@@ -118,21 +118,27 @@ namespace RAGE.Parser
             {
                 if (function == null) return DataType.Variable;
 
-                if (function.Variables.ContainsVariable(value))
-                {
-                    return DataType.Variable;
-                }
+				if (function.Variables.ContainsVariable(value))
+				{
+					Variable @var = function.Variables.GetVariable(value) as Variable;
+
+					return @var.ForeachReference != null ? DataType.ForeachVariable : DataType.Variable;
+				}
                 else if (value.StartsWith("Global_"))
                 {
                     return DataType.Global;
                 }
                 else if (Script.StaticVariables.ContainsVariable(value))
                 {
-                    return DataType.Static;
+					Variable @var = Script.StaticVariables.GetVariable(value) as Variable;
+
+					return @var.ForeachReference != null ? DataType.ForeachVariable : DataType.Static;
                 }
                 else if (function.ContainsParameterName(value))
                 {
-                    return DataType.Argument;
+					Variable @var = Script.StaticVariables.GetVariable(value) as Variable;
+
+					return @var.ForeachReference != null ? DataType.ForeachVariable : DataType.Argument;
                 }
             }
             Error($"Unable to parse value '{value}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
