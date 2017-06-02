@@ -395,30 +395,6 @@ public partial class RAGEBaseListener : IRAGEListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitTypeSpecifier([NotNull] RAGEParser.TypeSpecifierContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="RAGEParser.structOrUnionSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterStructOrUnionSpecifier([NotNull] RAGEParser.StructOrUnionSpecifierContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="RAGEParser.structOrUnionSpecifier"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitStructOrUnionSpecifier([NotNull] RAGEParser.StructOrUnionSpecifierContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="RAGEParser.structOrUnion"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="RAGEParser.structOrUnion"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.arrayDeclarator"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -454,6 +430,18 @@ public partial class RAGEBaseListener : IRAGEListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitArrayDeclaration([NotNull] RAGEParser.ArrayDeclarationContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.structSpecifier"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterStructSpecifier([NotNull] RAGEParser.StructSpecifierContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.structSpecifier"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitStructSpecifier([NotNull] RAGEParser.StructSpecifierContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.structDeclarationList"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -502,6 +490,18 @@ public partial class RAGEBaseListener : IRAGEListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStructDeclaratorList([NotNull] RAGEParser.StructDeclaratorListContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.structItemDeclarator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterStructItemDeclarator([NotNull] RAGEParser.StructItemDeclaratorContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.structItemDeclarator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitStructItemDeclarator([NotNull] RAGEParser.StructItemDeclaratorContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.structDeclarator"/>.
 	/// <para>The default implementation does nothing.</para>

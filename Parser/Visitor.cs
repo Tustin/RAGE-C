@@ -131,6 +131,20 @@ namespace RAGE.Parser
 			return new Value(DataType.Variable, variable, null);
 		}
 
+		public override Value VisitStructItemDeclarator([NotNull] StructItemDeclaratorContext context)
+		{
+			var currentStruct = Script.Structs.Last();
+			var lastMember = currentStruct.Members.LastOrDefault();
+			var memberName = context.Identifier().GetText();
+			var memberType = Utilities.GetTypeFromDeclaration(context.typeSpecifier().GetText());
+			if (memberType == DataType.Void)
+			{
+				Error($"Invalid type for member '{memberName}' ({memberType.ToString()}) in struct '{currentStruct.Name}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+			}
+
+			return base.VisitStructItemDeclarator(context);
+		}
+
 		public override Value VisitEnumerator([NotNull] EnumeratorContext context)
 		{
 			var currentEnum = Script.Enums.Last();

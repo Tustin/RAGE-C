@@ -257,7 +257,12 @@ namespace RAGE.Parser
             return enums.Any(a => a.Name == name);
         }
 
-        public static Enum GetEnum(this List<Enum> enums, string name)
+		public static bool ContainsStruct(this List<Struct> @struct, string name)
+		{
+			return @struct.Any(a => a.Name == name);
+		}
+
+		public static Enum GetEnum(this List<Enum> enums, string name)
         {
             return enums.Where(a => a.Name == name).FirstOrDefault();
         }

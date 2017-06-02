@@ -212,18 +212,6 @@ public interface IRAGEVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitTypeSpecifier([NotNull] RAGEParser.TypeSpecifierContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="RAGEParser.structOrUnionSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStructOrUnionSpecifier([NotNull] RAGEParser.StructOrUnionSpecifierContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="RAGEParser.structOrUnion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="RAGEParser.arrayDeclarator"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -241,6 +229,12 @@ public interface IRAGEVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitArrayDeclaration([NotNull] RAGEParser.ArrayDeclarationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="RAGEParser.structSpecifier"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStructSpecifier([NotNull] RAGEParser.StructSpecifierContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="RAGEParser.structDeclarationList"/>.
 	/// </summary>
@@ -265,6 +259,12 @@ public interface IRAGEVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStructDeclaratorList([NotNull] RAGEParser.StructDeclaratorListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="RAGEParser.structItemDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStructItemDeclarator([NotNull] RAGEParser.StructItemDeclaratorContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="RAGEParser.structDeclarator"/>.
 	/// </summary>

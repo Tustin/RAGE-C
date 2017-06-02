@@ -122,6 +122,43 @@ namespace RAGE.Parser
 			base.EnterEnumDeclarator(context);
 		}
 
+		//Struct
+		public override void EnterStructDeclarator([NotNull] StructDeclaratorContext context)
+		{
+			string structName = context.Identifier().GetText();
+
+			if (Script.Structs.ContainsStruct(structName))
+			{
+				Error($"Script already contains a struct called '{structName}' | line {lineNumber}, {linePosition}");
+			}
+
+			//Do this hack so the struct is parsed from top down
+			var structMembers = new List<StructItemDeclaratorContext>();
+			var structItemsList = context.structDeclaratorList();
+
+			if (structItemsList == null)
+			{
+				Error($"Struct '{structName}' contains no members | line {lineNumber}, {linePosition}");
+			}
+
+			while (structItemsList != null)
+			{
+				structMembers.Insert(0, structItemsList.structItemDeclarator());
+				structItemsList = structItemsList.structDeclaratorList();
+			}
+
+			var currentStruct = new Struct(structName);
+
+			Script.Structs.Add(currentStruct);
+
+			foreach (var structMember in structMembers)
+			{
+				visitor.VisitStructItemDeclarator(structMember);
+			}
+
+			base.EnterStructDeclarator(context);
+		}
+
 		//New functions
 		public override void EnterFunctionDefinition(FunctionDefinitionContext context)
 		{

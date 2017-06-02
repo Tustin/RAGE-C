@@ -331,26 +331,6 @@ public interface IRAGEListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitTypeSpecifier([NotNull] RAGEParser.TypeSpecifierContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="RAGEParser.structOrUnionSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterStructOrUnionSpecifier([NotNull] RAGEParser.StructOrUnionSpecifierContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="RAGEParser.structOrUnionSpecifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitStructOrUnionSpecifier([NotNull] RAGEParser.StructOrUnionSpecifierContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="RAGEParser.structOrUnion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="RAGEParser.structOrUnion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitStructOrUnion([NotNull] RAGEParser.StructOrUnionContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.arrayDeclarator"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -380,6 +360,16 @@ public interface IRAGEListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitArrayDeclaration([NotNull] RAGEParser.ArrayDeclarationContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.structSpecifier"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStructSpecifier([NotNull] RAGEParser.StructSpecifierContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.structSpecifier"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStructSpecifier([NotNull] RAGEParser.StructSpecifierContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.structDeclarationList"/>.
 	/// </summary>
@@ -420,6 +410,16 @@ public interface IRAGEListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitStructDeclaratorList([NotNull] RAGEParser.StructDeclaratorListContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.structItemDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStructItemDeclarator([NotNull] RAGEParser.StructItemDeclaratorContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.structItemDeclarator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStructItemDeclarator([NotNull] RAGEParser.StructItemDeclaratorContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.structDeclarator"/>.
 	/// </summary>

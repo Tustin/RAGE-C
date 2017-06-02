@@ -99,6 +99,7 @@
     <Compile Include="SelectionTypes.cs" />
     <Compile Include="Specifier.cs" />
     <Compile Include="StoredContext.cs" />
+    <Compile Include="Struct.cs" />
     <Compile Include="Switch.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="Value.cs" />

@@ -140,7 +140,6 @@ declarationSpecifier
     :   storageClassSpecifier
     |   typeSpecifier
     |   typeQualifier
-    |   enumSpecifier
     ;
 
 initDeclaratorList
@@ -168,18 +167,6 @@ typeSpecifier
     |   'string'
     |   'bool'
     |   'double')
-    |   structOrUnionSpecifier
-    |   enumSpecifier
-    ;
-
-structOrUnionSpecifier
-    :   structOrUnion Identifier? '{' structDeclarationList '}'
-    |   structOrUnion Identifier
-    ;
-
-structOrUnion
-    :   'struct'
-    |   'union'
     ;
 
 arrayDeclarator
@@ -197,6 +184,11 @@ arrayDeclaration
     :   constantExpression
     ;
 
+structSpecifier
+    :   'struct' Identifier '{' structDeclaratorList '}' 
+    |   'struct' Identifier '{' structDeclaratorList ',' '}'
+    ;
+
 structDeclarationList
     :   structDeclaration
     |   structDeclarationList structDeclaration
@@ -212,13 +204,18 @@ specifierQualifierList
     ;
 
 structDeclaratorList
-    :   structDeclarator
-    |   structDeclaratorList ',' structDeclarator
+    :   structItemDeclarator
+    |   structDeclaratorList ',' structItemDeclarator
+    ;
+
+structItemDeclarator
+    :   typeSpecifier Identifier
+    |   typeSpecifier Identifier '=' constantExpression
     ;
 
 structDeclarator
-    :   declarator
-    |   declarator? ':' constantExpression
+    :   'struct' Identifier '{' structDeclaratorList? '}'
+    |   'struct' Identifier '{' structDeclaratorList? ',' '}'
     ;
 
 enumDeclarator
@@ -360,6 +357,7 @@ statement
     |   enumSpecifier
     |   enumDeclarator
     |   arrayDeclarator
+    |   structDeclarator
     |   globalExpression
     ;
 
@@ -414,6 +412,7 @@ translationUnit
 externalDeclaration
     :   functionDefinition
     |   enumDeclarator
+    |   structDeclarator
     |   arrayDeclarator
     |   globalExpression
     |   declaration

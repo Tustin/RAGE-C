@@ -12,6 +12,8 @@ namespace RAGE.Parser
 
         public static List<Enum> Enums = new List<Enum>();
 
+		public static List<Struct> Structs = new List<Struct>(); 
+
         public static int GetNextStaticIndex()
         {
             int next = 0;
