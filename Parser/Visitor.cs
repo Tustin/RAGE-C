@@ -134,15 +134,57 @@ namespace RAGE.Parser
 		public override Value VisitStructItemDeclarator([NotNull] StructItemDeclaratorContext context)
 		{
 			var currentStruct = Script.Structs.Last();
-			var lastMember = currentStruct.Members.LastOrDefault();
 			var memberName = context.Identifier().GetText();
 			var memberType = Utilities.GetTypeFromDeclaration(context.typeSpecifier().GetText());
+
 			if (memberType == DataType.Void)
 			{
-				Error($"Invalid type for member '{memberName}' ({memberType.ToString()}) in struct '{currentStruct.Name}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+				Error($"Invalid type for member '{memberName}' ({memberType}) in struct '{currentStruct.Name}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
 			}
 
+			if (currentStruct.Members.ContainsVariable(memberName))
+			{
+				Error($"Struct '{currentStruct.Name}' already contains a member '{memberName}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+			}
+
+			Variable member = new Variable($"{currentStruct.Name}_{memberName}", Script.GetNextStaticIndex(), memberType);
+			member.Specifier = Specifier.Static;
+
+			//typeSpecifier Identifier
+			//e.g. int myMember
+			//Needs a default value
+			if (context.ChildCount == 2)
+			{
+				member.Value.Value = Utilities.GetDefaultValue(memberType);
+				member.Value.Type = memberType;
+				member.Value.IsDefault = true;
+				member.ValueAssembly.Add(Push.Generate(member.Value.Value.ToString(), memberType));
+			}
+			//typeSpecifier Identifier = constantExpression
+			//e.g. int myMember = 5
+			else if (context.ChildCount == 4)
+			{
+				var memberExpr = context.constantExpression().GetText();
+				var exprType = Utilities.GetType(null, memberExpr);
+				if (exprType != memberType)
+				{
+					Error($"Member expression '{memberExpr}' ({exprType}) doesn't match member's defined type ({memberType}) | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+				}
+				member.Value.Value = memberExpr;
+				member.Value.Type = memberType;
+				member.Value.IsDefault = false;
+				member.ValueAssembly.Add(Push.Generate(memberExpr, memberType));
+			}
+			else
+			{
+				Error($"Invalid member declaration (child count: {context.ChildCount}) | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+			}
+
+			Script.StaticVariables.Add(member);
+			currentStruct.Members.Add(member);
+
 			return base.VisitStructItemDeclarator(context);
+
 		}
 
 		public override Value VisitEnumerator([NotNull] EnumeratorContext context)
@@ -191,6 +233,9 @@ namespace RAGE.Parser
 				enumVar.Value.Type = DataType.Int;
 				enumVar.Value.IsDefault = false;
 				enumVar.ValueAssembly.Add(Push.Int(enumValue));
+
+				Script.StaticVariables.Add(enumVar);
+				currentEnum.Enumerators.Add(new Enumerator(enumName, enumVar));
 			}
 			else
 			{

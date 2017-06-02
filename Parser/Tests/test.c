@@ -5,8 +5,9 @@ static int someArray[] = {1, 2};
 
 //#include "a";
 struct myStruct {
-    int item = 1,
-    void shit = 5,
+    int item = 5,
+    bool shit,
+
 };
 void main() {
 }

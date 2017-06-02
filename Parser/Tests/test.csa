@@ -1,7 +1,7 @@
 //Compiled using RAGE-C by Tustin 6/2/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 3 statics
+//Auto assigning 5 statics
 Push_5
 StaticSet1 0 //something
 Push1 10
@@ -16,6 +16,10 @@ Push_2
 Push_1
 pStatic1 2 //&someArray
 ArraySet1 1
+Push_5
+StaticSet1 5 //myStruct_item
+Push_0
+StaticSet1 6 //myStruct_shit
 Call @main
 Return 0 0
 
