@@ -170,6 +170,7 @@ namespace RAGE.Parser
 				{
 					Error($"Member expression '{memberExpr}' ({exprType}) doesn't match member's defined type ({memberType}) | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
 				}
+
 				member.Value.Value = memberExpr;
 				member.Value.Type = memberType;
 				member.Value.IsDefault = false;
@@ -180,7 +181,7 @@ namespace RAGE.Parser
 				Error($"Invalid member declaration (child count: {context.ChildCount}) | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
 			}
 
-			Script.StaticVariables.Add(member);
+			//Script.StaticVariables.Add(member);
 			currentStruct.Members.Add(member);
 
 			return base.VisitStructItemDeclarator(context);
