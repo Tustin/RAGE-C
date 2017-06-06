@@ -282,7 +282,6 @@ namespace RAGE.Parser
 			return enumerators.Where(a => a.Name == name).FirstOrDefault();
 		}
 
-
 		public static int GetCaseExpression(Value expr)
 		{
 			int value = 0;

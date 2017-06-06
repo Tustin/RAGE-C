@@ -184,7 +184,6 @@ namespace RAGE.Parser
 								entryContents.Add(Push.Int(var.FrameId.ToString()));
 								entryContents.Add(StaticVar.Pointer(arr));
 								entryContents.Add(Opcodes.Array.Set());
-								//index++;
 							}
 						}
 						else if (variable is Variable var)

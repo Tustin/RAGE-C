@@ -82,8 +82,6 @@ namespace RAGE.Parser
 		{
 			var specifiers = (VisitDeclarationSpecifiers(context.declarationSpecifiers())).Data as DeclarationResponse;
 
-
-
 			DataType declType = specifiers.Type; //Should always have a type
 			Specifier declSpec = specifiers.Specifier; //Will be None if there is no specifier
 
@@ -186,8 +184,7 @@ namespace RAGE.Parser
 				Error($"Struct '{currentStruct.Name}' already contains a member '{memberName}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
 			}
 
-			Variable member = new Variable($"{currentStruct.Name}_{memberName}", Script.GetNextStaticIndex(), memberType);
-			member.Specifier = Specifier.Static;
+			Variable member = new Variable($"{currentStruct.Name}_{memberName}", currentStruct.Members.Count, memberType);
 
 			//typeSpecifier Identifier
 			//e.g. int myMember
