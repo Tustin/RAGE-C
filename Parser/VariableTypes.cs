@@ -22,5 +22,7 @@
         Enum,
         Cast,
 		ForeachVariable,
+		CustomType,
+		None,
     }
 }

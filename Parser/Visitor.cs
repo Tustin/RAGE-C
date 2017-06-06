@@ -17,11 +17,40 @@ namespace RAGE.Parser
 
 		public override Value VisitDeclarationSpecifiers([NotNull] DeclarationSpecifiersContext context)
 		{
+			var res = new DeclarationResponse();
+
 			var specifiers = context.declarationSpecifier();
+
+			foreach (var specifier in specifiers)
+			{
+				if (specifier.storageClassSpecifier() != null && res.Specifier == Specifier.None)
+				{
+					res.Specifier = Utilities.GetSpecifierFromDeclaration(specifier.GetText());
+				}
+				else if (specifier.typeSpecifier() != null && res.Type == DataType.Void)
+				{
+					res.Type = Utilities.GetTypeFromDeclaration(specifier.GetText());
+				}
+				else if (specifier.customTypeSpecifier() != null && res.Type == DataType.Void)
+				{
+					var custom = specifier.GetText().Replace("@", "");
+					res.Type = DataType.CustomType;
+					res.CustomType = custom;
+				}
+				else
+				{
+					Error($"Invalid specifier given to variable declaration ({specifier.GetText()}) - is this a custom type? Prefix it with an @ if so (e.g. @myStruct)| line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+				}
+			}
+
+			return new Value(DataType.None, res, null);
+
 			//At most, there should only be two specifiers, like so:
 			//static int myStatic = 69;
-			//Globals wont be referenced by type, so doing the following is invalid:
+			//Globals wont be referenced by a specifier, so doing the following is invalid:
 			//global int someGlobal = 69;
+
+			/*
 			if (specifiers.Length > 2)
 			{
 				Error($"Too many specifiers | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
@@ -35,12 +64,13 @@ namespace RAGE.Parser
 				//both a type and a specifier, parse them and return both
 				case 2:
 				var spec = Utilities.GetSpecifierFromDeclaration(specifiers[0].GetText());
-				var type2 = Utilities.GetTypeFromDeclaration(specifiers[1].GetText());
-				return new Value(type2, spec, null);
+				type = Utilities.GetTypeFromDeclaration(specifiers[1].GetText());
+				return new Value(type, spec, null);
 				default:
 				Error($"Invalid specifier count | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
 				return null;
 			}
+			*/
 		}
 
 		public override Value VisitArrayDeclarationList([NotNull] ArrayDeclarationListContext context)
@@ -50,13 +80,20 @@ namespace RAGE.Parser
 
 		public override Value VisitDeclaration([NotNull] DeclarationContext context)
 		{
-			var specifiers = VisitDeclarationSpecifiers(context.declarationSpecifiers());
+			var specifiers = (VisitDeclarationSpecifiers(context.declarationSpecifiers())).Data as DeclarationResponse;
+
+
 
 			DataType declType = specifiers.Type; //Should always have a type
-			Specifier declSpec = (Specifier)specifiers.Data; //Will be None if there is no specifier
+			Specifier declSpec = specifiers.Specifier; //Will be None if there is no specifier
 
 			var declarator = context.initDeclaratorList().initDeclarator();
 			var varName = declarator.declarator().GetText();
+
+			if (declType == DataType.Void)
+			{
+				Error($"No valid type given to variable declaration '{varName}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
+			}
 
 			//Will be null if no value is being set
 			var initializer = declarator.initializer();
@@ -122,12 +159,14 @@ namespace RAGE.Parser
 			}
 			else
 			{
+				if (variable.Type == DataType.CustomType) goto end;
 				variable.Value.Value = Utilities.GetDefaultValue(variable.Type);
 				variable.ValueAssembly.Add(Push.Generate(variable.Value.Value, variable.Type));
 				variable.Value.Type = variable.Type;
 				variable.Value.IsDefault = true;
 			}
 
+			end:
 			return new Value(DataType.Variable, variable, null);
 		}
 

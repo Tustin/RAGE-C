@@ -291,6 +291,16 @@ public interface IRAGEListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitDeclarationSpecifier([NotNull] RAGEParser.DeclarationSpecifierContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.customTypeSpecifier"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCustomTypeSpecifier([NotNull] RAGEParser.CustomTypeSpecifierContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.customTypeSpecifier"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCustomTypeSpecifier([NotNull] RAGEParser.CustomTypeSpecifierContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.initDeclaratorList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

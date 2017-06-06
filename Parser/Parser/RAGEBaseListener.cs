@@ -347,6 +347,18 @@ public partial class RAGEBaseListener : IRAGEListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDeclarationSpecifier([NotNull] RAGEParser.DeclarationSpecifierContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="RAGEParser.customTypeSpecifier"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCustomTypeSpecifier([NotNull] RAGEParser.CustomTypeSpecifierContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="RAGEParser.customTypeSpecifier"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCustomTypeSpecifier([NotNull] RAGEParser.CustomTypeSpecifierContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="RAGEParser.initDeclaratorList"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

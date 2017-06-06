@@ -56,6 +56,7 @@
     <Compile Include="Array.cs" />
     <Compile Include="Case.cs" />
     <Compile Include="ContextProperty.cs" />
+    <Compile Include="DeclarationResponse.cs" />
     <Compile Include="Enum.cs" />
     <Compile Include="Enumerator.cs" />
     <Compile Include="Function.cs" />

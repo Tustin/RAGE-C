@@ -199,7 +199,7 @@ namespace RAGE.Parser
 				entryContents.Add("Return 0 0");
 				Core.AssemblyCode.Add("__script_entry__", entryContents);
 			}
-			var specifier = visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers());
+			var specifier = (visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers())).Data as DeclarationResponse;
 
 			string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
 			if (Script.Functions.ContainsFunction(name))
@@ -281,8 +281,6 @@ namespace RAGE.Parser
 		//New variables
 		public override void EnterDeclaration(DeclarationContext context)
 		{
-			var ff = context.GetText();
-
 			var variable = visitor.VisitDeclaration(context);
 
 			Variable var = variable.Data as Variable;

@@ -1,25 +1,8 @@
 //Compiled using RAGE-C by Tustin 6/5/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 5 statics
-Push_5
-StaticSet1 0 //something
-Push1 10
-StaticSet1 1 //something2
-Push_2
-StaticSet1 2 //someArray
-Push_1
-Push_0
-pStatic1 2 //&someArray
-ArraySet1 1
-Push_2
-Push_1
-pStatic1 2 //&someArray
-ArraySet1 1
-Push_5
-StaticSet1 5 //myStruct_item
-Push_0
-StaticSet1 6 //myStruct_shit
+//Auto assigning 1 statics
+StaticSet1 0 //structDecl
 Call @main
 Return 0 0
 

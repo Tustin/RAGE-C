@@ -188,6 +188,12 @@ public interface IRAGEVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDeclarationSpecifier([NotNull] RAGEParser.DeclarationSpecifierContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="RAGEParser.customTypeSpecifier"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCustomTypeSpecifier([NotNull] RAGEParser.CustomTypeSpecifierContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="RAGEParser.initDeclaratorList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
