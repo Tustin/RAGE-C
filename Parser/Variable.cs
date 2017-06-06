@@ -23,6 +23,8 @@ namespace RAGE.Parser
 
 		public StoredContext Scope { get; set; }
 
+		public string CustomType { get; set; }
+
         public Variable(string name, int id, string type, StoredContext scope)
         {
             Name = name;

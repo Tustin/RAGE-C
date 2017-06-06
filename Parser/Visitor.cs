@@ -137,6 +137,12 @@ namespace RAGE.Parser
 				variable = new Variable(varName, RAGEListener.CurrentFunction.FrameVars + 1, declType);
 				variable.Specifier = declSpec;
 			}
+
+			if (variable.Type == DataType.CustomType)
+			{
+				variable.CustomType = specifiers.CustomType;
+			}
+
 			//See if this variable is being initialized
 			//If not, then we'll give it a default value
 			if (initializer != null)
@@ -184,7 +190,7 @@ namespace RAGE.Parser
 				Error($"Struct '{currentStruct.Name}' already contains a member '{memberName}' | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
 			}
 
-			Variable member = new Variable($"{currentStruct.Name}_{memberName}", currentStruct.Members.Count, memberType);
+			Variable member = new Variable(memberName, currentStruct.Members.Count, memberType);
 
 			//typeSpecifier Identifier
 			//e.g. int myMember
@@ -403,16 +409,9 @@ namespace RAGE.Parser
 
 			IVariable variable = null;
 
-			if (left.Type != DataType.Global)
+			if (left.Type != DataType.Global && left.Type != DataType.Struct)
 			{
 				variable = Utilities.GetAnyVariable(RAGEListener.CurrentFunction.Variables, left.Data.ToString());
-				//TODO: Clean me!
-				//variable = Script.StaticVariables.GetVariable(left.Data.ToString());
-
-				//if (variable == null)
-				//{
-				//	variable = RAGEListener.CurrentFunction.Variables.GetVariable(left.Data.ToString());
-				//}
 
 				if (variable == null)
 				{
@@ -486,6 +485,36 @@ namespace RAGE.Parser
 				if (right.Type == DataType.Static)
 				{
 					rightCode.Add(StaticVar.Set(Script.StaticVariables.GetVariable(right.Data as string)));
+				}
+
+				if (left.Type == DataType.Struct)
+				{
+					var frame = (left.Data as Variable).FrameId;
+					//Hack: Fix me!
+					if (frame > 0)
+					{
+						leftCode.Add(Immediate.Set(frame));
+					}
+					else
+					{
+						left.Assembly[0] = left.Assembly[0].Replace("Get", "Set");
+					}
+					leftCode.AddRange(left.Assembly);
+
+				}
+
+				if (right.Type == DataType.Struct)
+				{
+					rightCode.AddRange(right.Assembly);
+					var frame = (right.Data as Variable).FrameId;
+					if (frame > 0)
+					{
+						rightCode.Add(Immediate.Set(frame));
+					}
+					else
+					{
+						right.Assembly[0] = right.Assembly[0].Replace("Get", "Set");
+					}
 				}
 
 				if (right.Assembly.Count > 0 && rightCode.Count == 0)
@@ -1126,12 +1155,7 @@ namespace RAGE.Parser
 				else
 				{
 					//Find array
-					//Array array = RAGEListener.CurrentFunction.Arrays.GetArray(arrayName);
-					var array = RAGEListener.CurrentFunction.Variables.GetArray(arrayName) as Array;
-					if (array == null)
-					{
-						array = Script.StaticVariables.GetArray(arrayName) as Array;
-					}
+					var array = Utilities.GetAnyVariable<Array>(RAGEListener.CurrentFunction.Variables, arrayName) as Array;
 					if (array == null)
 					{
 						Error($"No array '{arrayName}' exists  | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
@@ -1211,6 +1235,52 @@ namespace RAGE.Parser
 					code.Add(StaticVar.Get(thisEnumerator.Variable as Variable));
 					return new Value(DataType.Enum, thisEnumerator, code);
 				}
+
+				//Struct members
+				case "->":
+				var structName = context.postfixExpression().GetText();
+				var @struct = Utilities.GetAnyVariable(RAGEListener.CurrentFunction.Variables, structName) as Variable;
+				if (@struct == null)
+				{
+					Error($"Struct '{structName}' was used but never declared | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+				}
+				if (@struct.Type != DataType.CustomType)
+				{
+					Error($"Struct '{structName}' was never declared as a custom type (is '{@struct.Type}') | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+				}
+				var structDecl = Script.Structs.GetStruct(@struct.CustomType);
+				var immediate = context.Identifier().GetText();
+				var immediateMember = structDecl.Members.GetVariable(immediate);
+
+				if (immediateMember == null)
+				{
+					Error($"Member variable '{immediate}' does not exist in struct '{structName}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+				}
+
+				if (immediateMember.FrameId == 0)
+				{
+					if (@struct.Specifier == Specifier.Static)
+					{
+						code.Add(StaticVar.Get(@struct));
+					}
+					else
+					{
+						code.Add(FrameVar.Get(@struct));
+					}
+				}
+				else
+				{
+					if (@struct.Specifier == Specifier.Static)
+					{
+						code.Add(StaticVar.Pointer(@struct));
+					}
+					else
+					{
+						code.Add(FrameVar.GetPointer(@struct));
+					}
+				}
+
+				return new Value(DataType.Struct, immediateMember, code);
 
 				default:
 				Error($"Unknown postfix type '{symbol}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");

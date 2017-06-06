@@ -188,8 +188,28 @@ namespace RAGE.Parser
 						}
 						else if (variable is Variable var)
 						{
-							entryContents.AddRange(var.ValueAssembly);
-							entryContents.Add(StaticVar.Set(var));
+							if (var.Type == DataType.CustomType)
+							{
+								var @struct = Script.Structs.GetStruct(var.CustomType);
+								foreach (Variable member in @struct.Members)
+								{
+									entryContents.AddRange(member.ValueAssembly);
+									if (member.FrameId == 0)
+									{
+										entryContents.Add(StaticVar.Set(variable));
+									}
+									else
+									{
+										entryContents.Add(StaticVar.Pointer(variable));
+										entryContents.Add(Immediate.Set(member.FrameId));
+									}
+								}
+							}
+							else
+							{
+								entryContents.AddRange(var.ValueAssembly);
+								entryContents.Add(StaticVar.Set(var));
+							}
 						}
 
 					}
@@ -247,8 +267,8 @@ namespace RAGE.Parser
 				contextsList.Insert(0, decl);
 				context = context.parameterList();
 			}
-			//Loop through each param
 
+			//Loop through each param
 			foreach (var declContext in contextsList)
 			{
 				var paramName = declContext.declarator().GetText();
@@ -288,7 +308,6 @@ namespace RAGE.Parser
 			{
 				return;
 			}
-
 
 			if (var.Specifier == Specifier.Static)
 			{

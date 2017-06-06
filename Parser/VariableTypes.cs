@@ -24,5 +24,7 @@
 		ForeachVariable,
 		CustomType,
 		None,
+		Struct,
+
     }
 }

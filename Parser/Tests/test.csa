@@ -2,11 +2,17 @@
 :__script_entry__
 Function 0 2 0
 //Auto assigning 1 statics
+Push_5
 StaticSet1 0 //structDecl
+Push_0
+pStatic1 0 //&structDecl
+SetImmediate1 1 //imm 1
 Call @main
 Return 0 0
 
 :main
 Function 0 2 0
+Push_6
+StaticSet1 0 //structDecl
 Return 0 0
 
