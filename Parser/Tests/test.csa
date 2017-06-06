@@ -11,8 +11,13 @@ Call @main
 Return 0 0
 
 :main
-Function 0 2 0
+Function 0 4 0
 Push_6
 StaticSet1 0 //structDecl
+StaticGet1 0 //structDecl
+SetF1 3 //item
+PushString "test"
+GetHash
+SetF1 4 //hash
 Return 0 0
 

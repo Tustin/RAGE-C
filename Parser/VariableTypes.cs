@@ -25,6 +25,7 @@
 		CustomType,
 		None,
 		Struct,
+		Hash,
 
     }
 }

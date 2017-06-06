@@ -957,6 +957,10 @@ namespace RAGE.Parser
 						code.AddRange(expr.Assembly);
 						code.Add(Bitwise.Generate(BitwiseType.Not));
 						return new Value(DataType.Not, null, code);
+						case DataType.Hash:
+						code.AddRange(expr.Assembly);
+						code.Add("GetHash");
+						return new Value(DataType.Hash, null, code);
 					}
 				}
 				else
@@ -982,6 +986,8 @@ namespace RAGE.Parser
 				return new Value(DataType.Address, null, null);
 				case "!":
 				return new Value(DataType.Not, null, null);
+				case "$":
+				return new Value(DataType.Hash, null, null);
 				default:
 				Error($"Unsupported unary operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 				return null;

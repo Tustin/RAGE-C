@@ -31,7 +31,7 @@ unaryExpression
     ;
 
 unaryOperator
-    :   '&' | '*' | '+' | '-' | '~' | '!'
+    :   '&' | '*' | '+' | '-' | '~' | '!' | '$'
     ;
 
 castExpression

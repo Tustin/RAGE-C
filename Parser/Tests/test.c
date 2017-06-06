@@ -14,4 +14,6 @@ static @myStruct structDecl;
 
 void main() {
     structDecl->item = 6;
+    int item = structDecl->item;
+    int hash = $"test";
 }
