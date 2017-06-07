@@ -26,10 +26,9 @@ namespace RAGE.Parser
 
 			if (Core.FilePath == null)
 			{
-				//Core.FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
+				Core.FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
+				//Core.FilePath = @"D:\GitHub\RAGE-C\Parser\bin\Debug\goy\menu.c";
 				Warn($"No script path supplied. Using debug script path... ({Core.FilePath})");
-
-				Core.FilePath = @"D:\GitHub\RAGE-C\Parser\bin\Debug\goy\menu.c";
 			}
 
 			Core.FilePath = Path.GetFullPath(Core.FilePath);
@@ -75,15 +74,19 @@ namespace RAGE.Parser
 			RAGEListener listener = new RAGEListener();
 
 			LogVerbose("Starting to walk parse tree...");
+
 			parser.RemoveErrorListeners();
+
 			ParseTreeWalker.Default.Walk(listener, parser.compilationUnit());
+
 			if (!Script.Functions.ContainsFunction("main"))
 			{
 				Error("Script must contain a function called 'main'");
 			}
+
 			LogVerbose("Finished walking parse tree");
 
-			LogVerbose("Writing assembly to output file...");
+			Log("Writing assembly to output file...");
 
 			List<string> final = new List<string>
 			{
@@ -97,18 +100,24 @@ namespace RAGE.Parser
 				final.Add("");
 			}
 
-			File.WriteAllLines(Core.FileDirectory + $"\\{Core.FileName}.csa", final.ToArray());
+			var outFileASM = Core.FileDirectory + $"\\{Core.FileName}.csa";
+
+			File.WriteAllLines(outFileASM, final.ToArray());
+
+			Log($"Successfully saved assembly to {outFileASM}");
 
 			Compiler.Compiler compiler = new Compiler.Compiler(final, Core.FileName, Script.GetNextStaticIndex());
 
-			LogVerbose("Compiling script file...");
+			Log("Compiling script file...");
 
 			var res = compiler.Compile(Compiler.Platform.PS3);
 
-			File.WriteAllBytes(Core.FileDirectory + $"\\{Core.FileName}.csc", res);
+			var outFile = Core.FileDirectory + $"\\{Core.FileName}.csc";
 
+			File.WriteAllBytes(outFile, res);
 
-			Log("Successfully saved assembly!");
+			Log($"Successfully saved script file to {outFile}");
+
 		}
 
 		static void Help()
