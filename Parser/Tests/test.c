@@ -13,7 +13,7 @@ struct myStruct {
 static @myStruct structDecl;
 
 void main() {
-    structDecl->item = 6;
+    structDecl->item2 = 6;
     int item = structDecl->item;
     int hash = $"test";
 }

@@ -357,11 +357,14 @@ namespace RAGE.Parser
 				}
 			}
 
-			//if (expression == "false")
-			//{
-			//	val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
-			//	return val;
-			//}
+			if (expression == "false")
+			{
+				if (CurrentContext.Context is IterationStatementContext)
+				{
+					val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
+					return val;
+				}
+			}
 
 			Value output = VisitAssignmentExpression(context.assignmentExpression());
 
@@ -507,6 +510,7 @@ namespace RAGE.Parser
 				{
 					rightCode.AddRange(right.Assembly);
 					var frame = (right.Data as Variable).FrameId;
+					//Hack: Fix me!
 					if (frame > 0)
 					{
 						rightCode.Add(Immediate.Set(frame));
@@ -685,35 +689,19 @@ namespace RAGE.Parser
 
 			List<string> code = new List<string>();
 
-			//@TODO Clean this
-			//if (left.Type != DataType.Int && left.Type != DataType.Variable)
-			//{
-			//    Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
-			//    return null;
-			//}
-
-			//if (right.Type != DataType.Int && right.Type != DataType.Variable)
-			//{
-			//    Error($"Cannot use relational operators on non-integer values | line {RAGEListener.lineNumber}:{RAGEListener.linePosition}");
-			//    return null;
-			//}
-
-
-			//Lets just output the variables here because fuck optimization
-			//Saves some headache with the compiler parsing logic on variables that might be changed
-			bool isIterator = (CurrentContext.Context is IterationStatementContext) | (CurrentContext.Context is SelectionStatementContext);
 			string op = context.GetChild(1).ToString();
+
 			switch (op)
 			{
 				case "<":
 				//If it's not an iterator context, then it's free to return the two values (if possible)
-				if (!isIterator)
-				{
-					if (left.Data != null && right.Data != null)
-					{
-						return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
-					}
-				}
+				//if (!isIterator)
+				//{
+				//	if (left.Data != null && right.Data != null)
+				//	{
+				//		return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+				//	}
+				//}
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
 
@@ -728,13 +716,13 @@ namespace RAGE.Parser
 				return new Value(DataType.Bool, null, code);
 
 				case "<=":
-				if (!isIterator)
-				{
-					if (left.Data != null && right.Data != null)
-					{
-						return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
-					}
-				}
+				//if (!isIterator)
+				//{
+				//	if (left.Data != null && right.Data != null)
+				//	{
+				//		return new Value(DataType.Bool, (int)left.Data < (int)right.Data, new List<string>());
+				//	}
+				//}
 
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
@@ -795,28 +783,33 @@ namespace RAGE.Parser
 			string op = context.GetChild(1).ToString();
 			switch (op)
 			{
+				//Addition
 				case "+":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
 
 				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
 				return new Value(DataType.Int, null, code);
+
+				//Subtraction
 				case "-":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
 				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
 				return new Value(DataType.Int, null, code);
 
+				//String concatentation (not supported yet)
 				case ".":
+				throw new NotImplementedException();
 				//Make sure both sides are strings
-				if (left.Type != DataType.Variable && right.Type != DataType.String)
-				{
-					Error($"String concatenation can only be performed on two strings | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-				}
-				code.AddRange(right.Assembly);
-				code.Add(FrameVar.GetPointer(RAGEListener.CurrentFunction.GetVariable(left.Data.ToString())));
-				code.Add(Opcodes.String.Strcat());
-				return new Value(DataType.Int, null, code);
+				//if (left.Type != DataType.Variable && right.Type != DataType.String)
+				//{
+				//	Error($"String concatenation can only be performed on two strings | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+				//}
+				//code.AddRange(right.Assembly);
+				//code.Add(FrameVar.GetPointer(RAGEListener.CurrentFunction.GetVariable(left.Data.ToString())));
+				//code.Add(Opcodes.String.Strcat());
+				//return new Value(DataType.Int, null, code);
 
 			}
 			Error($"Unsupported operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
@@ -837,26 +830,27 @@ namespace RAGE.Parser
 			string op = context.GetChild(1).ToString();
 			switch (op)
 			{
+				//Multiplication
 				case "*":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
-
 				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Multiplication));
 				return new Value(DataType.Int, null, code);
 
+				//Division
 				case "/":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
-
 				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
 				return new Value(DataType.Int, null, code);
 
+				//Modulus
 				case "%":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
-
 				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Modulus));
 				return new Value(DataType.Int, null, code);
+
 			}
 			Error($"Unsupported operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 			return null;
@@ -888,6 +882,7 @@ namespace RAGE.Parser
 					}
 					expr.Type = @static.Type;
 					break;
+
 					case DataType.Variable:
 					var var = RAGEListener.CurrentFunction.Variables.GetVariable(expr.Data as string);
 					if (var == null)
@@ -896,6 +891,7 @@ namespace RAGE.Parser
 					}
 					expr.Type = var.Type;
 					break;
+
 					case DataType.Argument:
 					var arg = RAGEListener.CurrentFunction.GetParameter(expr.Data as string);
 					if (arg == null)
@@ -950,13 +946,18 @@ namespace RAGE.Parser
 					List<string> code = new List<string>();
 					switch (op.Type)
 					{
+						//&someVar (address-of)
 						case DataType.Address:
 						code.Add(FrameVar.GetPointer(v));
 						return new Value(DataType.Address, null, code);
+
+						//!someExpression (not)
 						case DataType.Not:
 						code.AddRange(expr.Assembly);
 						code.Add(Bitwise.Generate(BitwiseType.Not));
 						return new Value(DataType.Not, null, code);
+
+						//$"somestring" (hash)
 						case DataType.Hash:
 						code.AddRange(expr.Assembly);
 						code.Add("GetHash");
@@ -973,10 +974,6 @@ namespace RAGE.Parser
 
 		public override Value VisitUnaryOperator(UnaryOperatorContext context)
 		{
-			if (context == null)
-			{
-				throw new Exception();
-			}
 			string op = context.GetText();
 
 			switch (op)
@@ -984,10 +981,15 @@ namespace RAGE.Parser
 				//Address of
 				case "&":
 				return new Value(DataType.Address, null, null);
+
+				//Not
 				case "!":
 				return new Value(DataType.Not, null, null);
+
+				//Joaat hash of string
 				case "$":
 				return new Value(DataType.Hash, null, null);
+
 				default:
 				Error($"Unsupported unary operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 				return null;
@@ -1017,6 +1019,7 @@ namespace RAGE.Parser
 
 			switch (symbol)
 			{
+				//Inline addition
 				case "++":
 				if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(expression) && !Script.StaticVariables.ContainsVariable(expression))
 				{
@@ -1037,6 +1040,8 @@ namespace RAGE.Parser
 				}
 
 				return new Value(DataType.Int, null, code);
+				
+				//Inline subtraction
 				case "--":
 				if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(expression))
 				{
@@ -1048,6 +1053,8 @@ namespace RAGE.Parser
 				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
 				code.Add(FrameVar.Set(variable));
 				return new Value(DataType.Int, null, code);
+
+				//Function call
 				case "(":
 				if (Script.Functions.ContainsFunction(expression))
 				{
@@ -1260,7 +1267,7 @@ namespace RAGE.Parser
 
 				if (immediateMember == null)
 				{
-					Error($"Member variable '{immediate}' does not exist in struct '{structName}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+					Error($"Member variable '{immediate}' does not exist in struct '{@struct.CustomType}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 				}
 
 				if (immediateMember.FrameId == 0)
@@ -1342,34 +1349,44 @@ namespace RAGE.Parser
 				}
 				code.Add(Push.Generate(value, type));
 				return new Value(DataType.Int, ival, code);
+
 				case DataType.Bool:
 				code.Add(Push.Generate(value, type));
 				return new Value(DataType.Bool, Convert.ToBoolean(value), code);
+
 				case DataType.Float:
 				code.Add(Push.Generate(value, type));
 				return new Value(DataType.Float, Convert.ToSingle(value), code);
+
 				case DataType.String:
 				code.Add(Push.Generate(value, type));
 				return new Value(DataType.String, value, code);
+
 				case DataType.Variable:
 				var var = RAGEListener.CurrentFunction.Variables.GetVariable(value);
 				code.Add(FrameVar.Get(var));
 				return new Value(DataType.Variable, value, code);
+
 				case DataType.NativeCall:
 				return new Value(DataType.NativeCall, value, new List<string>());
+
 				case DataType.LocalCall:
 				return new Value(DataType.LocalCall, value, new List<string>());
+
 				case DataType.Global:
 				var global = Globals.Global.Parse(value);
 				return new Value(DataType.Global, global, new List<string>());
+
 				case DataType.Static:
 				var = Script.StaticVariables.GetVariable(value);
 				code.Add(StaticVar.Get(var));
 				return new Value(DataType.Static, value, code);
+
 				case DataType.Argument:
 				var = RAGEListener.CurrentFunction.GetParameter(value);
 				code.Add(FrameVar.Get(var));
 				return new Value(DataType.Argument, value, code);
+
 				case DataType.ForeachVariable:
 				var tVar = RAGEListener.CurrentFunction.Variables.GetAnyVariable(value) as Variable;
 				var foreachVar = tVar.ForeachReference;
@@ -1392,28 +1409,11 @@ namespace RAGE.Parser
 				}
 				code.Add(Opcodes.Array.Get());
 				return new Value(DataType.ForeachVariable, value, code);
+
 				default:
 				Error($"Type {type} is unsupported | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 				return null;
 			}
 		}
-
-		private string GetValueFromVariable(string variable)
-		{
-			throw new NotImplementedException();
-			//string tempValue = variable;
-			//Variable var = null;
-			//do
-			//{
-			//    var = RAGEListener.CurrentFunction.Variables.GetVariable(tempValue);
-			//    if (var.Value.Type == DataType.LocalCall || var.Value.Type == DataType.NativeCall) break;
-			//    tempValue = var.Value.Value;
-			//}
-			//while (var.Type == DataType.Variable);
-
-			//LogVerbose($"Parsed variable '{variable}' and got value {tempValue}");
-			//return tempValue;
-		}
-
 	}
 }
