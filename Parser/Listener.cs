@@ -273,7 +273,7 @@ namespace RAGE.Parser
 			{
 				var paramName = declContext.declarator().GetText();
 
-				var specifier = visitor.VisitDeclarationSpecifiers(declContext.declarationSpecifiers());
+				var specifier = visitor.VisitDeclarationSpecifiers(declContext.declarationSpecifiers()).Data as DeclarationResponse;
 
 				CurrentFunction.Parameters.Add(new Parameter(specifier.Type, paramName, CurrentFunction.Parameters.Count));
 			}

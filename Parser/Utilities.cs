@@ -138,7 +138,7 @@ namespace RAGE.Parser
 				{
 					Variable @var = Script.StaticVariables.GetVariable(value) as Variable;
 
-					return @var.ForeachReference != null ? DataType.ForeachVariable : DataType.Argument;
+					return @var?.ForeachReference != null ? DataType.ForeachVariable : DataType.Argument;
 				}
 			}
 			Error($"Unable to parse value '{value}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
