@@ -350,7 +350,7 @@ namespace RAGE.Parser
 
 			if (expression == "true")
 			{
-				if (CurrentContext?.Context is IterationStatementContext && CurrentContext.Type != ScopeTypes.While)
+				if (CurrentContext?.Context is IterationStatementContext && CurrentContext?.Type != ScopeTypes.While)
 				{
 					val.Assembly.Add(Opcodes.Jump.Generate(Opcodes.JumpType.Unconditional, CurrentContext.Label));
 					return val;
