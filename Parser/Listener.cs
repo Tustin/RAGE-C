@@ -843,6 +843,13 @@ namespace RAGE.Parser
 				visitor.CurrentContext = sc;
 				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));
 				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{label}");
+
+				//Evaluate this here
+				foreach (ExpressionContext expression in context.expression().Reverse())
+				{
+					var test = visitor.VisitExpression(expression);
+					Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(test.Assembly);
+				}
 			}
 			//Foreach loops
 			else if (loop.StartsWith("foreach"))
@@ -916,7 +923,7 @@ namespace RAGE.Parser
 				func.Add(Push.Int(existingVar.Indices.Count) + $" //size of {existingVarName}");
 				func.Add(Jump.Generate(JumpType.LessThan, storedContext.Label));
 			}
-			else
+			else if (storedContext.Type != ScopeTypes.While)
 			{
 				//Reverse it so it evaluates the incrementing first before doing the comparison
 				foreach (ExpressionContext expression in context.expression().Reverse())
@@ -924,6 +931,11 @@ namespace RAGE.Parser
 					var test = visitor.VisitExpression(expression);
 					Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(test.Assembly);
 				}
+			}
+
+			if (storedContext.Type == ScopeTypes.While)
+			{
+				func.Add(Jump.Generate(JumpType.Unconditional, storedContext.Label));
 			}
 
 			Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));

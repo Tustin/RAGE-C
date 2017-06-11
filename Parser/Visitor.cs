@@ -350,7 +350,7 @@ namespace RAGE.Parser
 
 			if (expression == "true")
 			{
-				if (CurrentContext?.Context is IterationStatementContext)
+				if (CurrentContext?.Context is IterationStatementContext && CurrentContext.Type != ScopeTypes.While)
 				{
 					val.Assembly.Add(Opcodes.Jump.Generate(Opcodes.JumpType.Unconditional, CurrentContext.Label));
 					return val;
@@ -369,7 +369,7 @@ namespace RAGE.Parser
 			Value output = VisitAssignmentExpression(context.assignmentExpression());
 
 			//If the if expression doesnt have ==, then the result will come back as a type other than bool
-			if (output.Type != DataType.Bool && CurrentContext != null)
+			if (output.Type != DataType.Bool && CurrentContext != null && CurrentContext?.Type != ScopeTypes.While)
 			{
 				if (!RAGEListener.switches.ContainsKey(CurrentContext))
 				{

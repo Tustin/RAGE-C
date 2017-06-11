@@ -8,16 +8,10 @@ Return 0 0
 Function 1 4 0
 
 :while_0
-GetF1 0 //name
-CallNative REQUEST_SCRIPT 1 0
-JumpFalse @while_0
-Push_0
-CallNative WAIT 1 0
-JumpFalse @while_0
-GetF1 0 //name
-CallNative HAS_SCRIPT_LOADED 1 1
-Not
-JumpFalse @while_0_end
+Push_1
+PushString "ok"
+Call @test
+Jump @while_0
 
 :while_0_end
 Return 1 0

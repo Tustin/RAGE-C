@@ -26,8 +26,8 @@ namespace RAGE.Parser
 
 			if (Core.FilePath == null)
 			{
-				Core.FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
-				//Core.FilePath = @"D:\GitHub\goy-loader\menu.c";
+				//Core.FilePath = Core.PROJECT_ROOT + "\\Tests\\test.c";
+				Core.FilePath = @"D:\GitHub\goy-loader\menu.c";
 				//Core.FilePath = @"D:\GitHub\RAGE-C\Parser\bin\Debug\goy\menu.c";
 				Warn($"No script path supplied. Using debug script path... ({Core.FilePath})");
 			}

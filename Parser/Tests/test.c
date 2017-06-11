@@ -13,9 +13,13 @@
 // static @myStruct structDecl;
 
 void test(string name) {
-    while(!HAS_SCRIPT_LOADED(name)) {
-        REQUEST_SCRIPT(name);
-        WAIT(0);
+    // while(!HAS_SCRIPT_LOADED(name)) {
+    //     REQUEST_SCRIPT(name);
+    //     WAIT(0);
+    // }
+    // 
+    while (true) {
+        test("ok");
     }
 }
 void main() {
