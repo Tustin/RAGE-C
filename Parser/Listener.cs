@@ -816,7 +816,8 @@ namespace RAGE.Parser
 				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
 				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.For);
 				var label = $"for_{labelCount}";
-				StoredContext sc = new StoredContext(label, count, context, ScopeTypes.For);
+				var endLabel = $"for_{labelCount}_end";
+				StoredContext sc = new StoredContext(label, endLabel, count, context, ScopeTypes.For);
 
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
@@ -836,7 +837,8 @@ namespace RAGE.Parser
 				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
 				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.While);
 				var label = $"while_{labelCount}";
-				StoredContext sc = new StoredContext(label, count, context, ScopeTypes.While);
+				var endLabel = $"while_{labelCount}_end";
+				StoredContext sc = new StoredContext(label, endLabel, count, context, ScopeTypes.While);
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
 				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));
@@ -880,7 +882,8 @@ namespace RAGE.Parser
 				int count = storedContexts.Count(a => a.Context is IterationStatementContext);
 				int labelCount = storedContexts.Count(a => a.Type == ScopeTypes.Foreach);
 				var label = $"foreach_{labelCount}";
-				StoredContext sc = new StoredContext(label, count, context, ScopeTypes.Foreach);
+				var endLabel = $"foreach_{labelCount}_end";
+				StoredContext sc = new StoredContext(label, endLabel, count, context, ScopeTypes.Foreach);
 				storedContexts.Add(sc);
 				visitor.CurrentContext = sc;
 				Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));
@@ -894,6 +897,7 @@ namespace RAGE.Parser
 			var storedContext = storedContexts.Where(a => a.Context == context).First();
 			visitor.CurrentContext = storedContext;
 			string code = context.GetText();
+			var func = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
 
 			//Foreach needs custom code
 			if (storedContext.Type == ScopeTypes.Foreach)
@@ -905,14 +909,12 @@ namespace RAGE.Parser
 				var existingVar = CurrentFunction.Variables.GetAnyVariable<Array>(existingVarName) as Array;
 
 				//Check if the index is still in bounds, if so, update index and keep looping
-				var func = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
 				func.Add(FrameVar.Get(newVar));
 				func.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
 				func.Add(FrameVar.Set(newVar));
 				func.Add(FrameVar.Get(newVar));
 				func.Add(Push.Int(existingVar.Indices.Count) + $" //size of {existingVarName}");
 				func.Add(Jump.Generate(JumpType.LessThan, storedContext.Label));
-
 			}
 			else
 			{
@@ -923,6 +925,9 @@ namespace RAGE.Parser
 					Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.AddRange(test.Assembly);
 				}
 			}
+
+			Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));
+			Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{storedContext.EndLabel}");
 
 			base.ExitIterationStatement(context);
 		}

@@ -1,21 +1,30 @@
-//Compiled using RAGE-C by Tustin 6/7/2017
+//Compiled using RAGE-C by Tustin 6/10/2017
 :__script_entry__
 Function 0 2 0
-//Auto assigning 1 statics
-Push_5
-StaticSet1 0 //structDecl
-Push_0
-pStatic1 0 //&structDecl
-SetImmediate1 1 //imm 1
 Call @main
 Return 0 0
 
+:test
+Function 1 4 0
+
+:while_0
+GetF1 0 //name
+CallNative REQUEST_SCRIPT 1 0
+JumpFalse @while_0
+Push_0
+CallNative WAIT 1 0
+JumpFalse @while_0
+GetF1 0 //name
+CallNative HAS_SCRIPT_LOADED 1 1
+Not
+JumpFalse @while_0_end
+
+:while_0_end
+Return 1 0
+
 :main
-Function 0 4 0
-StaticGet1 0 //structDecl
-SetF1 3 //item
+Function 0 2 0
 PushString "test"
-GetHash
-SetF1 4 //hash
+Call @test
 Return 0 0
 

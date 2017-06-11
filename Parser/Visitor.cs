@@ -350,7 +350,7 @@ namespace RAGE.Parser
 
 			if (expression == "true")
 			{
-				if (CurrentContext.Context is IterationStatementContext)
+				if (CurrentContext?.Context is IterationStatementContext)
 				{
 					val.Assembly.Add(Opcodes.Jump.Generate(Opcodes.JumpType.Unconditional, CurrentContext.Label));
 					return val;
@@ -359,7 +359,7 @@ namespace RAGE.Parser
 
 			if (expression == "false")
 			{
-				if (CurrentContext.Context is IterationStatementContext)
+				if (CurrentContext?.Context is IterationStatementContext)
 				{
 					val.Assembly.Add(Jump.Generate(JumpType.Unconditional, CurrentContext.Label));
 					return val;
@@ -386,7 +386,15 @@ namespace RAGE.Parser
 			if (output.Type == DataType.Not)
 			{
 				val.Assembly.AddRange(output.Assembly);
-				val.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
+				if (CurrentContext.Type == ScopeTypes.While)
+				{
+					val.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.EndLabel));
+
+				}
+				else
+				{
+					val.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
+				}
 				return val;
 			}
 
@@ -1040,7 +1048,7 @@ namespace RAGE.Parser
 				}
 
 				return new Value(DataType.Int, null, code);
-				
+
 				//Inline subtraction
 				case "--":
 				if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(expression))
