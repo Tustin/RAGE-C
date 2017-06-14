@@ -481,9 +481,8 @@ namespace RAGE.Parser
 			{
 				int count = storedContexts.Count(a => a.Context is SelectionStatementContext);
 				var hasElse = context.selectionElseStatement() != null;
-				StoredContext sc;
 				//Set specific label if this selection has an else statement
-				sc = new StoredContext($"selection_end_{count}", count, context, ScopeTypes.Conditional);
+				var sc = new StoredContext($"selection_end_{count}", count, context, ScopeTypes.Conditional);
 				storedContexts.Add(sc);
 				if (hasElse)
 				{
@@ -583,6 +582,7 @@ namespace RAGE.Parser
 		{
 			var contextScope = storedContexts.Where(a => a.Context == context).LastOrDefault();
 			var parentContextScope = storedContexts.Where(a => a.Context == context.Parent).LastOrDefault();
+
 			if (parentContextScope == null)
 			{
 				Error($"Found else statement, but it has no parent if statement | line {lineNumber},{linePosition}");
@@ -591,7 +591,9 @@ namespace RAGE.Parser
 			{
 				Error($"Found else statement, but unable to find context | line {lineNumber},{linePosition}");
 			}
+
 			Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(Jump.Generate(JumpType.Unconditional, parentContextScope.Label));
+			Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add(default(string));
 			Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value.Add($":{contextScope.Label}");
 			base.EnterSelectionElseStatement(context);
 		}
@@ -614,7 +616,7 @@ namespace RAGE.Parser
 			{
 				cf.Add(Jump.Generate(JumpType.Unconditional, contextScope.Label));
 			}
-
+			cf.Add(default(string));
 			cf.Add($":{contextScope.Label}");
 		}
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace RAGE.Parser.Opcodes
@@ -53,7 +54,8 @@ namespace RAGE.Parser.Opcodes
 
 		public static string Int(string value)
 		{
-			if (int.TryParse(value, out int ival))
+			int ival;
+			if (int.TryParse(value, out ival) || int.TryParse(value, NumberStyles.HexNumber & NumberStyles.AllowHexSpecifier, CultureInfo.CurrentCulture, out ival))
 			{
 				if (ival >= -1 && ival <= 7)
 				{

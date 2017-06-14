@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using static RAGEParser;
 using static RAGE.Main.Logger;
 using RAGE.Parser.Opcodes;
+using System.Globalization;
 
 namespace RAGE.Parser
 {
@@ -268,7 +269,9 @@ namespace RAGE.Parser
 			else if (context.ChildCount == 3)
 			{
 				var enumValue = context.constantExpression().GetText();
-				if (!int.TryParse(enumValue, out int val))
+				enumValue = enumValue.Replace("0x", "");
+				int val;
+				if (!int.TryParse(enumValue, out val) && !int.TryParse(enumValue, NumberStyles.HexNumber & NumberStyles.AllowHexSpecifier, CultureInfo.CurrentCulture, out val))
 				{
 					Error($"Unable to parse enumeration '{enumName}' as int | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
 				}
@@ -495,7 +498,7 @@ namespace RAGE.Parser
 
 				if (right.Type == DataType.Static)
 				{
-					rightCode.Add(StaticVar.Set(Script.StaticVariables.GetVariable(right.Data as string)));
+					rightCode.Add(StaticVar.Get(Script.StaticVariables.GetVariable(right.Data as string)));
 				}
 
 				if (left.Type == DataType.Struct)
@@ -535,7 +538,16 @@ namespace RAGE.Parser
 				}
 				else if (right.Data != null)
 				{
-					rightCode.Add(Push.Generate(right.Data.ToString(), variable.Type));
+					//var potentialVariable = Utilities.GetAnyVariable(RAGEListener.CurrentFunction.Variables, right.Data as string) as Variable;
+					//if (variable != null)
+					//{
+					//	rightCode.Add(Push.Generate(potentialVariable.Value.Value, variable.Type));
+
+					//}
+					//else
+					//{
+					//	rightCode.Add(Push.Generate(right.Data.ToString(), variable.Type));
+					//}
 				}
 				else
 				{
@@ -1016,50 +1028,57 @@ namespace RAGE.Parser
 			List<string> code = new List<string>();
 			IVariable variable = null;
 
-			if (RAGEListener.CurrentFunction == null || Script.StaticVariables.ContainsVariable(expression))
-			{
-				variable = Script.StaticVariables.GetVariable(expression);
-			}
-			else
-			{
-				variable = RAGEListener.CurrentFunction.Variables.GetVariable(expression);
-			}
+			variable = Utilities.GetAnyVariable(RAGEListener.CurrentFunction.Variables, expression);
 
 			switch (symbol)
 			{
 				//Inline addition
 				case "++":
-				if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(expression) && !Script.StaticVariables.ContainsVariable(expression))
+				if (variable == null)
 				{
 					Error($"Postfix operator '{symbol}' can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 					return null;
 				}
-				if (RAGEListener.CurrentFunction.Variables.ContainsVariable(expression))
-				{
-					code.Add(FrameVar.Get(variable));
-					code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
-					code.Add(FrameVar.Set(variable));
-				}
-				else
+
+				if (variable.Specifier == Specifier.Static)
 				{
 					code.Add(StaticVar.Get(variable));
 					code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
 					code.Add(StaticVar.Set(variable));
+				}
+				else
+				{
+					code.Add(FrameVar.Get(variable));
+					code.Add(Arithmetic.GenerateInline(Arithmetic.ArithmeticType.Addition, 1));
+					code.Add(FrameVar.Set(variable));
 				}
 
 				return new Value(DataType.Int, null, code);
 
 				//Inline subtraction
 				case "--":
-				if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(expression))
+				if (variable == null)
 				{
 					Error($"Postfix operator '{symbol}' can only be used on variables | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 					return null;
 				}
-				code.Add(FrameVar.Get(variable));
-				code.Add(Push.Generate("1", DataType.Int));
-				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
-				code.Add(FrameVar.Set(variable));
+
+				if (variable.Specifier == Specifier.Static)
+				{
+					code.Add(StaticVar.Get(variable));
+					code.Add(Push.Int(1));
+					code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
+					code.Add(StaticVar.Set(variable));
+
+				}
+				else
+				{
+					code.Add(FrameVar.Get(variable));
+					code.Add(Push.Int(1));
+					code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
+					code.Add(FrameVar.Set(variable));
+				}
+
 				return new Value(DataType.Int, null, code);
 
 				//Function call
@@ -1185,7 +1204,7 @@ namespace RAGE.Parser
 					string index = context.expression().GetText();
 					//Make sure this is a variable or an int
 					var indexType = Utilities.GetType(RAGEListener.CurrentFunction, index);
-					if (indexType != DataType.Int && indexType != DataType.Variable)
+					if (indexType != DataType.Int && indexType != DataType.Variable && indexType != DataType.Static)
 					{
 						Error($"Index used for array is not a valid indexer | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 						return null;
@@ -1210,9 +1229,9 @@ namespace RAGE.Parser
 							code.Add(FrameVar.GetPointer(array));
 						}
 					}
-					else if (indexType == DataType.Variable)
+					else if (indexType == DataType.Variable || indexType == DataType.Static)
 					{
-						var vVar = RAGEListener.CurrentFunction.Variables.GetVariable(index);
+						var vVar = Utilities.GetAnyVariable(RAGEListener.CurrentFunction.Variables, index);
 						if (vVar == null)
 						{
 							Error($"Assumed variable '{index}' used for indexer, but got null | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");

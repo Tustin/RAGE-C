@@ -12,16 +12,27 @@
 
 // static @myStruct structDecl;
 
-void test(string name) {
-    // while(!HAS_SCRIPT_LOADED(name)) {
-    //     REQUEST_SCRIPT(name);
-    //     WAIT(0);
-    // }
-    // 
-    while (true) {
-        test("ok");
+void handle_input() {
+    if (delayed_key_press(Buttons.Dpad_Down) == true) {
+        show_notification("pressed down");
+        currentOption++;
+        if (currentOption > SCRIPT_COUNT) {
+            currentOption = 0;
+        }
+    } else if (delayed_key_press(Buttons.Dpad_Up) == true) {
+        show_notification("pressed up");
+        currentOption--;
+        if (currentOption < 0) {
+            currentOption = SCRIPT_COUNT;
+        }
+    } else if (delayed_key_press(Buttons.Button_Cross) == true) {
+        show_notification("pressed x");
+    } else if (delayed_key_press(Buttons.Button_Circle) == true) {
+        open = false;
+        show_notification("closed");
     }
 }
+
 void main() {
     test("test");
 }
