@@ -161,7 +161,7 @@ namespace RAGE.Compiler
                     case "fsub"://1
                     bytes.Add(0x0f);
                     break;
-                    case "fmul"://1
+                    case "fmult"://1
                     bytes.Add(0x10);
                     break;
                     case "fdiv"://1

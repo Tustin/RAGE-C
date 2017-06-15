@@ -13,6 +13,26 @@ namespace RAGE.Parser.Opcodes
             Modulus,
 
         }
+
+		public static string GenerateFloat(ArithmeticType type)
+		{
+			switch (type)
+			{
+				case ArithmeticType.Addition:
+				return "FAdd";
+				case ArithmeticType.Subtraction:
+				return "FSub";
+				case ArithmeticType.Multiplication:
+				return "FMult";
+				case ArithmeticType.Division:
+				return "FDiv";
+				case ArithmeticType.Modulus:
+				return "FMod";
+				default:
+				throw new Exception("Invalid arithmetic operation");
+			}
+		}
+
         public static string Generate(ArithmeticType type)
         {
             switch (type)

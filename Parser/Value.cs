@@ -29,6 +29,7 @@ namespace RAGE.Parser
         internal DataType Type { get; set; }
         internal object Data { get; set; }
         internal List<string> Assembly { get; set; }
+		internal List<DataType> AdditionalTypes { get; set; }
         //This is if the value inside a variable is a const and can be equated by the compiler
         //Store the original variable here so we can reference if necessary
         internal IVariable OriginalVariable { get; set; }
@@ -47,6 +48,7 @@ namespace RAGE.Parser
         public Value()
         {
             Assembly = new List<string>();
+			AdditionalTypes = new List<DataType>();
         }
     }
 }

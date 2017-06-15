@@ -401,10 +401,10 @@ namespace RAGE.Parser
 				return val;
 			}
 
-			if (output.Type == DataType.Array)
-			{
-				string ff = "";
-			}
+			//if (output.Type == DataType.Array)
+			//{
+			//	string ff = "";
+			//}
 
 			val.Assembly.AddRange(output.Assembly);
 			val.Type = output.Type;
@@ -808,14 +808,28 @@ namespace RAGE.Parser
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
 
-				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
+				if (left.Type == DataType.Float || right.Type == DataType.Float)
+				{
+					code.Add(Arithmetic.GenerateFloat(Arithmetic.ArithmeticType.Addition));
+				}
+				else
+				{
+					code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Addition));
+				}
 				return new Value(DataType.Int, null, code);
 
 				//Subtraction
 				case "-":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
-				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
+				if (left.Type == DataType.Float || right.Type == DataType.Float)
+				{
+					code.Add(Arithmetic.GenerateFloat(Arithmetic.ArithmeticType.Subtraction));
+				}
+				else
+				{
+					code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Subtraction));
+				}
 				return new Value(DataType.Int, null, code);
 
 				//String concatentation (not supported yet)
@@ -854,21 +868,42 @@ namespace RAGE.Parser
 				case "*":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
-				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Multiplication));
+				if (left.Type == DataType.Float || right.Type == DataType.Float)
+				{
+					code.Add(Arithmetic.GenerateFloat(Arithmetic.ArithmeticType.Multiplication));
+				}
+				else
+				{
+					code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Multiplication));
+				}
 				return new Value(DataType.Int, null, code);
 
 				//Division
 				case "/":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
-				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
+				if (left.Type == DataType.Float || right.Type == DataType.Float)
+				{
+					code.Add(Arithmetic.GenerateFloat(Arithmetic.ArithmeticType.Division));
+				}
+				else
+				{
+					code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Division));
+				}
 				return new Value(DataType.Int, null, code);
 
 				//Modulus
 				case "%":
 				code.AddRange(left.Assembly);
 				code.AddRange(right.Assembly);
-				code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Modulus));
+				if (left.Type == DataType.Float || right.Type == DataType.Float)
+				{
+					code.Add(Arithmetic.GenerateFloat(Arithmetic.ArithmeticType.Modulus));
+				}
+				else
+				{
+					code.Add(Arithmetic.Generate(Arithmetic.ArithmeticType.Modulus));
+				}
 				return new Value(DataType.Int, null, code);
 
 			}
