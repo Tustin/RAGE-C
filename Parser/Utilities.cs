@@ -116,7 +116,7 @@ namespace RAGE.Parser
 			}
 			else if (Regex.IsMatch(value, "^\\w+"))
 			{
-				if (function == null) return DataType.Variable;
+				if (function == null) return DataType.Static;
 
 				if (function.Variables.ContainsVariable(value))
 				{

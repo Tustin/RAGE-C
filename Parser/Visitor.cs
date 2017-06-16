@@ -981,49 +981,63 @@ namespace RAGE.Parser
 
 		public override Value VisitUnaryExpression(UnaryExpressionContext context)
 		{
-			if (context.unaryExpression() == null)
+			if (context.unaryExpression() == null && context.unaryOperator() == null)
 			{
-				if (context.unaryOperator() != null)
+				return VisitPostfixExpression(context.postfixExpression());
+			}
+
+			List<string> code = new List<string>();
+
+			if (context.unaryOperator() != null)
+			{
+				var op = VisitUnaryOperator(context.unaryOperator());
+				var expr = VisitCastExpression(context.castExpression());
+				string var = context.GetChild(1).GetText();
+
+				if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(var) && op.Type == DataType.Address)
 				{
-					Value op = VisitUnaryOperator(context.unaryOperator());
-
-					var expr = VisitCastExpression(context.castExpression());
-
-					string var = context.GetChild(1).GetText();
-
-					if (!RAGEListener.CurrentFunction.Variables.ContainsVariable(var) && op.Type == DataType.Address)
-					{
-						Error($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
-						return null;
-					}
-
-					var v = RAGEListener.CurrentFunction.Variables.GetVariable(var);
-					List<string> code = new List<string>();
-					switch (op.Type)
-					{
-						//&someVar (address-of)
-						case DataType.Address:
-						code.Add(FrameVar.GetPointer(v));
-						return new Value(DataType.Address, null, code);
-
-						//!someExpression (not)
-						case DataType.Not:
-						code.AddRange(expr.Assembly);
-						code.Add(Bitwise.Generate(BitwiseType.Not));
-						return new Value(DataType.Not, null, code);
-
-						//$"somestring" (hash)
-						case DataType.Hash:
-						code.AddRange(expr.Assembly);
-						code.Add("GetHash");
-						return new Value(DataType.Hash, null, code);
-					}
+					Error($"Unary expression {context.unaryOperator().GetText()} on {var} is not possible | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+					return null;
 				}
-				else
+
+				var v = RAGEListener.CurrentFunction.Variables.GetVariable(var);
+
+				switch (op.Type)
 				{
-					return VisitPostfixExpression(context.postfixExpression());
+					//&someVar (address-of)
+					case DataType.Address:
+					code.Add(FrameVar.GetPointer(v));
+					return new Value(DataType.Address, null, code);
+
+					//!someExpression (not)
+					case DataType.Not:
+					code.AddRange(expr.Assembly);
+					code.Add(Bitwise.Generate(BitwiseType.Not));
+					return new Value(DataType.Not, null, code);
+
+					//$"somestring" (hash)
+					case DataType.Hash:
+					code.AddRange(expr.Assembly);
+					code.Add("GetHash");
+					return new Value(DataType.Hash, null, code);
 				}
 			}
+
+			var operation = context.GetChild(0).GetText();
+
+			if (operation == "sizeof")
+			{
+				var variable = VisitUnaryExpression(context.unaryExpression());
+				if (!(variable.OriginalVariable is Array arr))
+				{
+					Error($"Variable '{variable.OriginalVariable.Name}' used in sizeof but is not an array | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+					return null;
+				}
+
+				code.Add(Push.Int(arr.Indices.Count));
+				return new Value(DataType.Int, null, code);
+			}
+
 			return null;
 		}
 
@@ -1044,6 +1058,9 @@ namespace RAGE.Parser
 				//Joaat hash of string
 				case "$":
 				return new Value(DataType.Hash, null, null);
+
+				case "sizeof":
+				return new Value(DataType.Sizeof, null, null);
 
 				default:
 				Error($"Unsupported unary operator '{op}' | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
@@ -1427,7 +1444,7 @@ namespace RAGE.Parser
 				case DataType.Variable:
 				var var = RAGEListener.CurrentFunction.Variables.GetVariable(value);
 				code.Add(FrameVar.Get(var));
-				return new Value(DataType.Variable, value, code);
+				return new Value(DataType.Variable, value, code, var);
 
 				case DataType.NativeCall:
 				return new Value(DataType.NativeCall, value, new List<string>());
@@ -1442,7 +1459,7 @@ namespace RAGE.Parser
 				case DataType.Static:
 				var = Script.StaticVariables.GetVariable(value);
 				code.Add(StaticVar.Get(var));
-				return new Value(DataType.Static, value, code);
+				return new Value(DataType.Static, value, code, var);
 
 				case DataType.Argument:
 				var = RAGEListener.CurrentFunction.GetParameter(value);

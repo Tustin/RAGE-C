@@ -28,6 +28,7 @@ unaryExpression
     |   '++' unaryExpression
     |   '--' unaryExpression
     |   unaryOperator castExpression
+    |   'sizeof' '(' unaryExpression ')'
     ;
 
 unaryOperator

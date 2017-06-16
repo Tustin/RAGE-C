@@ -1,57 +1,111 @@
-//Compiled using RAGE-C by Tustin 6/12/2017
+//Compiled using RAGE-C by Tustin 6/14/2017
 :__script_entry__
 Function 0 2 0
+//Auto assigning 1 statics
+Push1 200
+StaticSet1 0 //FXDelay01
 Call @main
 Return 0 0
 
-:test
-Function 1 8 0
-Push_1
-SetF1 4 //foo
-Push_4
-SetF1 5 //bar
-Push_0
-SetF1 6 //currentOption
-Push_5
-SetF1 7 //SCRIPT_COUNT
-Push_2
-GetF1 4 //foo
-CallNative IS_DISABLED_CONTROL_PRESSED 2 1
-Push_1
-JumpNE @selection_else_0
-GetF1 6 //currentOption
-GetF1 7 //SCRIPT_COUNT
-JumpLE @selection_end_1
-Push_0
-SetF1 6 //currentOption
-Jump @selection_end_1
-:selection_end_1
-Jump @selection_end_0
-:selection_else_0
-Push_2
-GetF1 5 //bar
-CallNative IS_DISABLED_CONTROL_PRESSED 2 1
-JumpFalse @selection_end_2
-GetF1 6 //currentOption
-Push_1
-Sub
-SetF1 6 //currentOption
-GetF1 6 //currentOption
-Push_0
-JumpGE @selection_end_3
-GetF1 7 //SCRIPT_COUNT
-SetF1 6 //currentOption
-Jump @selection_end_3
-:selection_end_3
-Jump @selection_end_2
-:selection_end_2
-Jump @selection_end_0
-:selection_end_0
-Return 1 0
-
 :main
-Function 0 2 0
-PushString "test"
-Call @test
+Function 0 7 0
+StaticGet1 0 //FXDelay01
+CallNative GET_GAME_TIMER 0 1
+JumpGE @selection_end_0
+PushString "scr_oddjobtraffickingair"
+CallNative HAS_NAMED_PTFX_ASSET_LOADED 1 1
+JumpFalse @selection_end_0
+PushString "scr_oddjobtraffickingair"
+CallNative _USE_PARTICLE_FX_ASSET_NEXT_CALL 1 0
+JumpFalse @selection_end_0
+PushString "scr_drug_traffic_flare_L"
+CallNative PLAYER_PED_ID 0 1
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+PushI24 65068
+Fpush 0.7
+Push_0
+Push_0
+Push_0
+CallNative _START_PARTICLE_FX_LOOPED_ON_ENTITY_BONE_2 13 1
+SetF1 3 //TrailFX21
+PushString "scr_drug_traffic_flare_L"
+CallNative PLAYER_PED_ID 0 1
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+PushI24 36029
+Fpush 0.7
+Push_0
+Push_0
+Push_0
+CallNative _START_PARTICLE_FX_LOOPED_ON_ENTITY_BONE_2 13 1
+SetF1 4 //TrailFX21
+PushString "scr_drug_traffic_flare_L"
+CallNative PLAYER_PED_ID 0 1
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+PushS 14201
+Fpush 0.7
+Push_0
+Push_0
+Push_0
+CallNative _START_PARTICLE_FX_LOOPED_ON_ENTITY_BONE_2 13 1
+SetF1 5 //TrailFX21
+PushString "scr_drug_traffic_flare_L"
+CallNative PLAYER_PED_ID 0 1
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+PushS 6286
+Fpush 0.7
+Push_0
+Push_0
+Push_0
+CallNative _START_PARTICLE_FX_LOOPED_ON_ENTITY_BONE_2 13 1
+SetF1 6 //TrailFX21
+PushString "scr_drug_traffic_flare_L"
+CallNative PLAYER_PED_ID 0 1
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+Push_0
+PushS 11816
+Fpush 0.7
+Push_0
+Push_0
+Push_0
+CallNative _START_PARTICLE_FX_LOOPED_ON_ENTITY_BONE_2 13 1
+SetF1 7 //TrailFX21
+GetF1 3 //TrailFX21
+Push1 255
+Push1 255
+Push1 255
+Push_0
+CallNative SET_PARTICLE_FX_LOOPED_COLOUR 5 0
+JumpFalse @selection_end_0
+CallNative GET_GAME_TIMER 0 1
+Push1 150
+Add
+StaticSet1 0 //FXDelay01
+Jump @selection_end_0
+
+:selection_end_0
 Return 0 0
 

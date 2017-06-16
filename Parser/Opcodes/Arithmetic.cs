@@ -23,7 +23,7 @@ namespace RAGE.Parser.Opcodes
 				case ArithmeticType.Subtraction:
 				return "FSub";
 				case ArithmeticType.Multiplication:
-				return "FMult";
+				return "FMul";
 				case ArithmeticType.Division:
 				return "FDiv";
 				case ArithmeticType.Modulus:

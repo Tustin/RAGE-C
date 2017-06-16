@@ -26,6 +26,7 @@
 		None,
 		Struct,
 		Hash,
+		Sizeof,
 
     }
 }
