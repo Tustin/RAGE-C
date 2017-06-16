@@ -1,4 +1,4 @@
-//Compiled using RAGE-C by Tustin 6/14/2017
+//Compiled using RAGE-C by Tustin 6/15/2017
 :__script_entry__
 Function 0 2 0
 //Auto assigning 1 statics
@@ -14,10 +14,8 @@ CallNative GET_GAME_TIMER 0 1
 JumpGE @selection_end_0
 PushString "scr_oddjobtraffickingair"
 CallNative HAS_NAMED_PTFX_ASSET_LOADED 1 1
-JumpFalse @selection_end_0
 PushString "scr_oddjobtraffickingair"
 CallNative _USE_PARTICLE_FX_ASSET_NEXT_CALL 1 0
-JumpFalse @selection_end_0
 PushString "scr_drug_traffic_flare_L"
 CallNative PLAYER_PED_ID 0 1
 Push_0
@@ -99,7 +97,6 @@ Push1 255
 Push1 255
 Push_0
 CallNative SET_PARTICLE_FX_LOOPED_COLOUR 5 0
-JumpFalse @selection_end_0
 CallNative GET_GAME_TIMER 0 1
 Push1 150
 Add

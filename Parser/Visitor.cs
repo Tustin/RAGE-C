@@ -372,18 +372,18 @@ namespace RAGE.Parser
 			Value output = VisitAssignmentExpression(context.assignmentExpression());
 
 			//If the if expression doesnt have ==, then the result will come back as a type other than bool
-			if (output.Type != DataType.Bool && CurrentContext != null && CurrentContext?.Type != ScopeTypes.While)
-			{
-				if (!RAGEListener.switches.ContainsKey(CurrentContext))
-				{
-					switch (output.Type)
-					{
-						case DataType.NativeCall:
-						output.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
-						break;
-					}
-				}
-			}
+			//if (output.Type != DataType.Bool && CurrentContext != null && CurrentContext?.Type != ScopeTypes.While)
+			//{
+			//	if (!RAGEListener.switches.ContainsKey(CurrentContext))
+			//	{
+			//		switch (output.Type)
+			//		{
+			//			case DataType.NativeCall:
+			//			output.Assembly.Add(Jump.Generate(JumpType.False, CurrentContext.Label));
+			//			break;
+			//		}
+			//	}
+			//}
 
 			//!someVar
 			if (output.Type == DataType.Not)
@@ -1030,7 +1030,7 @@ namespace RAGE.Parser
 				var variable = VisitUnaryExpression(context.unaryExpression());
 				if (!(variable.OriginalVariable is Array arr))
 				{
-					Error($"Variable '{variable.OriginalVariable.Name}' used in sizeof but is not an array | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
+					Error($"Variable '{variable.OriginalVariable.Name}' used in sizeof is not an array | line {RAGEListener.lineNumber}, {RAGEListener.linePosition}");
 					return null;
 				}
 
