@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using RAGE.Parser.Opcodes;
 
 using static RAGE.Main.Logger;
 
@@ -299,6 +300,62 @@ namespace RAGE.Parser
 				Error($"Unable to determine case type | line {RAGEListener.lineNumber},{RAGEListener.linePosition}");
 			}
 			return value;
+		}
+
+		public static List<string> GenerateEntry()
+		{
+			var entry = new List<string>();
+
+			if (Script.StaticVariables.Count > 0)
+			{
+				entry.Add($"//Auto assigning {Script.StaticVariables.Count} statics");
+				foreach (var variable in Script.StaticVariables)
+				{
+					//Fill out each item in the array also
+					if (variable is Array arr)
+					{
+						entry.Add(Push.Int(arr.Indices.Count.ToString()));
+						entry.Add(StaticVar.Set(arr));
+						foreach (var var in arr.Indices)
+						{
+							entry.AddRange(var.ValueAssembly);
+							entry.Add(Push.Int(var.FrameId.ToString()));
+							entry.Add(StaticVar.Pointer(arr));
+							entry.Add(Opcodes.Array.Set());
+						}
+					}
+					else if (variable is Variable var)
+					{
+						if (var.Type == DataType.CustomType)
+						{
+							var @struct = Script.Structs.GetStruct(var.CustomType);
+							foreach (Variable member in @struct.Members)
+							{
+								entry.AddRange(member.ValueAssembly);
+								if (member.FrameId == 0)
+								{
+									entry.Add(StaticVar.Set(variable));
+								}
+								else
+								{
+									entry.Add(StaticVar.Pointer(variable));
+									entry.Add(Immediate.Set(member.FrameId));
+								}
+							}
+						}
+						else
+						{
+							entry.AddRange(var.ValueAssembly);
+							entry.Add(StaticVar.Set(var));
+						}
+					}
+
+				}
+			}
+			entry.Add("Call @main");
+			entry.Add("Return 0 0");
+
+			return entry;
 		}
 
 	}

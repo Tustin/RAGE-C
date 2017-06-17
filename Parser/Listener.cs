@@ -163,61 +163,14 @@ namespace RAGE.Parser
 		public override void EnterFunctionDefinition(FunctionDefinitionContext context)
 		{
 			//Generate script entry point if it doesn't already exist
-			//@Cleanup: Make this not so dumb
 			if (Core.AssemblyCode.Count == 0)
 			{
 				var entryContents = new List<string>();
 				entryContents.Add("Function 0 2 0");
-				if (Script.StaticVariables.Count > 0)
-				{
-					entryContents.Add($"//Auto assigning {Script.StaticVariables.Count} statics");
-					foreach (var variable in Script.StaticVariables)
-					{
-						//Fill out each item in the array also
-						if (variable is Array arr)
-						{
-							entryContents.Add(Push.Int(arr.Indices.Count.ToString()));
-							entryContents.Add(StaticVar.Set(arr));
-							foreach (var var in arr.Indices)
-							{
-								entryContents.AddRange(var.ValueAssembly);
-								entryContents.Add(Push.Int(var.FrameId.ToString()));
-								entryContents.Add(StaticVar.Pointer(arr));
-								entryContents.Add(Opcodes.Array.Set());
-							}
-						}
-						else if (variable is Variable var)
-						{
-							if (var.Type == DataType.CustomType)
-							{
-								var @struct = Script.Structs.GetStruct(var.CustomType);
-								foreach (Variable member in @struct.Members)
-								{
-									entryContents.AddRange(member.ValueAssembly);
-									if (member.FrameId == 0)
-									{
-										entryContents.Add(StaticVar.Set(variable));
-									}
-									else
-									{
-										entryContents.Add(StaticVar.Pointer(variable));
-										entryContents.Add(Immediate.Set(member.FrameId));
-									}
-								}
-							}
-							else
-							{
-								entryContents.AddRange(var.ValueAssembly);
-								entryContents.Add(StaticVar.Set(var));
-							}
-						}
-
-					}
-				}
-				entryContents.Add("Call @main");
-				entryContents.Add("Return 0 0");
+				entryContents.AddRange(Utilities.GenerateEntry());
 				Core.AssemblyCode.Add("__script_entry__", entryContents);
 			}
+
 			var specifier = (visitor.VisitDeclarationSpecifiers(context.declarationSpecifiers())).Data as DeclarationResponse;
 
 			string name = Regex.Replace(context.declarator().GetText(), "\\(.*\\)", "");
@@ -229,7 +182,6 @@ namespace RAGE.Parser
 			{
 				Error($"Function name '{name}' is a reserved built-in function | line {lineNumber},{linePosition}");
 			}
-			var comp = context.declarationSpecifiers();
 
 			//Add the default function entry instruction
 			//This will get automatically changed in ExitFunctionDefinition to have the right frame variable count
@@ -286,7 +238,7 @@ namespace RAGE.Parser
 			string funcEntry = function.Value[0];
 			var funcCode = Core.AssemblyCode.FindFunction(CurrentFunction.Name).Value;
 			//@TODO: Update first 0 for param count
-			funcEntry = funcEntry.Replace("Function 0 2 0", $"Function {CurrentFunction.Parameters.Count} {CurrentFunction.FrameVars + CurrentFunction.Parameters.Count} 0");
+			funcEntry = funcEntry.Replace("Function 0 2 0", $"Function {CurrentFunction.Parameters.Count} {CurrentFunction.FrameVars} 0");
 			function.Value[0] = funcEntry;
 			//@Hack: Fix me!
 			if (!funcCode.Last().StartsWith("Return"))
